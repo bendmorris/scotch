@@ -9,9 +9,9 @@ import qualified Text.ParserCombinators.Parsec.Token as Token
 import Types
 
 languageDef =
-  emptyDef { Token.commentStart    = "/*",
-             Token.commentEnd      = "*/",
-             Token.commentLine     = "//",
+  emptyDef { Token.commentStart    = "#-",
+             Token.commentEnd      = "-#",
+             Token.commentLine     = "#",
              Token.identStart      = letter,
              Token.identLetter     = alphaNum,
              Token.reservedNames   = [
@@ -164,6 +164,11 @@ term :: Parser Expr
 term =   try syntax
      <|> parens expression
      
+value = try listStmt
+      <|> try strStmt
+      <|> try floatStmt
+      <|> try intStmt
+     
 syntax :: Parser Expr
 syntax =  try (reserved "true" >> return (Val (Bit True)))
       <|> try (reserved "false" >> return (Val (Bit False)))
@@ -171,10 +176,7 @@ syntax =  try (reserved "true" >> return (Val (Bit True)))
       <|> try defunStmt
       <|> try assignStmt
       <|> try ifStmt
-      <|> try listStmt
-      <|> try strStmt
-      <|> try floatStmt
-      <|> try intStmt
+      <|> try value
       <|> try skipStmt
       <|> try printStmt
       <|> try forStmt
