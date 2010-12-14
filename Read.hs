@@ -57,7 +57,7 @@ value = try listValue <|> try strValue <|> try floatValue <|> try intValue
 valueStmt = try listStmt <|>
             try strStmt <|>
             try floatStmt <|>
-            try intStmt <|>
+            try intStmt
      
 syntax :: Parser Expr
 syntax = try (reserved "true" >> return (Val (Bit True))) <|>
@@ -72,7 +72,7 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try forStmt <|>
          try valueStmt <|>
          try funcallStmt <|>
-         try varcallStmt <|>
+         try varcallStmt
 
 -- syntax parsers
 
