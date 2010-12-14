@@ -11,7 +11,8 @@ type Call = ([Id], Expr)
 type Binding = (Id, Call)
 
 -- a value with its corresponding type
-data Value = Number Double
+data Value = NumInt Integer
+           | NumFloat Double
            | Str String
            | Bit Bool
            | List [Expr]
@@ -19,7 +20,8 @@ data Value = Number Double
            deriving Eq
 instance Show (Value) where
     show (Str s) = s
-    show (Number n) = show n
+    show (NumInt n) = show n
+    show (NumFloat n) = show n
     show (Bit True) = "true"
     show (Bit False) = "false"
     show (List l) = show l

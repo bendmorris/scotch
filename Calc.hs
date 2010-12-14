@@ -17,27 +17,29 @@ calc _ (Incomplete i) _ = Incomplete i
 
 -- the following functions provide basic operations between Values, returning a Calculation
 vadd, vsub, vprod, vdiv, vexp, veq, vgt, vlt :: Value -> Value -> Calculation
-vadd (Number a) (Number b) = Result (Number (a + b))
+vadd (NumInt a) (NumInt b) = Result (NumInt (a + b))
 vadd (Str a) (Str b) = Result (Str (a ++ b))
-vadd (Str a) (Number b) = Result (Str (a ++ (show b)))
-vadd (Number a) (Str b) = Result (Str ((show a) ++ b))
+vadd (Str a) (NumInt b) = Result (Str (a ++ (show b)))
+vadd (NumInt a) (Str b) = Result (Str ((show a) ++ b))
 vadd (List a) (List b) = Result (List (a ++ b))
 vadd a b = type_mismatch "+" a b
-vsub (Number a) (Number b) = Result (Number (a - b))
+vsub (NumInt a) (NumInt b) = Result (NumInt (a - b))
 vsub a b = type_mismatch "-" a b
-vprod (Number a) (Number b) = Result (Number (a * b))
+vprod (NumInt a) (NumInt b) = Result (NumInt (a * b))
 vprod a b = type_mismatch "*" a b
-vdiv (Number a) (Number b) = Result (Number (a / b))
+vdiv (NumInt a) (NumInt b) = Result (NumInt (a `div` b))
+vdiv (NumFloat a) (NumFloat b) = Result (NumFloat (a / b))
 vdiv a b = type_mismatch "/" a b
-vexp (Number a) (Number b) = Result (Number (a ** b))
+vexp (NumInt a) (NumInt b) = Result (NumInt (a ^ b))
+vexp (NumFloat a) (NumFloat b) = Result (NumFloat (a ** b))
 vexp a b = type_mismatch "^" a b
-veq (Number a) (Number b) = Result (Bit (a == b))
+veq (NumInt a) (NumInt b) = Result (Bit (a == b))
 veq (Str a) (Str b) = Result (Bit (a == b))
 veq (Bit a) (Bit b) = Result (Bit (a == b))
 veq a b = type_mismatch "=" a b
-vgt (Number a) (Number b) = Result (Bit (a > b))
+vgt (NumInt a) (NumInt b) = Result (Bit (a > b))
 vgt a b = type_mismatch ">" a b
-vlt (Number a) (Number b) = Result (Bit (a < b))
+vlt (NumInt a) (NumInt b) = Result (Bit (a < b))
 vlt a b = type_mismatch "<" a b
 vand (Bit a) (Bit b) = Result (Bit (a && b))
 vand a b = type_mismatch "&" a b

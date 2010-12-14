@@ -181,7 +181,7 @@ intValue :: Parser Value
 intValue =
   do value <- integer
      whitespace <- whiteSpace
-     return $ Number (realToFrac value)
+     return $ NumInt value
 intStmt :: Parser Expr
 intStmt =
   do value <- intValue
@@ -191,7 +191,7 @@ floatValue :: Parser Value
 floatValue =
   do value <- float
      whitespace <- whiteSpace
-     return $ Number value
+     return $ NumFloat value
 floatStmt :: Parser Expr
 floatStmt =
   do value <- floatValue

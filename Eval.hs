@@ -1,7 +1,6 @@
 module Eval where
 
 import Types
-import Stdlib
 import Calc
 
 -- eval: computes the result of an expression as a Calculation
@@ -52,7 +51,7 @@ weval exp vars = case exp of
                                             Result v -> Val (List (forloop id [Val v] y))
                                             otherwise -> Undefined (show x)) vars
                     Range v -> case weval v vars of
-                                 Result (Number r) -> weval (Val (List [Val (Number i) | i <- [0..(r-1)]])) vars
+                                 Result (NumInt r) -> weval (Val (List [Val (NumInt i) | i <- [1..r]])) vars
                                  otherwise -> Exception "Bad range"
                     Output x y -> weval y vars
                  where var_binding :: Id -> [Binding] -> Call
@@ -88,4 +87,4 @@ weval exp vars = case exp of
                        forloop id (h:t) y = [Def id h y] ++ (forloop id t y)
                                 
 eval :: Expr -> [Binding] -> Calculation
-eval exp bindings = weval exp (bindings ++ Stdlib.stdlib)
+eval exp bindings = weval exp bindings

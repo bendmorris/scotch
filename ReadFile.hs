@@ -1,7 +1,6 @@
 module ReadFile where
 
 import Text.ParserCombinators.Parsec
-import Stdlib
 import Read
 import Types
 import Eval
@@ -73,5 +72,5 @@ execute :: Bool -> String -> [Binding] -> IO ()
 execute verbose file bindings = do input <- readFile file
                                    wexecute verbose 
                                             (split '\n' input) 
-                                            ([(0, binding) | binding <- (bindings ++ stdlib)]) 
+                                            ([(0, binding) | binding <- bindings]) 
                                             1
