@@ -21,7 +21,7 @@ languageDef =
                                       "and", "or", "not"
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
-                                      "<", ">", "and", "or", "not"
+                                      "<", ">", "and", "or", "not", ":"
                                      ]
            }
            
@@ -155,12 +155,19 @@ exprList :: Parser [Expr]
 exprList = sepBy (whiteSpace >> expression) (oneOf ",")
 
 identifierOrValue :: Parser Id
-identifierOrValue = 
-    do id <- identifier
-       return $ Name id 
-    <|> 
-    do val <- value
-       return $ Pattern val
+identifierOrValue = try idSplit <|> try idName <|> try idPattern
+idSplit = 
+  do id1 <- identifier
+     reservedOp ":"
+     id2 <- identifier
+     return $ Split id1 id2
+idName =
+  do id <- identifier
+     return $ Name id 
+idPattern =
+  do val <- value
+     return $ Pattern val
+       
 
 idList :: Parser [Id]
 idList = do id <- sepBy identifierOrValue (oneOf ",")

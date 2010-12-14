@@ -72,12 +72,19 @@ weval exp vars = case exp of
                        pattern_match [] [] = True
                        pattern_match (a:b) (c:d) = case a of
                                                      Name n -> pattern_match b d
+                                                     Split x y -> case weval c vars of
+                                                                    Result (List l) -> pattern_match b d
+                                                                    otherwise -> False
                                                      Pattern v -> if (weval c vars) == Result v 
                                                                   then pattern_match b d
                                                                   else False
                        funcall f [] = f
                        funcall f (h:t) = case fst h of
                                             Name _ -> Def (fst h) (eager_eval (snd h)) (funcall f t)
+                                            Split x y -> case eager_eval (snd h) of
+                                                            Val (List l) -> Def (Name x) (eager_eval (head l)) (
+                                                                            Def (Name y) (Val (List (tail l))) (
+                                                                            funcall f t))
                                             Pattern _ -> funcall f t
                        eager_eval x = case (weval (x) vars) of
                                         Result r -> Val r

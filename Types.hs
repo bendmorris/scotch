@@ -1,10 +1,11 @@
 module Types where
 
 -- a bindable identifier
-data Id = Name String | Pattern Value deriving Eq
+data Id = Name String | Pattern Value | Split String String deriving Eq
 instance Show(Id) where
     show (Name s) = s
     show (Pattern v) = show v
+    show (Split a b) = "(" ++ show a ++ " : " ++ show b ++ ")"
 -- a list of identifiers (empty list for variables) and an expression containing them
 type Call = ([Id], Expr)
 -- binds an ID to a Call
