@@ -36,7 +36,8 @@ peeled_bindings (h:t) = snd h : peeled_bindings t
 wexecute :: [String] -> [ScopedBinding] -> Int -> IO ()
 wexecute [] bindings _ = do return ()
 wexecute (h:t) bindings line = 
-  do if (length input) - scope > 0 then 
+  do -- putStrLn (show bindings)
+     if (length input) - scope > 0 then 
          do 
             case parsed of
                Output x y -> output x

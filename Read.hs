@@ -141,7 +141,7 @@ forStmt =
 -- value parsers
 
 exprList :: Parser [Expr]
-exprList = sepBy expression (oneOf ",")
+exprList = sepBy (whiteSpace >> expression) (oneOf ",")
 
 identifierOrValue :: Parser Id
 identifierOrValue = 
