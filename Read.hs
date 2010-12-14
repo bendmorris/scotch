@@ -78,10 +78,14 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
 
 -- syntax parsers
 
+moduleName :: Parser [String]
+moduleName =
+  do sepBy identifier (oneOf ".")
+
 importStmt :: Parser Expr
 importStmt =
   do reservedOp "import"
-     mod <- identifier
+     mod <- moduleName
      return $ Import mod
 
 defunStmt :: Parser Expr

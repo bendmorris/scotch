@@ -58,10 +58,10 @@ data Expr =
           | Func Id [Expr]                  -- function cal
           | If Expr Expr Expr               -- conditional
           | For Id (Expr) (Expr)            -- iteration
-          | Range (Expr)                    -- range, start -> finish -> step size
+          | Range (Expr)                    -- range
           | Output (Expr) (Expr)            -- output
           | Placeholder                     -- the next statement should go here
-          | Import String
+          | Import [String]                 -- import module
           deriving Eq
 se' :: (Show a) => [a] -> String
 se' [] = []
@@ -93,4 +93,4 @@ instance Show(Expr) where
     show (Range r) = "(range " ++ show r ++ ")"
     show (Output x y) = se "print" [x, y]
     show (Placeholder) = "**nothing**"
-    show (Import s) = "import " ++ s
+    show (Import s) = "import " ++ (show s)

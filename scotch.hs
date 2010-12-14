@@ -18,7 +18,8 @@ main = do putStrLn ("Scotch interpreter, version " ++ version)
           let verbose = vFlag args
           if verbose then putStrLn "-v Verbose mode on" else return ()
           if (length args) > 0 && isSuffixOf ".sco" (args !! 0) 
-            then execute verbose (args !! 0) []
+            then do execute verbose (args !! 0) []
+                    return ()
             else runInputT defaultSettings (loop verbose [])
 loop :: Bool -> [Binding] -> InputT IO ()
 loop verbose bindings = 
@@ -29,7 +30,7 @@ loop verbose bindings =
         Just input -> do let parsed = Read.read input
                          let imp = case parsed of
                                         Import s -> s
-                                        otherwise -> ""
+                                        otherwise -> []
                          let result = eval parsed bindings
                          if verbose then outputStrLn (show parsed)
                                     else return ()
