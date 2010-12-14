@@ -58,7 +58,7 @@ ifStmt =
      stmt1 <- expression
      reserved "else"
      stmt2 <- expression
-     return $ If cond stmt1 stmt2
+     return $ If cond stmt1 Placeholder
  
 assignStmt :: Parser Expr
 assignStmt =
@@ -67,19 +67,20 @@ assignStmt =
      reservedOp "="
      w <- whiteSpace
      expr1 <- expression
-     return $ Def var expr1 (Var var)
+     return $ Def var expr1 Placeholder
      
 printStmt :: Parser Expr
 printStmt =
   do reservedOp "print"
      expr <- expression
-     return $ Output (expr) (expr)
+     return $ Output (expr) Placeholder
 
 exprList :: Parser [Expr]
 exprList = sepBy expression (oneOf ",")
 
 idList :: Parser [Id]
-idList = sepBy identifier (oneOf ",")
+idList = id <- sepBy (oneOf identifier value) (oneOf ",")
+         return $ Name id
 
 strStmt :: Parser Expr
 strStmt = 
@@ -116,7 +117,7 @@ forStmt =
   do reservedOp "for"
      iterator <- identifier
      reservedOp "in"
-     list <- listStmt
+     list <- expression
      expr <- expression
      return $ For iterator list expr
      
@@ -126,7 +127,7 @@ defunStmt =
      params <- parens idList
      reservedOp "="
      expr <- expression
-     return $ Defun var params expr (Skip)
+     return $ Defun var params expr Placeholder
      
 funcallStmt :: Parser Expr
 funcallStmt =

@@ -13,15 +13,21 @@ vFlag (h:t) = if h == "-v" then True else vFlag t
 main = do putStrLn ("Scotch interpreter, version " ++ version)
           args <- getArgs
           let verbose = vFlag args
-          runInputT defaultSettings (loop verbose)
-loop :: Bool -> InputT IO ()
-loop verbose = do line <- getInputLine ">> "
-                  case line of
-                    Nothing -> return ()
-                    Just "quit" -> return ()
-                    Just input -> do let parsed = Read.read input
-                                     let result = eval parsed
-                                     if verbose then outputStrLn (show parsed)
-                                                else return ()
-                                     outputStrLn (show result)
-                                     loop verbose
+          if verbose then putStrLn "-v Verbose mode on" else return ()
+          runInputT defaultSettings (loop verbose [])
+loop :: Bool -> [Binding] -> InputT IO ()
+loop verbose bindings = 
+  do line <- getInputLine ">> "
+     case line of
+        Nothing -> return ()
+        Just "quit" -> return ()
+        Just input -> do let parsed = Read.read input
+                         let result = eval parsed bindings
+                         if verbose then outputStrLn (show parsed)
+                                    else return ()
+                         let newBindings = case parsed of
+                                             Def id x _ -> [(id, ([], x))]
+                                             Defun id params x _ -> [(id, (params, x))]
+                                             otherwise -> []
+                         outputStrLn (show result)
+                         loop verbose (newBindings ++ bindings)

@@ -12,6 +12,8 @@ calc :: Calculation -> Calculation ->
 calc _ (Exception s) _ = Exception s
 calc (Exception s) _ _ = Exception s
 calc (Result a) (Result b) f = f a b
+calc (Incomplete i) _ _ = Incomplete i
+calc _ (Incomplete i) _ = Incomplete i
 
 -- the following functions provide basic operations between Values, returning a Calculation
 vadd, vsub, vprod, vdiv, vexp, veq, vgt, vlt :: Value -> Value -> Calculation

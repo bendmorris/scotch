@@ -1,7 +1,7 @@
 module Types where
 
 -- a bindable identifier
-type Id = String
+data Id = Name String | Pattern Value
 -- a list of identifiers (empty list for variables) and an expression containing them
 type Call = ([Id], Expr)
 -- binds an ID to a Call
@@ -22,36 +22,38 @@ instance Show (Value) where
     show (Null) = "null"
 
 -- a calculation, which may cause an exception if one of its members contains an exception
-data Calculation = Exception String | Result (Value)
+data Calculation = Exception String | Result (Value) | Incomplete (Expr)
 instance Show (Calculation) where
     show (Result r) = show r
     show (Exception s) = "Exception: " ++ s
+    show (Incomplete e) = show e
 
 -- represents an arithmetic expression
 data Expr = 
-            Undefined String            -- undefined
-          | Skip                        -- returns Null
-          | Val (Value)                 -- value
-          | Add Expr Expr               -- addition
-          | Sub Expr Expr               -- subtraction
-          | Prod Expr Expr              -- product
-          | Neg Expr                    -- negation
-          | Div Expr Expr               -- division
-          | Exp Expr Expr               -- exponent
-          | Eq Expr Expr                -- equal
-          | Gt Expr Expr                -- greater than
-          | Lt Expr Expr                -- less than
-          | And Expr Expr               -- boolean and
-          | Or Expr Expr                -- boolean or
-          | Not Expr                    -- boolean not
-          | Def Id Expr Expr            -- identifier assignment
-          | Defun Id [Id] Expr Expr     -- function definition
-          | Var Id                      -- identifier
-          | Func Id [Expr]              -- function cal
-          | If Expr Expr Expr           -- conditional
-          | For Id (Expr) (Expr)        -- iteration
-          | Output (Expr) (Expr)        -- output
-          | Placeholder                 -- the next statement should go here
+            Undefined String                -- undefined
+          | Skip                            -- returns Null
+          | Val (Value)                     -- value
+          | Add Expr Expr                   -- addition
+          | Sub Expr Expr                   -- subtraction
+          | Prod Expr Expr                  -- product
+          | Neg Expr                        -- negation
+          | Div Expr Expr                   -- division
+          | Exp Expr Expr                   -- exponent
+          | Eq Expr Expr                    -- equal
+          | Gt Expr Expr                    -- greater than
+          | Lt Expr Expr                    -- less than
+          | And Expr Expr                   -- boolean and
+          | Or Expr Expr                    -- boolean or
+          | Not Expr                        -- boolean not
+          | Def Id Expr Expr                -- identifier assignment
+          | Defun Id [Id] Expr Expr         -- function definition
+          | Var Id                          -- identifier
+          | Func Id [Expr]                  -- function cal
+          | If Expr Expr Expr               -- conditional
+          | For Id (Expr) (Expr)            -- iteration
+          | Range (Value) (Value) (Value)   -- range, start -> finish -> step size
+          | Output (Expr) (Expr)            -- output
+          | Placeholder                     -- the next statement should go here
 se' :: (Show a) => [a] -> String
 se' [] = []
 se' (h:t) = " " ++ show h ++ (se' t)

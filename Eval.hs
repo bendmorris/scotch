@@ -8,9 +8,13 @@ import Calc
 weval :: Expr -> [Binding] -> Calculation
 weval exp vars = case exp of
                     Undefined s -> Exception ("Undefined: " ++ s)
+                    Placeholder -> Incomplete (Placeholder)
                     Skip -> Result Null
                     Val (List l) -> Result (List [(case (weval item vars) of
-                                                     Result r -> Val r) | item <- l])
+                                                     Result r -> Val r
+                                                     Incomplete x -> x
+                                                     ) 
+                                                     | item <- l])
                     Val x -> Result x
                     Add x y -> calc (weval x vars) (weval y vars) (vadd)
                     Sub x y -> calc (weval x vars) (weval y vars) (vsub)
@@ -36,7 +40,7 @@ weval exp vars = case exp of
                                    then weval (funcall (snd definition)
                                           (zip (fst definition) args)) vars
                                    else Exception "Variable called as function"
-                                   where definition = var_binding f vars
+                                   where definition = func_binding f args vars
                     If cond x y -> case (weval cond vars) of
                                      Result (Bit True) -> weval x vars
                                      Result (Bit False) -> weval y vars
@@ -49,11 +53,19 @@ weval exp vars = case exp of
                        var_binding x (h:t) = if fst h == x 
                                              then snd h
                                              else var_binding x t
+                       func_binding x args [] = ([], Undefined ("Function " ++ x))
+                       func_binding x args (h:t) = if (fst h == x) &&
+                                                      (length args == length params)
+                                                   then binding
+                                                   else func_binding x args t
+                                                   where (id, params, expr) =
+                                                           (fst h, fst binding, snd binding)
+                                                         binding = snd h
                        funcall f [] = f
                        funcall f (h:t) = Def (fst h) (snd h) (funcall f t)
                        forloop :: Id -> [Expr] -> Expr -> [Expr]
                        forloop id [] y = []
                        forloop id (h:t) y = [Def id h y] ++ (forloop id t y)
                                 
-eval :: Expr -> Calculation
-eval exp = weval exp Stdlib.stdlib
+eval :: Expr -> [Binding] -> Calculation
+eval exp bindings = weval exp (bindings ++ Stdlib.stdlib)
