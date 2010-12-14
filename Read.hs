@@ -71,6 +71,7 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try skipStmt <|>
          try printStmt <|>
          try forStmt <|>
+         try rangeStmt <|>
          try valueStmt <|>
          try funcallStmt <|>
          try varcallStmt
@@ -137,6 +138,12 @@ forStmt =
      reservedOp ","
      expr <- expression
      return $ For (Name iterator) list expr
+
+rangeStmt :: Parser Expr
+rangeStmt =
+  do reservedOp "range"
+     expr <- parens expression
+     return $ Range expr
 
 -- value parsers
 

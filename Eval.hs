@@ -13,6 +13,7 @@ weval exp vars = case exp of
                     Skip -> Result Null
                     Val (List l) -> Result (List [(case (weval item vars) of
                                                      Result r -> Val r
+                                                     Exception e -> Undefined e
                                                      Incomplete x -> x
                                                      ) 
                                                      | item <- l])
@@ -46,10 +47,13 @@ weval exp vars = case exp of
                                      Result (Bit True) -> weval x vars
                                      Result (Bit False) -> weval y vars
                                      otherwise -> Exception "Non-boolean condition"
-                    For id x y -> weval (case x of
-                                            Val (List l) -> Val (List (forloop id l y))
-                                            Val v -> Val (List (forloop id [Val v] y))
+                    For id x y -> weval (case (weval x vars) of
+                                            Result (List l) -> Val (List (forloop id l y))
+                                            Result v -> Val (List (forloop id [Val v] y))
                                             otherwise -> Undefined (show x)) vars
+                    Range v -> case weval v vars of
+                                 Result (Number r) -> weval (Val (List [Val (Number i) | i <- [0..(r-1)]])) vars
+                                 otherwise -> Exception "Bad range"
                     Output x y -> weval y vars
                  where var_binding :: Id -> [Binding] -> Call
                        var_binding x [] = ([], Undefined ("Variable " ++ (show x)))

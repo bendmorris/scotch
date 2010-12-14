@@ -17,8 +17,8 @@ main = do putStrLn ("Scotch interpreter, version " ++ version)
           args <- getArgs
           let verbose = vFlag args
           if verbose then putStrLn "-v Verbose mode on" else return ()
-          if isSuffixOf ".sco" (args !! 0) 
-            then execute (args !! 0) []
+          if (length args) > 0 && isSuffixOf ".sco" (args !! 0) 
+            then execute verbose (args !! 0) []
             else runInputT defaultSettings (loop verbose [])
 loop :: Bool -> [Binding] -> InputT IO ()
 loop verbose bindings = 

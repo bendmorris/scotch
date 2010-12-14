@@ -23,6 +23,7 @@ whitespace [] = 0
 whitespace (h:t) = case h of 
                      ' ' -> 1 + (whitespace t) 
                      '\t' -> 4 + (whitespace t)
+                     '#' -> 1 + (whitespace [' ' | c <- t])
                      otherwise -> 0
 
 scoped_bindings :: Int -> [ScopedBinding] -> [ScopedBinding]
@@ -33,21 +34,22 @@ peeled_bindings :: [ScopedBinding] -> [Binding]
 peeled_bindings [] = []
 peeled_bindings (h:t) = snd h : peeled_bindings t
 
-wexecute :: [String] -> [ScopedBinding] -> Int -> IO ()
-wexecute [] bindings _ = do return ()
-wexecute (h:t) bindings line = 
+wexecute :: Bool -> [String] -> [ScopedBinding] -> Int -> IO ()
+wexecute _ [] bindings _ = do return ()
+wexecute verbose (h:t) bindings line = 
   do -- putStrLn (show bindings)
      if (length input) - scope > 0 then 
-         do 
+         do if verbose then putStrLn (show parsed)
+                       else return ()
             case parsed of
                Output x y -> output x
                otherwise -> case result of
                                 Exception e -> putStrLn ("Exception on line " ++ (show line) ++ "\n" ++ e)
                                 otherwise -> do case parsed of
                                                     Output x y -> output x
-                                                    otherwise -> wexecute t (newBindings ++ bindings') (line+1)
+                                                    otherwise -> wexecute verbose t (newBindings ++ bindings') (line+1)
             
-      else wexecute t (bindings) (line+1)
+      else wexecute verbose t (bindings) (line+1)
       where input = h
             scope = whitespace input
             parsed = Read.read input
@@ -65,8 +67,11 @@ wexecute (h:t) bindings line =
             output x = case (eval x peeled) of
                          Exception e -> putStrLn ("Exception on line " ++ (show line) ++ ":\n\t" ++ e)
                          s -> do putStrLn (show s)
-                                 wexecute t (newBindings ++ bindings') (line+1)     
+                                 wexecute verbose t (newBindings ++ bindings') (line+1)     
 
-execute :: String -> [Binding] -> IO ()
-execute file bindings = do input <- readFile file
-                           wexecute (split '\n' input) ([(0, binding) | binding <- (bindings ++ stdlib)]) 1
+execute :: Bool -> String -> [Binding] -> IO ()
+execute verbose file bindings = do input <- readFile file
+                                   wexecute verbose 
+                                            (split '\n' input) 
+                                            ([(0, binding) | binding <- (bindings ++ stdlib)]) 
+                                            1
