@@ -73,7 +73,8 @@ wexecute verbose (h:t) bindings line =
             importFileName (h:t) = "/" ++ h ++ (importFileName t)            
             importFile s = do currDir <- getCurrentDirectory
                               val <- execute verbose (currDir ++ (importFileName s)) []
-                              return val
+                              let newval = [(scope, snd binding) | binding <- val]
+                              return newval
             
             output x = case (eval x peeled) of
                          Exception e -> do putStrLn ("Exception on line " ++ (show line) ++ ":\n\t" ++ e)
