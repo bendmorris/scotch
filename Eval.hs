@@ -7,6 +7,7 @@ import Calc
 -- eval: computes the result of an expression as a Calculation
 weval :: Expr -> [Binding] -> Calculation
 weval exp vars = case exp of
+                    Import s -> Incomplete (Placeholder)
                     Undefined s -> Exception ("Undefined: " ++ s)
                     Placeholder -> Incomplete (Placeholder)
                     Skip -> Result Null
@@ -39,7 +40,7 @@ weval exp vars = case exp of
                     Func f args -> if length (fst definition) > 0 
                                    then weval (funcall (snd definition)
                                                (zip (fst definition) args)) vars
-                                   else Exception "Variable called as function"
+                                   else Exception "Function call doesn't match any existing patterns."
                                    where definition = func_binding f args vars
                     If cond x y -> case (weval cond vars) of
                                      Result (Bit True) -> weval x vars
@@ -47,7 +48,8 @@ weval exp vars = case exp of
                                      otherwise -> Exception "Non-boolean condition"
                     For id x y -> weval (case x of
                                             Val (List l) -> Val (List (forloop id l y))
-                                            Val v -> Val (List (forloop id [Val v] y))) vars
+                                            Val v -> Val (List (forloop id [Val v] y))
+                                            otherwise -> Undefined (show x)) vars
                     Output x y -> weval y vars
                  where var_binding :: Id -> [Binding] -> Call
                        var_binding x [] = ([], Undefined ("Variable " ++ (show x)))

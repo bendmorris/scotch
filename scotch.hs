@@ -5,6 +5,7 @@ import Types
 import Read
 import Eval
 import System.Console.Haskeline
+import ReadFile
 
 version = "0.1"
 vFlag [] = False
@@ -22,6 +23,9 @@ loop verbose bindings =
         Nothing -> return ()
         Just "quit" -> return ()
         Just input -> do let parsed = Read.read input
+                         let imp = case parsed of
+                                        Import s -> s
+                                        otherwise -> ""
                          let result = eval parsed bindings
                          if verbose then outputStrLn (show parsed)
                                     else return ()
@@ -33,5 +37,7 @@ loop verbose bindings =
                                                                        )))]
                                              Defun id params x _ -> [(id, (params, x))]
                                              otherwise -> []
+                         execute imp bindings
+                         loop verbose (newBindings ++ bindings)
                          outputStrLn (show result)
                          loop verbose (newBindings ++ bindings)

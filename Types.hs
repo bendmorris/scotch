@@ -18,7 +18,7 @@ data Value = Number Double
            | Null
            deriving Eq
 instance Show (Value) where
-    show (Str s) = "\"" ++ s ++ "\""
+    show (Str s) = s
     show (Number n) = show n
     show (Bit True) = "true"
     show (Bit False) = "false"
@@ -59,6 +59,7 @@ data Expr =
           | Range (Value) (Value) (Value)   -- range, start -> finish -> step size
           | Output (Expr) (Expr)            -- output
           | Placeholder                     -- the next statement should go here
+          | Import String
           deriving Eq
 se' :: (Show a) => [a] -> String
 se' [] = []
@@ -89,3 +90,4 @@ instance Show(Expr) where
     show (For x y z) = "(for " ++ (show x) ++ " in " ++ (show y) ++ " " ++ (show z) ++ ")"
     show (Output x y) = se "print" [x, y]
     show (Placeholder) = "**nothing**"
+    show (Import s) = "import " ++ s

@@ -63,6 +63,7 @@ syntax :: Parser Expr
 syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try (reserved "false" >> return (Val (Bit False))) <|>
          try (reserved "null" >> return (Val Null)) <|>
+         try importStmt <|>
          try defunStmt <|>
          try eagerStmt <|>
          try assignStmt <|>
@@ -75,6 +76,12 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try varcallStmt
 
 -- syntax parsers
+
+importStmt :: Parser Expr
+importStmt =
+  do reservedOp "import"
+     mod <- identifier
+     return $ Import mod
 
 defunStmt :: Parser Expr
 defunStmt =
@@ -127,6 +134,7 @@ forStmt =
      iterator <- identifier
      reservedOp "in"
      list <- expression
+     reservedOp ","
      expr <- expression
      return $ For (Name iterator) list expr
 
