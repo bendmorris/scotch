@@ -1,7 +1,10 @@
 module Types where
 
 -- a bindable identifier
-data Id = Name String | Pattern Value
+data Id = Name String | Pattern Value deriving Eq
+instance Show(Id) where
+    show (Name s) = s
+    show (Pattern v) = show v
 -- a list of identifiers (empty list for variables) and an expression containing them
 type Call = ([Id], Expr)
 -- binds an ID to a Call
@@ -13,6 +16,7 @@ data Value = Number Double
            | Bit Bool
            | List [Expr]
            | Null
+           deriving Eq
 instance Show (Value) where
     show (Str s) = "\"" ++ s ++ "\""
     show (Number n) = show n
@@ -22,7 +26,7 @@ instance Show (Value) where
     show (Null) = "null"
 
 -- a calculation, which may cause an exception if one of its members contains an exception
-data Calculation = Exception String | Result (Value) | Incomplete (Expr)
+data Calculation = Exception String | Result (Value) | Incomplete (Expr) deriving Eq
 instance Show (Calculation) where
     show (Result r) = show r
     show (Exception s) = "Exception: " ++ s
@@ -46,6 +50,7 @@ data Expr =
           | Or Expr Expr                    -- boolean or
           | Not Expr                        -- boolean not
           | Def Id Expr Expr                -- identifier assignment
+          | EagerDef Id Expr Expr           -- identifier assignment
           | Defun Id [Id] Expr Expr         -- function definition
           | Var Id                          -- identifier
           | Func Id [Expr]                  -- function cal
@@ -54,6 +59,7 @@ data Expr =
           | Range (Value) (Value) (Value)   -- range, start -> finish -> step size
           | Output (Expr) (Expr)            -- output
           | Placeholder                     -- the next statement should go here
+          deriving Eq
 se' :: (Show a) => [a] -> String
 se' [] = []
 se' (h:t) = " " ++ show h ++ (se' t)
@@ -74,11 +80,12 @@ instance Show(Expr) where
     show (And x y) = se "&" [x, y]
     show (Or x y) = se "|" [x, y]
     show (Not x) = se "!" [x]
-    show (Def a b c) = "(def " ++ a ++ se' [b, c] ++ ")"
-    show (Defun a b c d) = "(def " ++ a ++ " " ++ (show b) ++ se' [c, d] ++ ")"
-    show (Var v) = v
-    show (Func f p) = "(func " ++ f ++ " " ++ (show p) ++ ")"
+    show (Def a b c) = "(def " ++ (show a) ++ se' [b, c] ++ ")"
+    show (EagerDef a b c) = "(eager def " ++ (show a) ++ se' [b, c] ++ ")"
+    show (Defun a b c d) = "(def " ++ (show a) ++ " " ++ (show b) ++ se' [c, d] ++ ")"
+    show (Var v) = show v
+    show (Func f p) = "(func " ++ (show f) ++ " " ++ (show p) ++ ")"
     show (If cond x y) = se "if" [cond, x, y]
-    show (For x y z) = "(for " ++ x ++ " in " ++ (show y) ++ " " ++ (show z) ++ ")"
+    show (For x y z) = "(for " ++ (show x) ++ " in " ++ (show y) ++ " " ++ (show z) ++ ")"
     show (Output x y) = se "print" [x, y]
-    show (Placeholder) = "** placeholder **"
+    show (Placeholder) = "**nothing**"

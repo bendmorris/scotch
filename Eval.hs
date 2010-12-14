@@ -32,13 +32,13 @@ weval exp vars = case exp of
                                                 Bit b -> Result (Bit (not b))
                                                 otherwise -> Exception "Expected boolean"
                     Def id x y -> weval y ((id, ([], x)) : vars)
+                    EagerDef id x y -> weval y ((id, ([], eager_eval x)) : vars)
                     Defun id params x y -> weval y ((id, (params, x)) : vars)
-                    Var x -> if fst definition == [] then weval (snd definition) vars
-                                                     else Exception "Function used as variable"
-                              where definition = var_binding x vars
+                    Var x -> weval (snd definition) vars
+                             where definition = var_binding x vars
                     Func f args -> if length (fst definition) > 0 
                                    then weval (funcall (snd definition)
-                                          (zip (fst definition) args)) vars
+                                               (zip (fst definition) args)) vars
                                    else Exception "Variable called as function"
                                    where definition = func_binding f args vars
                     If cond x y -> case (weval cond vars) of
@@ -49,20 +49,34 @@ weval exp vars = case exp of
                                             Val (List l) -> Val (List (forloop id l y))
                                             Val v -> Val (List (forloop id [Val v] y))) vars
                     Output x y -> weval y vars
-                 where var_binding x [] = ([], Undefined ("Variable " ++ x))
-                       var_binding x (h:t) = if fst h == x 
+                 where var_binding :: Id -> [Binding] -> Call
+                       var_binding x [] = ([], Undefined ("Variable " ++ (show x)))
+                       var_binding x (h:t) = if (show $ fst h) == (show x)
                                              then snd h
                                              else var_binding x t
-                       func_binding x args [] = ([], Undefined ("Function " ++ x))
-                       func_binding x args (h:t) = if (fst h == x) &&
-                                                      (length args == length params)
+                       func_binding :: Id -> [Expr] -> [Binding] -> Call
+                       func_binding x args [] = ([], Undefined ("Function " ++ (show x)))
+                       func_binding x args (h:t) = if (show id) == (show x) &&
+                                                      length args == length params &&
+                                                      pattern_match params args
                                                    then binding
                                                    else func_binding x args t
                                                    where (id, params, expr) =
                                                            (fst h, fst binding, snd binding)
                                                          binding = snd h
+                       pattern_match [] [] = True
+                       pattern_match (a:b) (c:d) = case a of
+                                                     Name n -> pattern_match b d
+                                                     Pattern v -> if (weval c vars) == Result v 
+                                                                  then pattern_match b d
+                                                                  else False
                        funcall f [] = f
-                       funcall f (h:t) = Def (fst h) (snd h) (funcall f t)
+                       funcall f (h:t) = case fst h of
+                                            Name _ -> Def (fst h) (eager_eval (snd h)) (funcall f t)
+                                            Pattern _ -> funcall f t
+                       eager_eval x = case (weval (x) vars) of
+                                        Result r -> Val r
+                                        Exception s -> Undefined s
                        forloop :: Id -> [Expr] -> Expr -> [Expr]
                        forloop id [] y = []
                        forloop id (h:t) y = [Def id h y] ++ (forloop id t y)

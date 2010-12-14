@@ -67,7 +67,16 @@ assignStmt =
      reservedOp "="
      w <- whiteSpace
      expr1 <- expression
-     return $ Def var expr1 Placeholder
+     return $ Def (Name var) expr1 Placeholder
+
+eagerStmt :: Parser Expr
+eagerStmt =
+  do var <- identifier
+     w <- whiteSpace
+     reservedOp ":="
+     w <- whiteSpace
+     expr1 <- expression
+     return $ EagerDef (Name var) expr1 Placeholder     
      
 printStmt :: Parser Expr
 printStmt =
@@ -78,39 +87,63 @@ printStmt =
 exprList :: Parser [Expr]
 exprList = sepBy expression (oneOf ",")
 
-idList :: Parser [Id]
-idList = id <- sepBy (oneOf identifier value) (oneOf ",")
-         return $ Name id
+identifierOrValue :: Parser Id
+identifierOrValue = 
+    do id <- identifier
+       return $ Name id 
+    <|> 
+    do val <- value
+       return $ Pattern val
 
-strStmt :: Parser Expr
-strStmt = 
+idList :: Parser [Id]
+idList = do id <- sepBy identifierOrValue (oneOf ",")
+            return $ id
+
+strValue :: Parser Value
+strValue = 
   do reservedOp "\""
      chars <- many (noneOf "\"")
      reservedOp "\""
-     return $ Val (Str chars)
+     return $ Str chars
   <|> do reservedOp "'"
          chars <- many (noneOf "'")
          reservedOp "'"
-         return $ Val (Str chars)
+         return $ Str chars
+strStmt :: Parser Expr
+strStmt =
+  do str <- strValue
+     return $ Val str
      
-intStmt :: Parser Expr
-intStmt =
+intValue :: Parser Value
+intValue =
   do value <- integer
      whitespace <- whiteSpace
-     return $ Val (Number (realToFrac value))
+     return $ Number (realToFrac value)
+intStmt :: Parser Expr
+intStmt =
+  do value <- intValue
+     return $ Val value
      
-floatStmt :: Parser Expr
-floatStmt =
+floatValue :: Parser Value
+floatValue =
   do value <- float
      whitespace <- whiteSpace
-     return $ Val (Number value)
+     return $ Number value
+floatStmt :: Parser Expr
+floatStmt =
+  do value <- floatValue
+     return $ Val value
 
-listStmt :: Parser Expr
-listStmt =
+listValue :: Parser Value
+listValue =
   do reservedOp "["
      exprs <- exprList
      reservedOp "]"
-     return $ Val (List exprs)
+     return $ List exprs
+listStmt :: Parser Expr
+listStmt =
+  do list <- listValue
+     return $ Val list
      
 forStmt :: Parser Expr
 forStmt =
@@ -119,7 +152,7 @@ forStmt =
      reservedOp "in"
      list <- expression
      expr <- expression
-     return $ For iterator list expr
+     return $ For (Name iterator) list expr
      
 defunStmt :: Parser Expr
 defunStmt =
@@ -127,13 +160,18 @@ defunStmt =
      params <- parens idList
      reservedOp "="
      expr <- expression
-     return $ Defun var params expr Placeholder
+     return $ Defun (Name var) params expr Placeholder
      
 funcallStmt :: Parser Expr
 funcallStmt =
   do var <- identifier
      params <- parens exprList
-     return $ Func var params
+     return $ Func (Name var) params
+     
+varcallStmt :: Parser Expr
+varcallStmt =
+  do var <- identifier
+     return $ Var (Name var)
  
 skipStmt :: Parser Expr
 skipStmt = reserved "skip" >> return Skip
@@ -165,7 +203,8 @@ term :: Parser Expr
 term =   try syntax
      <|> parens expression
      
-value = try listStmt
+value = try listValue <|> try strValue <|> try floatValue <|> try intValue
+valueStmt = try listStmt
       <|> try strStmt
       <|> try floatStmt
       <|> try intStmt
@@ -175,14 +214,15 @@ syntax =  try (reserved "true" >> return (Val (Bit True)))
       <|> try (reserved "false" >> return (Val (Bit False)))
       <|> try (reserved "null" >> return (Val Null))
       <|> try defunStmt
+      <|> try eagerStmt
       <|> try assignStmt
       <|> try ifStmt
-      <|> try value
+      <|> try valueStmt
       <|> try skipStmt
       <|> try printStmt
       <|> try forStmt
       <|> try funcallStmt
-      <|> liftM Var identifier
+      <|> try varcallStmt
 
 read s = case (parse parser "" s) of
             Right r -> r

@@ -4,11 +4,12 @@ import Types
 
 stdlib :: [Binding]
 stdlib = [
-          ("True",      ([], Val (Bit True))                    ),
-          ("False",     ([], Val (Bit False))                   ),
-          ("Null",      ([], Val Null)                          ),
-          ("null",      ([], Val Null)                          ),
-          ("pi",        ([], Val (Number 3.141592654))          ),
+          (Name "True",      ([], Val (Bit True))                    ),
+          (Name "False",     ([], Val (Bit False))                   ),
+          (Name "Null",      ([], Val Null)                          ),
+          (Name "null",      ([], Val Null)                          ),
+          (Name "pi",        ([], Val $ Number 3.141592654)          ),
           --("fact",      ([Val (Number 1)], Val (Number 1))      ),
-          ("fact",      (["n"], Prod (Var "n") (Func "fact" [Sub (Var "n") (Val (Number 1.0))])) )
+          (Name "fact",      ([Name "n"], Prod (Var $ Name "n") 
+                                               (Func (Name "fact") [Sub (Var $ Name "n") (Val $ Number 1.0)])) )
           ]
