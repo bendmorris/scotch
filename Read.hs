@@ -14,19 +14,11 @@ languageDef =
              Token.commentLine     = "#",
              Token.identStart      = letter,
              Token.identLetter     = alphaNum,
-             Token.reservedNames   = [
-                                      "if",
-                                      "then",
-                                      "else",
-                                      "for",
-                                      "in",
-                                      "skip",
-                                      "true",
-                                      "false",
-                                      "and",
-                                      "or",
-                                      "not",
-                                      "print"
+             Token.reservedNames   = ["if", "then", "else",
+                                      "for", "in",
+                                      "print", "skip",
+                                      "true", "false",
+                                      "and", "or", "not"
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
                                       "<", ">", "and", "or", "not"
@@ -48,7 +40,67 @@ semi       = Token.semi       lexer -- parses a semicolon
 whiteSpace = Token.whiteSpace lexer -- parses whitespace
 
 parser :: Parser Expr
-parser = whiteSpace >> statement
+parser = whiteSpace >> expression
+
+-- expression parsers
+
+expression :: Parser Expr
+expression = try operation <|> term
+           
+operation = buildExpressionParser operators (try term <|> parens term)
+
+term :: Parser Expr
+term = try syntax <|>
+       parens expression
+     
+value = try listValue <|> try strValue <|> try floatValue <|> try intValue
+valueStmt = try listStmt <|>
+            try strStmt <|>
+            try floatStmt <|>
+            try intStmt <|>
+     
+syntax :: Parser Expr
+syntax = try (reserved "true" >> return (Val (Bit True))) <|>
+         try (reserved "false" >> return (Val (Bit False))) <|>
+         try (reserved "null" >> return (Val Null)) <|>
+         try defunStmt <|>
+         try eagerStmt <|>
+         try assignStmt <|>
+         try ifStmt <|>
+         try skipStmt <|>
+         try printStmt <|>
+         try forStmt <|>
+         try valueStmt <|>
+         try funcallStmt <|>
+         try varcallStmt <|>
+
+-- syntax parsers
+
+defunStmt :: Parser Expr
+defunStmt =
+  do var <- identifier
+     params <- parens idList
+     reservedOp "="
+     expr <- expression
+     return $ Defun (Name var) params expr Placeholder
+
+eagerStmt :: Parser Expr
+eagerStmt =
+  do var <- identifier
+     w <- whiteSpace
+     reservedOp ":="
+     w <- whiteSpace
+     expr1 <- expression
+     return $ EagerDef (Name var) expr1 Placeholder
+     
+assignStmt :: Parser Expr
+assignStmt =
+  do var <- identifier
+     w <- whiteSpace
+     reservedOp "="
+     w <- whiteSpace
+     expr1 <- expression
+     return $ Def (Name var) expr1 Placeholder
            
 ifStmt :: Parser Expr
 ifStmt =
@@ -59,30 +111,26 @@ ifStmt =
      reserved "else"
      stmt2 <- expression
      return $ If cond stmt1 Placeholder
- 
-assignStmt :: Parser Expr
-assignStmt =
-  do var <- identifier
-     w <- whiteSpace
-     reservedOp "="
-     w <- whiteSpace
-     expr1 <- expression
-     return $ Def (Name var) expr1 Placeholder
-
-eagerStmt :: Parser Expr
-eagerStmt =
-  do var <- identifier
-     w <- whiteSpace
-     reservedOp ":="
-     w <- whiteSpace
-     expr1 <- expression
-     return $ EagerDef (Name var) expr1 Placeholder     
      
+skipStmt :: Parser Expr
+skipStmt = reserved "skip" >> return Skip
+
 printStmt :: Parser Expr
 printStmt =
   do reservedOp "print"
      expr <- expression
      return $ Output (expr) Placeholder
+     
+forStmt :: Parser Expr
+forStmt =
+  do reservedOp "for"
+     iterator <- identifier
+     reservedOp "in"
+     list <- expression
+     expr <- expression
+     return $ For (Name iterator) list expr
+
+-- value parsers
 
 exprList :: Parser [Expr]
 exprList = sepBy expression (oneOf ",")
@@ -145,22 +193,6 @@ listStmt =
   do list <- listValue
      return $ Val list
      
-forStmt :: Parser Expr
-forStmt =
-  do reservedOp "for"
-     iterator <- identifier
-     reservedOp "in"
-     list <- expression
-     expr <- expression
-     return $ For (Name iterator) list expr
-     
-defunStmt :: Parser Expr
-defunStmt =
-  do var <- identifier
-     params <- parens idList
-     reservedOp "="
-     expr <- expression
-     return $ Defun (Name var) params expr Placeholder
      
 funcallStmt :: Parser Expr
 funcallStmt =
@@ -172,9 +204,8 @@ varcallStmt :: Parser Expr
 varcallStmt =
   do var <- identifier
      return $ Var (Name var)
- 
-skipStmt :: Parser Expr
-skipStmt = reserved "skip" >> return Skip
+
+-- operator table
 
 operators :: [[ Operator Char st Expr ]]
 operators = [[Infix  (reservedOp "^"   >> return (Exp             )) AssocLeft],
@@ -190,39 +221,6 @@ operators = [[Infix  (reservedOp "^"   >> return (Exp             )) AssocLeft],
               Infix  (reservedOp "&"   >> return (And             )) AssocLeft,
               Infix  (reservedOp "|"   >> return (Or              )) AssocLeft ]
              ]
-             
-statement :: Parser Expr
-statement =  expression
-
-expression :: Parser Expr
-expression = try operation <|> term
-           
-operation = buildExpressionParser operators (try term <|> parens term)
-
-term :: Parser Expr
-term =   try syntax
-     <|> parens expression
-     
-value = try listValue <|> try strValue <|> try floatValue <|> try intValue
-valueStmt = try listStmt
-      <|> try strStmt
-      <|> try floatStmt
-      <|> try intStmt
-     
-syntax :: Parser Expr
-syntax =  try (reserved "true" >> return (Val (Bit True)))
-      <|> try (reserved "false" >> return (Val (Bit False)))
-      <|> try (reserved "null" >> return (Val Null))
-      <|> try defunStmt
-      <|> try eagerStmt
-      <|> try assignStmt
-      <|> try ifStmt
-      <|> try valueStmt
-      <|> try skipStmt
-      <|> try printStmt
-      <|> try forStmt
-      <|> try funcallStmt
-      <|> try varcallStmt
 
 read s = case (parse parser "" s) of
             Right r -> r
