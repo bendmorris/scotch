@@ -27,6 +27,10 @@ loop verbose bindings =
                                     else return ()
                          let newBindings = case parsed of
                                              Def id x _ -> [(id, ([], x))]
+                                             EagerDef id x _ -> [(id, ([], (case eval x bindings of
+                                                                        Result r -> Val r
+                                                                        Exception s -> Undefined s
+                                                                       )))]
                                              Defun id params x _ -> [(id, (params, x))]
                                              otherwise -> []
                          outputStrLn (show result)
