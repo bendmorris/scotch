@@ -92,9 +92,16 @@ wexecute verbose (h:t) bindings line =
                                  val <- wexecute verbose t (new ++ bindings') (line+1)
                                  return val
 
+replace :: Eq a => [a] -> [a] -> [a] -> [a]
+replace [] _ _ = []
+replace s find repl =
+    if take (length find) s == find
+        then repl ++ (replace (drop (length find) s) find repl)
+        else [head s] ++ (replace (tail s) find repl)
+
 execute :: Bool -> String -> [Binding] -> IO [ScopedBinding]
 execute verbose file bindings = do input <- readFile file
                                    wexecute verbose 
-                                            (split '\n' input) 
+                                            (split '\n' (replace input "\\\n" "") ) 
                                             ([(0, binding) | binding <- bindings]) 
                                             1

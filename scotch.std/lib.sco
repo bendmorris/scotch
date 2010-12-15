@@ -40,7 +40,9 @@ rstrip(a, s) = reverse(lstrip(reverse(a), s))
 strip(h:t) = strip(h:t, " ")
 strip(h:t, s) = lstrip(rstrip(h:t, s), s)
 
-split(h:t, s) = (if h == s then "" + rest else [h + head(rest)] + tail(rest)) where rest := split(t, s)
+split(h:t, s) = (if h == s then "" + rest \
+                           else [h + head(rest)] + tail(rest)) \
+                           where rest := split(t, s)
 split([], s) = []
 
 only(h:t, s) = (if contains(s, h) then h else "") + only(t, s)
