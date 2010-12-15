@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language id="scotch" _name="Scotch" version="2.0" _section="Sources"
+        mimetypes="text/x-scotch;text/x-scotch" globs="*.sco">
+    <styles>
+      <style id="string" _name="String" map-to="def:string"/>
+      <style id="escaped-character" _name="Escaped Character" map-to="def:special-char"/>
+      <style id="preprocessor" _name="Preprocessor" map-to="def:preprocessor"/>
+      <style id="included-file" _name="Included File" map-to="def:string"/>
+      <style id="char" _name="Character" map-to="def:character"/>
+      <style id="keyword" _name="Keyword" map-to="def:keyword"/>
+      <style id="type" _name="Data Type" map-to="def:type"/>
+    </styles>
+    <definitions>
+        <context id="scotch">
+            <include>
+
+                <context id="comment" style-ref="comment">
+                    <start>#</start>
+                    <end>\n</end>
+                </context>
+
+                <context id="string" end-at-line-end="true"
+                        style-ref="string">
+                    <start>"</start>
+                    <end>"</end>
+                    <include>
+                        <context id="escaped-character" style-ref="escaped-character">
+                            <match>\\.</match>
+                        </context>
+                    </include>
+                </context>
+                
+                <context id="singlequotedstring" end-at-line-end="true"
+                        style-ref="string">
+                    <start>'</start>
+                    <end>'</end>
+                    <include>
+                        <context id="escaped-character" style-ref="escaped-character">
+                            <match>\\.</match>
+                        </context>
+                    </include>
+                </context>                
+
+                <context id="comment-multiline"
+                            style-ref="comment">
+                    <start>#-</start>
+                    <end>-#</end>
+                    <include>
+                        <context ref="def:in-comment"/>
+                    </include>
+                </context>
+
+                <context id="char" end-at-line-end="true" style-ref="char">
+                    <start>'</start>
+                    <end>'</end>
+                    <include>
+                        <context ref="escaped-character"/>
+                    </include>
+                </context>
+
+                <context ref="def:decimal"/>
+                <context ref="def:float"/>
+
+                <context id="keywords" style-ref="keyword">
+                    <keyword>if</keyword>
+                    <keyword>else</keyword>
+                    <keyword>for</keyword>
+                    <keyword>in</keyword>
+                    <keyword>skip</keyword>
+                    <keyword>range</keyword>
+                    <keyword>print</keyword>
+                    <keyword>and</keyword>
+                    <keyword>or</keyword>
+                    <keyword>not</keyword>
+                </context>
+
+                <context id="types" style-ref="type">
+                    <keyword>true</keyword>
+                    <keyword>false</keyword>
+                    <keyword>null</keyword>
+                </context>
+
+                <context id="preprocessor"
+                            style-ref="preprocessor">
+                    <keyword>import</keyword>
+                </context>
+
+            </include>
+        </context>
+    </definitions>
+</language>
+
