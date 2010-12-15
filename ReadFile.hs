@@ -2,6 +2,7 @@ module ReadFile where
 
 import Data.List
 import System.Directory
+import System.Environment.Executable
 import Text.ParserCombinators.Parsec
 import Read
 import Types
@@ -70,7 +71,12 @@ wexecute verbose (h:t) bindings line =
             importFileName [] = ".sco"
             importFileName (h:t) = "/" ++ h ++ (importFileName t)            
             importFile s = do currDir <- getCurrentDirectory
-                              val <- execute verbose (currDir ++ (importFileName s)) []
+                              full_path <- splitExecutablePath
+                              let exepath = (fst full_path)
+                              let path = case (s !! 0) of
+                                           "std" -> exepath ++ (importFileName s)
+                                           otherwise -> currDir ++ importFileName s
+                              val <- execute verbose (path) []
                               let newval = [(scope, snd binding) | binding <- val]
                               return newval
             
