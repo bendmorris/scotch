@@ -13,7 +13,7 @@ languageDef =
              Token.commentEnd      = "-#",
              Token.commentLine     = "#",
              Token.identStart      = letter,
-             Token.identLetter     = alphaNum <|> char '_',
+             Token.identLetter     = alphaNum <|> oneOf "_!'+-",
              Token.reservedNames   = ["if", "then", "else",
                                       "for", "in",
                                       "print", "skip",
