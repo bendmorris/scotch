@@ -54,9 +54,6 @@ weval exp vars = case exp of
                                             Result (List l) -> Val (List (forloop id l y))
                                             Result v -> Val (List (forloop id [Val v] y))
                                             otherwise -> Undefined (show x)) vars
-                    Range v -> case weval v vars of
-                                 Result (NumInt r) -> weval (Val (List [Val (NumInt i) | i <- [1..r]])) vars
-                                 otherwise -> Exception "Bad range"
                     Output x y -> weval y vars
                  where var_binding :: Id -> [Binding] -> Call
                        var_binding x [] = ([], Undefined ("Variable " ++ (show x)))

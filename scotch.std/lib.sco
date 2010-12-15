@@ -3,6 +3,10 @@
 len(h:t) = 1 + len(t)
 len([]) = 0
 
+range(start, n, step) = start + if start + step < n then range(start + step, n, step) else []
+range(n) = range(n-1) + n
+range(0) = []
+
 head(h:t) = h
 tail(h:t) = t
 reverse(h:t) = reverse(t) + h
