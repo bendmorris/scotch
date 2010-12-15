@@ -14,6 +14,8 @@ import ReadFile
 version = "0.1"
 vFlag [] = False
 vFlag (h:t) = if h == "-v" then True else vFlag t
+iFlag [] = False
+iFlag (h:t) = if h == "-i" then True else iFlag t
 
 unscope :: [ScopedBinding] -> [Binding]
 unscope [] = []
@@ -25,6 +27,7 @@ left (h:t) n = h : (left t (n - 1))
 
 main = do args <- getArgs
           let verbose = vFlag args
+          let interpret = iFlag args
           full_path <- splitExecutablePath
           let path = (fst full_path) ++ "scotch.std/lib.sco"
           exists <- doesFileExist path
@@ -34,8 +37,9 @@ main = do args <- getArgs
           let unscoped = unscope bindings
           if verbose then putStrLn "-v Verbose mode on" else return ()
           if (length args) > 0 && isSuffixOf ".sco" (args !! 0) 
-            then do execute verbose (args !! 0) unscoped
-                    return ()
+            then do newbindings <- execute verbose (args !! 0) unscoped
+                    if interpret then runInputT defaultSettings (loop verbose (unscope newbindings))
+                                 else return ()
             else do putStrLn ("Scotch interpreter, version " ++ version)                    
                     runInputT defaultSettings (loop verbose unscoped)
 loop :: Bool -> [Binding] -> InputT IO ()
