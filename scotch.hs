@@ -1,6 +1,8 @@
 module Main where
 
 import System
+import System.Environment.Executable
+import System.Directory
 import Data.List
 import Types
 import Read
@@ -17,10 +19,19 @@ unscope :: [ScopedBinding] -> [Binding]
 unscope [] = []
 unscope (h:t) = (snd h) : unscope t
 
+left [] 0 = []
+left (h:t) 0 = []
+left (h:t) n = h : (left t (n - 1))
+
 main = do args <- getArgs
           let verbose = vFlag args
-          bindings <- execute verbose "std/lib.sco" []
-          let unscoped = unscope bindings          
+          full_path <- splitExecutablePath
+          let path = (fst full_path) ++ "std/lib.sco"
+          exists <- doesFileExist path
+          bindings <- case exists of 
+                        True -> execute verbose path []
+                        False -> do return []
+          let unscoped = unscope bindings
           if verbose then putStrLn "-v Verbose mode on" else return ()
           if (length args) > 0 && isSuffixOf ".sco" (args !! 0) 
             then do execute verbose (args !! 0) unscoped
