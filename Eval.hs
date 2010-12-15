@@ -76,9 +76,13 @@ weval exp vars = case exp of
                                                                     Result (List l) -> pattern_match b d
                                                                     Result (Str l) -> pattern_match b d
                                                                     otherwise -> False
-                                                     Pattern v -> if (weval c vars) == Result v 
+                                                     Pattern v -> if result == Result v 
                                                                   then pattern_match b d
-                                                                  else False
+                                                                  else case (result, v) of 
+                                                                         (Result (List []), Str "") -> pattern_match b d
+                                                                         (Result (Str ""), List []) -> pattern_match b d
+                                                                         otherwise -> False
+                                                                  where result = weval c vars
                        funcall f [] = f
                        funcall f (h:t) = case fst h of
                                             Name _ -> Def (fst h) (eager_eval (snd h)) (funcall f t)
