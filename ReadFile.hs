@@ -60,12 +60,12 @@ wexecute verbose (h:t) bindings line =
             result = eval parsed peeled
             newBindings :: IO ([ScopedBinding])
             newBindings = case parsed of
-                             Def id x _ -> do return [(scope, (id, ([], x)))]
-                             EagerDef id x _ -> do return [(scope, (id, ([], (case eval x peeled of
-                                                                                Result r -> Val r
-                                                                                Exception s -> Undefined s
-                                                                              ))))]
-                             Defun id params x _ -> do return [(scope, (id, (params, x)))]
+                             Def id x Placeholder -> do return [(scope, (id, ([], x)))]
+                             EagerDef id x Placeholder -> do return [(scope, (id, ([], (case eval x peeled of
+                                                                                          Result r -> Val r
+                                                                                          Exception s -> Undefined s
+                                                                                        ))))]
+                             Defun id params x Placeholder -> do return [(scope, (id, (params, x)))]
                              Import s -> importFile s
                              otherwise -> do return []
             importFileName [] = ".sco"
