@@ -20,7 +20,7 @@ prefix([], c) = false
 prefix(a, []) = true
 suffix(a, c) = prefix(reverse(a), reverse(c))
 
-find(h:t, s) = if h == s then true else find(t, s)
+find(h:t, s) = if prefix(h:t, s) then true else find(t, s)
 find([], s) = false
 
 count(h:t, s) = (if prefix(h:t, s) then 1 else 0) + count(t, s)
@@ -32,6 +32,9 @@ rstrip(h:t) = rstrip(h:t, " ")
 rstrip(a, s) = reverse(lstrip(reverse(a), s))
 strip(h:t) = strip(h:t, " ")
 strip(h:t, s) = lstrip(rstrip(h:t, s), s)
+
+only(h:t, s) = (if find(s, h) then h else "") + only(t, s)
+only([], s) = []
 
 sum(h:t) = h + sum(t)
 sum([]) = 0
@@ -46,17 +49,17 @@ str([]) = ""
 
 int(h:t, n) = int(h) * (10 ^ n) + int(t, n-1)
 int([], n) = 0
-int(h:t) = int(strip(h:t), len(strip(h:t)) - 1)
-int("0") = 0
-int("1") = 1
-int("2") = 2
-int("3") = 3
-int("4") = 4
-int("5") = 5
-int("6") = 6
-int("7") = 7
-int("8") = 8
-int("9") = 9
+int(h:t) = int(only(h:t, "0123456789"), len(only(h:t, "0123456789")) - 1)
+int('0') = 0
+int('1') = 1
+int('2') = 2
+int('3') = 3
+int('4') = 4
+int('5') = 5
+int('6') = 6
+int('7') = 7
+int('8') = 8
+int('9') = 9
 int([]) = 0
 
 left(h:t, n) = h + left(t, n-1)
