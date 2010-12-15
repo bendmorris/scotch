@@ -26,6 +26,10 @@ vadd (Str a) (Str b) = Result (Str (a ++ b))
 vadd (Str a) (NumInt b) = Result (Str (a ++ (show b)))
 vadd (NumInt a) (Str b) = Result (Str ((show a) ++ b))
 vadd (List a) (List b) = Result (List (a ++ b))
+vadd (Str a) (List []) = Result (Str a)
+vadd (List []) (Str b) = Result (Str b)
+vadd (List a) (v) = Result (List (a ++ [Val v]))
+vadd (v) (List b) = Result (List ([Val v] ++ b))
 vadd a b = type_mismatch "+" a b
 -- subtraction
 vsub (NumInt a) (NumInt b) = Result (NumInt (a - b))
