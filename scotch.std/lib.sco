@@ -3,7 +3,9 @@
 len(h:t) = 1 + len(t)
 len([]) = 0
 
-range(start, n, step) = start + if start + step > n then [] else range(start + step, n, step)
+range(start, n, step) = start + \
+                        if start + step > n then [] \
+                                            else range(start + step, n, step)
 range(start, n) = range(start, n, 1)
 range(n) = range(n-1) + n
 range(0) = []
