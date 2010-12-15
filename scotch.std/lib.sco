@@ -45,6 +45,10 @@ split(h:t, s) = (if h == s then "" + rest \
                            where rest := split(t, s)
 split([], s) = []
 
+replace(h:t, s, r) = if prefix(h:t, s) then r + replace(right(h:t, len(h:t) - len(s)), s, r) \
+                                       else h + replace(t, s, r)
+replace([], s, r) = []
+
 only(h:t, s) = (if contains(s, h) then h else "") + only(t, s)
 only([], s) = []
 
