@@ -26,3 +26,10 @@ rstrip(h:t) = rstrip(h:t, " ")
 rstrip(a, s) = lstrip(reverse(a), s)
 strip(h:t) = strip(h:t, " ")
 strip(h:t, s) = lstrip(rstrip(h:t, s), s)
+
+sum(h:t) = h + sum(t)
+sum([]) = 0
+prod(h:t) = h * prod(t)
+prod([]) = 1
+mean(h:t) = sum(h:t) / len(h:t)
+mean([]) = 0
