@@ -18,7 +18,8 @@ languageDef =
                                       "for", "in",
                                       "print", "skip",
                                       "true", "false",
-                                      "and", "or", "not"
+                                      "and", "or", "not",
+                                      "where"
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
                                       "<", ">", "and", "or", "not", ":"
@@ -75,7 +76,8 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try valueStmt <|>
          try funcallStmt <|>
          try splitExpr <|>
-         try varcallStmt
+         try varcallStmt <|>
+         try whereStmt
 
 -- syntax parsers
 
@@ -88,6 +90,17 @@ importStmt =
   do reserved "import"
      mod <- moduleName
      return $ Import mod
+     
+whereStmt :: Parser Expr
+whereStmt =
+  do wexpr <- parens expression
+     reserved "where"
+     assignment <- try defunStmt <|> try eagerStmt <|> try assignStmt
+     let result = case assignment of
+                    Defun a b c Placeholder -> Defun a b c wexpr
+                    EagerDef a b Placeholder -> EagerDef a b wexpr
+                    Def a b Placeholder -> Def a b wexpr
+     return $ result
 
 defunStmt :: Parser Expr
 defunStmt =

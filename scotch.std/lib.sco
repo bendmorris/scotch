@@ -1,4 +1,4 @@
-# these functions will be imported automatically
+# these functions will be imported by the Scotch interpreter automatically
 
 len(h:t) = 1 + len(t)
 len([]) = 0
@@ -9,7 +9,9 @@ range(n) = range(n-1) + n
 range(0) = []
 
 head(h:t) = h
+head([]) = []
 tail(h:t) = t
+tail([]) = []
 reverse(h:t) = reverse(t) + h
 reverse([]) = []
 
@@ -25,20 +27,23 @@ prefix([], c) = false
 prefix(a, []) = true
 suffix(a, c) = prefix(reverse(a), reverse(c))
 
-find(h:t, s) = if prefix(h:t, s) then true else find(t, s)
-find([], s) = false
+contains(h:t, s) = if prefix(h:t, s) then true else contains(t, s)
+contains([], s) = false
 
 count(h:t, s) = (if prefix(h:t, s) then 1 else 0) + count(t, s)
 count([], s) = 0
 
 lstrip(h:t) = lstrip(h:t, " ")
-lstrip(h:t, s) = if find(s, h) then lstrip(t, s) else h + t
+lstrip(h:t, s) = if contains(s, h) then lstrip(t, s) else h + t
 rstrip(h:t) = rstrip(h:t, " ")
 rstrip(a, s) = reverse(lstrip(reverse(a), s))
 strip(h:t) = strip(h:t, " ")
 strip(h:t, s) = lstrip(rstrip(h:t, s), s)
 
-only(h:t, s) = (if find(s, h) then h else "") + only(t, s)
+split(h:t, s) = (if h == s then "" + split(t, s) else [h + head(rest)] + tail(rest)) where rest := split(t, s)
+split([], s) = []
+
+only(h:t, s) = (if contains(s, h) then h else "") + only(t, s)
 only([], s) = []
 
 sum(h:t) = h + sum(t)
