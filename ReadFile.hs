@@ -7,8 +7,6 @@ import Read
 import Types
 import Eval
 
-type ScopedBinding = (Int, Binding)
-
 split :: Char -> String -> [String]
 split = unfoldr . split'
 

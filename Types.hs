@@ -10,6 +10,8 @@ instance Show(Id) where
 type Call = ([Id], Expr)
 -- binds an ID to a Call
 type Binding = (Id, Call)
+-- binding with associated scope (amount of whitespace)
+type ScopedBinding = (Int, Binding)
 
 -- a value with its corresponding type
 data Value = NumInt Integer
