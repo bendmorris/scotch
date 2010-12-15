@@ -18,9 +18,9 @@ unscope [] = []
 unscope (h:t) = (snd h) : unscope t
 
 main = do args <- getArgs
-          bindings <- execute False "std/lib.sco" []
-          let unscoped = unscope bindings
           let verbose = vFlag args
+          bindings <- execute verbose "std/lib.sco" []
+          let unscoped = unscope bindings          
           if verbose then putStrLn "-v Verbose mode on" else return ()
           if (length args) > 0 && isSuffixOf ".sco" (args !! 0) 
             then do execute verbose (args !! 0) unscoped

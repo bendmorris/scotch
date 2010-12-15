@@ -23,6 +23,10 @@ weval exp vars = case exp of
                     Div x y -> calc (weval x vars) (weval y vars) (vdiv)
                     Exp x y -> calc (weval x vars) (weval y vars) (vexp)
                     Eq x y -> calc (weval x vars) (weval y vars) (veq)
+                    InEq x y -> case calc (weval x vars) (weval y vars) (veq) of
+                                Result (Bit True) -> Result (Bit False)
+                                Result (Bit False) -> Result (Bit True)
+                                otherwise -> otherwise                    
                     Gt x y -> calc (weval x vars) (weval y vars) (vgt)
                     Lt x y -> calc (weval x vars) (weval y vars) (vlt)                    
                     And x y -> calc (weval x vars) (weval y vars) (vand)

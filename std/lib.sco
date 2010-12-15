@@ -23,9 +23,12 @@ suffix(a, c) = prefix(reverse(a), reverse(c))
 lstrip(h:t) = lstrip(h:t, " ")
 lstrip(h:t, s) = if h == s then lstrip(t, s) else h + t
 rstrip(h:t) = rstrip(h:t, " ")
-rstrip(a, s) = lstrip(reverse(a), s)
+rstrip(a, s) = reverse(lstrip(reverse(a), s))
 strip(h:t) = strip(h:t, " ")
 strip(h:t, s) = lstrip(rstrip(h:t, s), s)
+
+find(h:t, s) = if h == s then true else find(t, s)
+find([], s) = false
 
 sum(h:t) = h + sum(t)
 sum([]) = 0

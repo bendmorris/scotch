@@ -49,7 +49,8 @@ data Expr =
           | Neg Expr                        -- negation
           | Div Expr Expr                   -- division
           | Exp Expr Expr                   -- exponent
-          | Eq Expr Expr                    -- equal
+          | Eq Expr Expr                    -- equality
+          | InEq Expr Expr                  -- inequality
           | Gt Expr Expr                    -- greater than
           | Lt Expr Expr                    -- less than
           | And Expr Expr                   -- boolean and
