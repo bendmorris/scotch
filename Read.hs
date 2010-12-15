@@ -119,10 +119,10 @@ ifStmt =
   do reserved "if"
      cond  <- expression
      reserved "then"
-     stmt1 <- expression
+     expr1 <- expression
      reserved "else"
-     stmt2 <- expression
-     return $ If cond stmt1 Placeholder
+     expr2 <- expression
+     return $ If cond expr1 expr2
      
 skipStmt :: Parser Expr
 skipStmt = reserved "skip" >> return Skip
@@ -170,7 +170,7 @@ idPattern =
        
 
 idList :: Parser [Id]
-idList = do id <- sepBy identifierOrValue (oneOf ",")
+idList = do id <- sepBy (whiteSpace >> identifierOrValue) (oneOf ",")
             return $ id
 
 strValue :: Parser Value
