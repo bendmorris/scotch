@@ -16,8 +16,8 @@ any(h:t) = if h then true else any(t)
 any([]) = false
 
 prefix(a:b, c:d) = if a == c then prefix(b, d) else false
-prefix(a, []) = false
-prefix([], c) = true
+prefix([], c) = false
+prefix(a, []) = true
 suffix(a, c) = prefix(reverse(a), reverse(c))
 
 lstrip(h:t) = lstrip(h:t, " ")
