@@ -66,9 +66,7 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try (reserved "false" >> return (Val (Bit False))) <|>
          try (reserved "null" >> return (Val Null)) <|>
          try importStmt <|>
-         try defunStmt <|>
-         try eagerStmt <|>
-         try assignStmt <|>
+         try assignment <|>
          try ifStmt <|>
          try skipStmt <|>
          try printStmt <|>
@@ -90,17 +88,6 @@ importStmt =
   do reserved "import"
      mod <- moduleName
      return $ Import mod
-     
-whereStmt :: Parser Expr
-whereStmt =
-  do wexpr <- parens expression
-     reserved "where"
-     assignment <- try defunStmt <|> try eagerStmt <|> try assignStmt
-     let result = case assignment of
-                    Defun a b c Placeholder -> Defun a b c wexpr
-                    EagerDef a b Placeholder -> EagerDef a b wexpr
-                    Def a b Placeholder -> Def a b wexpr
-     return $ result
 
 defunStmt :: Parser Expr
 defunStmt =
@@ -241,6 +228,23 @@ varcallStmt :: Parser Expr
 varcallStmt =
   do var <- identifier
      return $ Var (Name var)
+
+assignment :: Parser Expr
+assignment = try defunStmt <|> try eagerStmt <|> try assignStmt
+     
+nestwhere [] wexpr = wexpr
+nestwhere (h:t) wexpr = case h of
+                          Defun a b c Placeholder -> Defun a b c (nestwhere t wexpr)
+                          EagerDef a b Placeholder -> EagerDef a b (nestwhere t wexpr)
+                          Def a b Placeholder -> Def a b (nestwhere t wexpr)
+                          otherwise -> nestwhere t wexpr
+
+whereStmt :: Parser Expr
+whereStmt =
+  do wexpr <- parens expression
+     reserved "where"
+     assignment <- sepBy (whiteSpace >> assignment) (oneOf ",")
+     return $ nestwhere assignment wexpr
 
 -- operator table
 
