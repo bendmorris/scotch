@@ -33,10 +33,11 @@ contains([], s) = false
 count(h:t, s) = (if prefix(h:t, s) then 1 else 0) + count(t, s)
 count([], s) = 0
 
-lstrip(h:t) = lstrip(h:t, " ")
 lstrip(h:t, s) = if contains(s, h) then lstrip(t, s) else h + t
-rstrip(h:t) = rstrip(h:t, " ")
+lstrip([], s) = []
+lstrip(h:t) = lstrip(h:t, " ")
 rstrip(a, s) = reverse(lstrip(reverse(a), s))
+rstrip(h:t) = rstrip(h:t, " ")
 strip(h:t) = strip(h:t, " ")
 strip(h:t, s) = lstrip(rstrip(h:t, s), s)
 
