@@ -49,5 +49,7 @@ loop verbose bindings =
                                              Defun id params x _ -> [(id, (params, x))]
                                              otherwise -> []
                          --execute imp bindings
-                         outputStrLn (show result)
+                         case parsed of
+                            Output x y -> outputStrLn (show (eval x bindings))
+                            otherwise -> outputStrLn (show result)
                          loop verbose (newBindings ++ bindings)

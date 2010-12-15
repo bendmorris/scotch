@@ -89,7 +89,7 @@ instance Show(Expr) where
     show (Not x) = se "!" [x]
     show (Def a b c) = "(def " ++ (show a) ++ se' [b, c] ++ ")"
     show (EagerDef a b c) = "(eager def " ++ (show a) ++ se' [b, c] ++ ")"
-    show (Defun a b c d) = "(def " ++ (show a) ++ " " ++ (show b) ++ se' [c, d] ++ ")"
+    show (Defun a b c d) = "(defun " ++ (show a) ++ " " ++ (show b) ++ se' [c, d] ++ ")"
     show (Var v) = show v
     show (Func f p) = "(func " ++ (show f) ++ " " ++ (show p) ++ ")"
     show (If cond x y) = se "if" [cond, x, y]
