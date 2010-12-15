@@ -75,6 +75,7 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try rangeStmt <|>
          try valueStmt <|>
          try funcallStmt <|>
+         try splitExpr <|>
          try varcallStmt
 
 -- syntax parsers
@@ -223,6 +224,12 @@ funcallStmt =
   do var <- identifier
      params <- parens exprList
      return $ Func (Name var) params
+     
+splitExpr =
+  do id1 <- identifier
+     reservedOp ":"
+     id2 <- identifier
+     return $ Add (Var (Name id1)) (Var (Name id2))
      
 varcallStmt :: Parser Expr
 varcallStmt =
