@@ -74,7 +74,7 @@ wexecute verbose (h:t) bindings line =
                               full_path <- splitExecutablePath
                               let exepath = (fst full_path)
                               let path = case (s !! 0) of
-                                           "std" -> exepath ++ (importFileName s)
+                                           "std" -> exepath ++ "scotch." ++ (importFileName s)
                                            otherwise -> currDir ++ importFileName s
                               val <- execute verbose (path) []
                               let newval = [(scope, snd binding) | binding <- val]

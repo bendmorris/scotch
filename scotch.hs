@@ -26,7 +26,7 @@ left (h:t) n = h : (left t (n - 1))
 main = do args <- getArgs
           let verbose = vFlag args
           full_path <- splitExecutablePath
-          let path = (fst full_path) ++ "std/lib.sco"
+          let path = (fst full_path) ++ "scotch.std/lib.sco"
           exists <- doesFileExist path
           bindings <- case exists of 
                         True -> execute verbose path []
