@@ -33,7 +33,6 @@ instance Show (Value) where
 -- a calculation, which may cause an exception if one of its members contains an exception
 data Calculation = Exception String | Result (Value) | Incomplete (Expr) deriving Eq
 instance Show (Calculation) where
-    show (Result (Str s)) = s
     show (Result r) = show r
     show (Exception s) = "Exception: " ++ s
     show (Incomplete e) = show e

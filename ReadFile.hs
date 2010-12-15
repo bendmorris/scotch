@@ -77,9 +77,13 @@ wexecute verbose (h:t) bindings line =
             output x = case (eval x peeled) of
                          Exception e -> do putStrLn ("Exception on line " ++ (show line) ++ ":\n\t" ++ e)
                                            return []
+                         Result (Str s) -> do putStrLn s
+                                              new <- newBindings
+                                              val <- wexecute verbose t (new ++ bindings') (line+1)
+                                              return val
                          s -> do putStrLn (show s)
                                  new <- newBindings
-                                 val <- wexecute verbose t (new ++ bindings') (line+1)     
+                                 val <- wexecute verbose t (new ++ bindings') (line+1)
                                  return val
 
 execute :: Bool -> String -> [Binding] -> IO [ScopedBinding]

@@ -39,3 +39,7 @@ prod(h:t) = h * prod(t)
 prod([]) = 1
 mean(h:t) = sum(h:t) / len(h:t)
 mean([]) = 0
+
+str(n) = "" + n
+str(h:t) = str(h) + str(t)
+str([]) = ""
