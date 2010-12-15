@@ -27,20 +27,21 @@ languageDef =
            
 lexer = Token.makeTokenParser languageDef
 
-identifier = Token.identifier lexer -- parses an identifier
-reserved   = Token.reserved   lexer -- parses a reserved name
-reservedOp = Token.reservedOp lexer -- parses an operator
-parens     = Token.parens     lexer -- parses surrounding parenthesis:
-                                    --   parens p
-                                    -- takes care of the parenthesis and
-                                    -- uses p to parse what's inside them
-integer    = Token.integer    lexer -- parses an integer
-float      = Token.float      lexer -- parses a float
-semi       = Token.semi       lexer -- parses a semicolon
-whiteSpace = Token.whiteSpace lexer -- parses whitespace
+identifier = Token.identifier       lexer -- parses an identifier
+reserved   = Token.reserved         lexer -- parses a reserved name
+reservedOp = Token.reservedOp       lexer -- parses an operator
+parens     = Token.parens           lexer -- parses surrounding parenthesis:
+                                          --   parens p
+                                          -- takes care of the parenthesis and
+                                          -- uses p to parse what's inside them
+integer    = Token.integer          lexer -- parses an integer
+float      = Token.float            lexer -- parses a float
+whiteSpace = Token.whiteSpace       lexer -- parses whitespace
+stringLit  = Token.stringLiteral    lexer -- parses a string
+charLit    = Token.charLiteral      lexer -- parses a character literal
 
 parser :: Parser Expr
-parser = whiteSpace >> expression
+parser = expression
 
 -- expression parsers
 
@@ -84,7 +85,7 @@ moduleName =
 
 importStmt :: Parser Expr
 importStmt =
-  do reservedOp "import"
+  do reserved "import"
      mod <- moduleName
      return $ Import mod
 
@@ -129,15 +130,15 @@ skipStmt = reserved "skip" >> return Skip
 
 printStmt :: Parser Expr
 printStmt =
-  do reservedOp "print"
+  do reserved "print"
      expr <- expression
      return $ Output (expr) Placeholder
      
 forStmt :: Parser Expr
 forStmt =
-  do reservedOp "for"
+  do reserved "for"
      iterator <- identifier
-     reservedOp "in"
+     reserved "in"
      list <- expression
      reservedOp ","
      expr <- expression
@@ -145,7 +146,7 @@ forStmt =
 
 rangeStmt :: Parser Expr
 rangeStmt =
-  do reservedOp "range"
+  do reserved "range"
      expr <- parens expression
      return $ Range expr
 
@@ -175,14 +176,11 @@ idList = do id <- sepBy (whiteSpace >> identifierOrValue) (oneOf ",")
 
 strValue :: Parser Value
 strValue = 
-  do reservedOp "\""
-     chars <- many (noneOf "\"")
-     reservedOp "\""
-     return $ Str chars
-  <|> do reservedOp "'"
-         chars <- many (noneOf "'")
-         reservedOp "'"
-         return $ Str chars
+  try (do chars <- stringLit
+          return $ Str chars) <|>
+  try (do char <- charLit
+          return $ Str [char])
+   
 strStmt :: Parser Expr
 strStmt =
   do str <- strValue
