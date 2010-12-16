@@ -7,7 +7,8 @@ import Data.List
 import Types
 import Read
 import Eval
-import System.Console.Readline
+import System.Console.Haskeline
+import System.Console.Haskeline.IO
 import ReadFile
 
 
@@ -23,6 +24,7 @@ left (h:t) 0 = []
 left (h:t) n = h : (left t (n - 1))
 
 main = do args <- getArgs
+          state <- initializeInput defaultSettings
           let verbose = vFlag args
           let interpret = iFlag args
           -- import std.lib
@@ -36,21 +38,20 @@ main = do args <- getArgs
             -- if a .sco filename is given as the first argument, interpret that file
             then do newbindings <- execute verbose (args !! 0) unscoped
                     -- if the -i flag is set, start the interpreter
-                    if interpret then loop verbose (unscope newbindings)
+                    if interpret then loop verbose (unscope newbindings) state
                                  else return ()
             -- otherwise, start the interpreter
             else do putStrLn ("Scotch interpreter, version " ++ version)                    
-                    loop verbose unscoped
+                    loop verbose unscoped state
 
 -- the interpreter's main REPL loop
-loop :: Bool -> [Binding] -> IO ()
-loop verbose bindings = 
-  do line <- readline ">> "
+loop :: Bool -> [Binding] -> InputState -> IO ()
+loop verbose bindings state = 
+  do line <- queryInput state (getInputLine ">> ")
      case line of
         Nothing -> return ()
         Just "quit" -> return ()
-        Just input -> do addHistory input
-                         -- parse input
+        Just input -> do -- parse input
                          let parsed = Read.read input
                          imp' <- case parsed of
                                    Import s -> importFile verbose 0 s
@@ -86,4 +87,4 @@ loop verbose bindings =
                                            Incomplete i -> return ()
                                            otherwise -> putStrLn (show result)
                          -- continue loop
-                         loop verbose (newBindings ++ (unscope imp) ++ bindings)
+                         loop verbose (newBindings ++ (unscope imp) ++ bindings) state
