@@ -72,20 +72,9 @@ wexecute verbose (h:t) bindings line =
                                                                                          Exception s -> Undefined s
                                                                                        ))))]
                             Defun id params x Placeholder -> do return [(scope, (id, (params, x)))]
-                            Import s -> importFile s
+                            Import s -> importFile verbose scope s
                             otherwise -> do return []
-           -- interpret another file and add its final definitions to the stack
-           importFileName [] = ".sco"
-           importFileName (h:t) = "/" ++ h ++ (importFileName t)            
-           importFile s = do currDir <- getCurrentDirectory
-                             full_path <- splitExecutablePath
-                             let exepath = (fst full_path)
-                             let path = case (s !! 0) of
-                                          "std" -> exepath ++ "scotch." ++ tail (importFileName s)
-                                          otherwise -> currDir ++ importFileName s
-                             val <- execute verbose (path) []
-                             let newval = [(scope, snd binding) | binding <- val]
-                             return newval
+           -- interpret another file and add its final definitions to the stack            
             
            output x = case (eval x unscoped) of
                         Exception e -> do putStrLn ("Exception on line " ++ (show line) ++ ":\n\t" ++ e)
@@ -105,6 +94,18 @@ replace s find repl =
     if take (length find) s == find
         then repl ++ (replace (drop (length find) s) find repl)
         else [head s] ++ (replace (tail s) find repl)
+        
+importFileName [] = ".sco"
+importFileName (h:t) = "/" ++ h ++ (importFileName t)
+importFile verbose scope s = do currDir <- getCurrentDirectory
+                                full_path <- splitExecutablePath
+                                let exepath = (fst full_path)
+                                let path = case (s !! 0) of
+                                             "std" -> exepath ++ "scotch." ++ tail (importFileName s)
+                                             otherwise -> currDir ++ importFileName s
+                                val <- execute verbose (path) []
+                                let newval = [(scope, snd binding) | binding <- val]
+                                return newval
 
 -- interpret the contents of a file
 execute :: Bool -> String -> [Binding] -> IO [ScopedBinding]

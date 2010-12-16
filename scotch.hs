@@ -7,7 +7,7 @@ import Data.List
 import Types
 import Read
 import Eval
-import System.Console.Haskeline
+import System.Console.Readline
 import ReadFile
 
 
@@ -38,27 +38,27 @@ main = do args <- getArgs
             -- if a .sco filename is given as the first argument, interpret that file
             then do newbindings <- execute verbose (args !! 0) unscoped
                     -- if the -i flag is set, start the interpreter
-                    if interpret then runInputT defaultSettings (loop verbose (unscope newbindings))
+                    if interpret then loop verbose (unscope newbindings)
                                  else return ()
             -- otherwise, start the interpreter
             else do putStrLn ("Scotch interpreter, version " ++ version)                    
-                    runInputT defaultSettings (loop verbose unscoped)
+                    loop verbose unscoped
 
 -- the interpreter's main REPL loop
-loop :: Bool -> [Binding] -> InputT IO ()
+loop :: Bool -> [Binding] -> IO ()
 loop verbose bindings = 
-  do line <- getInputLine ">> "
+  do line <- readline ">> "
      case line of
         Nothing -> return ()
         Just "quit" -> return ()
         Just input -> do -- parse input
                          let parsed = Read.read input
-                         let imp = case parsed of
-                                        Import s -> s
-                                        otherwise -> []
+                         imp <- case parsed of
+                                        Import s -> importFile verbose 0 s
+                                        otherwise -> do return []
                          -- evaluate parsed input
                          let result = eval parsed bindings
-                         if verbose then outputStrLn (show parsed)
+                         if verbose then putStrLn (show parsed)
                                     else return ()
                          -- determine whether any definitions were made
                          let newBindings = case parsed of
@@ -71,9 +71,9 @@ loop verbose bindings =
                                              otherwise -> []
                          -- output, if necessary
                          case parsed of
-                            Output x y -> outputStrLn (case (eval x bindings) of
+                            Output x y -> putStrLn (case (eval x bindings) of
                                                          Result (Str s) -> s
                                                          e -> show e)
-                            otherwise -> outputStrLn (show result)
+                            otherwise -> putStrLn (show result)
                          -- continue loop
-                         loop verbose (newBindings ++ bindings)
+                         loop verbose (newBindings ++ (unscope imp) ++ bindings)
