@@ -100,9 +100,11 @@ replace s find repl =
     if take (length find) s == find
         then repl ++ (replace (drop (length find) s) find repl)
         else [head s] ++ (replace (tail s) find repl)
-        
+
+-- returns a qualified file name from a list of identifiers provided by an import statement        
 importFileName [] = ".sco"
 importFileName (h:t) = "/" ++ h ++ (importFileName t)
+-- returns (was the import successful?, list of imported bindings)
 importFile verbose scope s = do currDir <- getCurrentDirectory
                                 full_path <- splitExecutablePath
                                 let exepath = (fst full_path) ++ "scotch.lib"

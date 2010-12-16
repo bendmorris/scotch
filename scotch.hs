@@ -55,10 +55,13 @@ loop verbose bindings =
                                    Import s -> importFile verbose 0 s
                                    otherwise -> do return (False, [(0, (Pattern (Bit False), ([], Val $ Bit False)))])
                          imp <- case imp' of
-                                  (False, []) -> do putStrLn ("Failed to open " ++ show (parsed))
+                                  (False, []) -> do -- the imported module failed to open
+                                                    putStrLn ("Failed to open " ++ show (parsed))
                                                     return []
-                                  (False, f) -> do return []
-                                  (True, b) -> do return b
+                                  (False, f) -> do -- there was no attempted import
+                                                   return []
+                                  (True, b) -> do -- successful module import
+                                                  return b
                          -- evaluate parsed input
                          let result = eval parsed bindings
                          if verbose then putStrLn (show parsed)
