@@ -27,7 +27,10 @@ main = do args <- getArgs
           let interpret = iFlag args
           -- import std.lib
           bindings <- importFile verbose 0 ["std", "lib"]
-          let unscoped = unscope bindings
+          unscoped <- case bindings of
+                        (False, _) -> do putStrLn "Failed to import std.lib."
+                                         return []
+                        (True, b) -> do return $ unscope b
           if verbose then putStrLn "-v Verbose mode on" else return ()
           if (length args) > 0 && isSuffixOf ".sco" (args !! 0) 
             -- if a .sco filename is given as the first argument, interpret that file
@@ -48,9 +51,14 @@ loop verbose bindings =
         Just "quit" -> return ()
         Just input -> do -- parse input
                          let parsed = Read.read input
-                         imp <- case parsed of
-                                        Import s -> importFile verbose 0 s
-                                        otherwise -> do return []
+                         imp' <- case parsed of
+                                   Import s -> importFile verbose 0 s
+                                   otherwise -> do return (False, [(0, (Pattern (Bit False), ([], Val $ Bit False)))])
+                         imp <- case imp' of
+                                  (False, []) -> do putStrLn ("Failed to open " ++ show (parsed))
+                                                    return []
+                                  (False, f) -> do return []
+                                  (True, b) -> do return b
                          -- evaluate parsed input
                          let result = eval parsed bindings
                          if verbose then putStrLn (show parsed)

@@ -72,7 +72,13 @@ wexecute verbose (h:t) bindings line =
                                                                                          Exception s -> Undefined s
                                                                                        ))))]
                             Defun id params x Placeholder -> do return [(scope, (id, (params, x)))]
-                            Import s -> importFile verbose scope s
+                            Import s -> do i <- importFile verbose scope s
+                                           b <- case i of 
+                                                  (False, _) -> do putStrLn ("Failed to import module " ++ show s)
+                                                                   return []
+                                                  (True, i) -> do return i
+                                           return b
+                                           
                             otherwise -> do return []
            -- interpret another file and add its final definitions to the stack            
             
@@ -111,8 +117,11 @@ importFile verbose scope s = do currDir <- getCurrentDirectory
                                 val <- case path of 
                                          "" -> do return []
                                          otherwise -> execute verbose (path) []
+                                let success = case path of
+                                                "" -> False
+                                                otherwise -> True
                                 let newval = [(scope, snd binding) | binding <- val]
-                                return newval
+                                return (success, newval)
 
 -- interpret the contents of a file
 execute :: Bool -> String -> [Binding] -> IO [ScopedBinding]
