@@ -12,6 +12,11 @@ type Call = ([Id], Expr)
 type Binding = (Id, Call)
 -- binding with associated scope (amount of whitespace)
 type ScopedBinding = (Int, Binding)
+-- given a scoped binding, returns an unscoped binding
+unscope :: [ScopedBinding] -> [Binding]
+unscope [] = []
+unscope (h:t) = (snd h) : unscope t
+
 
 -- a value with its corresponding type
 data Value = NumInt Integer
