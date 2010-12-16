@@ -112,7 +112,9 @@ importFile verbose scope s = do currDir <- getCurrentDirectory
                                 exepath_exists <- doesFileExist (exepath ++ importFileName s)
                                 -- search current directory, then executable directory
                                 let path = case (s !! 0) of
-                                             "std" -> exepath ++ (importFileName s)                                             
+                                             "std" -> case exepath_exists of
+                                                        True -> exepath ++ (importFileName s)
+                                                        False -> ""
                                              otherwise -> case (currDir_exists, exepath_exists) of
                                                             (True, _) -> currDir ++ importFileName s
                                                             (False, True) -> exepath ++ importFileName s
