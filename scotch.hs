@@ -49,7 +49,8 @@ loop verbose bindings =
      case line of
         Nothing -> return ()
         Just "quit" -> return ()
-        Just input -> do -- parse input
+        Just input -> do addHistory input
+                         -- parse input
                          let parsed = Read.read input
                          imp' <- case parsed of
                                    Import s -> importFile verbose 0 s
