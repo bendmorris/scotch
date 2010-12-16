@@ -1,5 +1,6 @@
 # pi
 pi = 3.141592654
+e = 2.71828183
 
 # factorial
 fact(n) = n * fact(n-1)
