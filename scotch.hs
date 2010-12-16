@@ -50,7 +50,7 @@ loop verbose bindings state =
   do line <- queryInput state (getInputLine ">> ")
      case line of
         Nothing -> return ()
-        Just "quit" -> return ()
+        Just "quit" -> closeInput state
         Just input -> do -- parse input
                          let parsed = Read.read input
                          imp' <- case parsed of
