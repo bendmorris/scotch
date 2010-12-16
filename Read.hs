@@ -42,7 +42,7 @@ stringLit  = Token.stringLiteral    lexer -- parses a string
 charLit    = Token.charLiteral      lexer -- parses a character literal
 
 parser :: Parser Expr
-parser = expression
+parser = try expression <|> do return Skip
 
 -- expression parsers
 
