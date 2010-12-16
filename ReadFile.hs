@@ -99,14 +99,18 @@ importFileName [] = ".sco"
 importFileName (h:t) = "/" ++ h ++ (importFileName t)
 importFile verbose scope s = do currDir <- getCurrentDirectory
                                 full_path <- splitExecutablePath
-                                let exepath = (fst full_path)
-                                exists <- doesFileExist (currDir ++ importFileName s)
+                                let exepath = (fst full_path) ++ "scotch.lib"
+                                currDir_exists <- doesFileExist (currDir ++ importFileName s)
+                                exepath_exists <- doesFileExist (exepath ++ importFileName s)
                                 let path = case (s !! 0) of
-                                             "std" -> exepath ++ "scotch.lib" ++ (importFileName s)                                             
-                                             otherwise -> case exists of
-                                                            True -> currDir ++ importFileName s
-                                                            False -> exepath ++ "scotch.lib" ++ importFileName s
-                                val <- execute verbose (path) []
+                                             "std" -> exepath ++ (importFileName s)                                             
+                                             otherwise -> case (currDir_exists, exepath_exists) of
+                                                            (True, _) -> currDir ++ importFileName s
+                                                            (False, True) -> exepath ++ importFileName s
+                                                            (False, False) -> ""
+                                val <- case path of 
+                                         "" -> do return []
+                                         otherwise -> execute verbose (path) []
                                 let newval = [(scope, snd binding) | binding <- val]
                                 return newval
 
