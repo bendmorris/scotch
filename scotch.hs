@@ -25,13 +25,8 @@ left (h:t) n = h : (left t (n - 1))
 main = do args <- getArgs
           let verbose = vFlag args
           let interpret = iFlag args
-          full_path <- splitExecutablePath
-          let path = (fst full_path) ++ "scotch.std/lib.sco"
-          exists <- doesFileExist path
           -- import std.lib
-          bindings <- case exists of 
-                        True -> execute verbose path []
-                        False -> do return []
+          bindings <- importFile verbose 0 ["std", "lib"]
           let unscoped = unscope bindings
           if verbose then putStrLn "-v Verbose mode on" else return ()
           if (length args) > 0 && isSuffixOf ".sco" (args !! 0) 

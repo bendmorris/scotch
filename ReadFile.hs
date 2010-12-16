@@ -100,9 +100,12 @@ importFileName (h:t) = "/" ++ h ++ (importFileName t)
 importFile verbose scope s = do currDir <- getCurrentDirectory
                                 full_path <- splitExecutablePath
                                 let exepath = (fst full_path)
+                                exists <- doesFileExist (currDir ++ importFileName s)
                                 let path = case (s !! 0) of
-                                             "std" -> exepath ++ "scotch." ++ tail (importFileName s)
-                                             otherwise -> currDir ++ importFileName s
+                                             "std" -> exepath ++ "scotch.lib" ++ (importFileName s)                                             
+                                             otherwise -> case exists of
+                                                            True -> currDir ++ importFileName s
+                                                            False -> exepath ++ "scotch.lib" ++ importFileName s
                                 val <- execute verbose (path) []
                                 let newval = [(scope, snd binding) | binding <- val]
                                 return newval
