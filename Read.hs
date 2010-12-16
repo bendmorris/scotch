@@ -19,10 +19,11 @@ languageDef =
                                       "print", "skip",
                                       "true", "false",
                                       "and", "or", "not",
-                                      "where", "case"
+                                      "where", "case", "otherwise"
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
-                                      "<", ">", "and", "or", "not", ":"
+                                      "<", ">", "and", "or", "not", ":", "->",
+                                      "<=", ">="
                                      ]
            }
            
@@ -128,6 +129,7 @@ ifStmt =
      
 nestedCase [] = Undefined "No match found for case expression"
 nestedCase (h:t) = case h of
+                     If (Eq (b) (Placeholder)) c _ -> c
                      If a b _ -> If a b (nestedCase t)
      
 caseStmt :: Parser Expr
@@ -135,7 +137,10 @@ caseStmt =
   do reserved "case"
      check <- whiteSpace >> expression
      reserved "of"
-     cases <- sepBy (do cond <- whiteSpace >> expression
+     cases <- sepBy (do cond <- whiteSpace >> (try (do reserved "otherwise"
+                                                       return Placeholder
+                                                       ) <|> 
+                                               try expression)
                         reservedOp "->"
                         expr <- expression
                         return $ If (Eq (check) (cond)) (expr) (Placeholder)
@@ -265,6 +270,9 @@ whereStmt =
 
 -- operator table
 
+ltEq x y = Not (Gt x y)
+gtEq x y = Not (Lt x y)
+
 operators :: [[ Operator Char st Expr ]]
 operators = [[Infix  (reservedOp "^"   >> return (Exp             )) AssocLeft],
              [Infix  (reservedOp "*"   >> return (Prod            )) AssocLeft ,
@@ -272,6 +280,8 @@ operators = [[Infix  (reservedOp "^"   >> return (Exp             )) AssocLeft],
              [Infix  (reservedOp "+"   >> return (Add             )) AssocLeft ,
               Infix  (reservedOp "-"   >> return (Sub             )) AssocLeft],
              [Infix  (reservedOp "=="  >> return (Eq              )) AssocLeft,
+              Infix  (reservedOp "<="  >> return (ltEq            )) AssocLeft,
+              Infix  (reservedOp ">="  >> return (gtEq            )) AssocLeft,
               Infix  (reservedOp "not" >> return (InEq            )) AssocLeft,
               Infix  (reservedOp ">"   >> return (Gt              )) AssocLeft,
               Infix  (reservedOp "<"   >> return (Lt              )) AssocLeft],
