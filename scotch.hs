@@ -71,9 +71,12 @@ loop verbose bindings =
                                              otherwise -> []
                          -- output, if necessary
                          case parsed of
-                            Output x y -> putStrLn (case (eval x bindings) of
-                                                         Result (Str s) -> s
-                                                         e -> show e)
-                            otherwise -> putStrLn (show result)
+                            Output x y -> case (eval x bindings) of
+                                            Result (Str s) -> putStrLn s
+                                            Incomplete i -> return ()
+                                            e -> putStrLn (show e)
+                            otherwise -> case result of
+                                           Incomplete i -> return ()
+                                           otherwise -> putStrLn (show result)
                          -- continue loop
                          loop verbose (newBindings ++ (unscope imp) ++ bindings)
