@@ -74,7 +74,14 @@ int('8') = 8
 int('9') = 9
 int([]) = 0
 
+float(n) = n * 1.0
+
 left(h:t, n) = h + left(t, n-1)
 left(h:t, 0) = []
 left([], n) = []
 right(h:t, n) = reverse(left(reverse(h:t), n))
+
+foldl(f, z, h:t) = foldl(f, f(z, h), t)
+foldl(f, z, []) = z
+foldr(f, z, h:t) = f(h, foldr(a, z, t))
+foldr(f, z, []) = z
