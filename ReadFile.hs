@@ -110,6 +110,7 @@ importFile verbose scope s = do currDir <- getCurrentDirectory
                                 let exepath = (fst full_path) ++ "scotch.lib"
                                 currDir_exists <- doesFileExist (currDir ++ importFileName s)
                                 exepath_exists <- doesFileExist (exepath ++ importFileName s)
+                                -- search current directory, then executable directory
                                 let path = case (s !! 0) of
                                              "std" -> exepath ++ (importFileName s)                                             
                                              otherwise -> case (currDir_exists, exepath_exists) of
