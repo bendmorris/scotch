@@ -44,7 +44,12 @@ weval exp vars = case exp of
                     Func f args -> if length (fst definition) > 0 
                                    then weval (funcall (snd definition)
                                                (zip (fst definition) args)) vars
-                                   else Exception "Function call doesn't match any existing patterns."
+                                   else case snd $ var_binding f vars of
+                                          Var (Name v) -> weval (funcall (snd definition')
+                                                                 (zip (fst definition') args)) vars
+                                                          where definition' = func_binding (Name v) args vars
+                                          Func f' args' -> weval (Func f' (args' ++ args)) vars
+                                          otherwise -> Exception "Function call doesn't match any existing patterns."
                                    where definition = func_binding f args vars
                     If cond x y -> case (weval cond vars) of
                                      Result (Bit True) -> weval x vars
@@ -61,7 +66,7 @@ weval exp vars = case exp of
                                              then snd h
                                              else var_binding x t
                        func_binding :: Id -> [Expr] -> [Binding] -> Call
-                       func_binding x args [] = ([], Undefined ("Function " ++ (show x)))
+                       func_binding x args [] = ([], Undefined ("Function " ++ (show x) ++ " doesn't match any existing patterns."))
                        func_binding x args (h:t) = if (show id) == (show x) &&
                                                       length args == length params &&
                                                       pattern_match params args
