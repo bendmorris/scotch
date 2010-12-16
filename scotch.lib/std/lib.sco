@@ -55,13 +55,6 @@ replace([], s, r) = []
 only(h:t, s) = (if contains(s, h) then h else "") + only(t, s)
 only([], s) = []
 
-sum(h:t) = h + sum(t)
-sum([]) = 0
-prod(h:t) = h * prod(t)
-prod([]) = 1
-mean(h:t) = sum(h:t) / len(h:t)
-mean([]) = 0
-
 str(n) = "" + n
 str(h:t) = str(h) + str(t)
 str([]) = ""

@@ -12,3 +12,11 @@ fibs(a,b,0) = a
 
 # square root
 sqrt(n) = n ^ 0.5
+
+# sum, product, mean
+sum(h:t) = h + sum(t)
+sum([]) = 0
+prod(h:t) = h * prod(t)
+prod([]) = 1
+mean(h:t) = sum(h:t) / len(h:t)
+mean([]) = 0
