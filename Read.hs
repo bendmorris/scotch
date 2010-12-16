@@ -19,7 +19,7 @@ languageDef =
                                       "print", "skip",
                                       "true", "false",
                                       "and", "or", "not",
-                                      "where"
+                                      "where", "case"
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
                                       "<", ">", "and", "or", "not", ":"
@@ -68,6 +68,7 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try importStmt <|>
          try assignment <|>
          try ifStmt <|>
+         try caseStmt <|>
          try skipStmt <|>
          try printStmt <|>
          try forStmt <|>
@@ -124,6 +125,22 @@ ifStmt =
      reserved "else"
      expr2 <- expression
      return $ If cond expr1 expr2
+     
+nestedCase [] = Undefined "No match found for case expression"
+nestedCase (h:t) = case h of
+                     If a b _ -> If a b (nestedCase t)
+     
+caseStmt :: Parser Expr
+caseStmt =
+  do reserved "case"
+     check <- whiteSpace >> expression
+     reserved "of"
+     cases <- sepBy (do cond <- whiteSpace >> expression
+                        reservedOp "->"
+                        expr <- expression
+                        return $ If (Eq (check) (cond)) (expr) (Placeholder)
+                        ) (oneOf ",")
+     return $ nestedCase cases
      
 skipStmt :: Parser Expr
 skipStmt = reserved "skip" >> return Skip
