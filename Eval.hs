@@ -3,6 +3,13 @@ module Eval where
 import Types
 import Calc
 
+-- evalList: checks a list for exceptions
+evalList [] = Result (Bit True)
+evalList (h:t) = case h of
+                   Val r -> evalList t
+                   Undefined e -> Exception e
+                   otherwise -> Exception "Non-value used in list."
+
 -- eval: computes the result of an expression as a Calculation
 weval :: Expr -> [Binding] -> Calculation
 weval exp vars = case exp of
@@ -10,12 +17,14 @@ weval exp vars = case exp of
                     Undefined s -> Exception ("Undefined: " ++ s)
                     Placeholder -> Incomplete (Placeholder)
                     Skip -> Result Null
-                    Val (List l) -> Result (List [(case (weval item vars) of
-                                                     Result r -> Val r
-                                                     Exception e -> Undefined e
-                                                     Incomplete x -> x
-                                                     ) 
-                                                     | item <- l])
+                    Val (List l) -> case (evalList r) of
+                                        Result _ -> Result (List r)
+                                        Exception e -> Exception e
+                                    where r = [(case (weval item vars) of
+                                                  Result r -> Val r
+                                                  Exception e -> Undefined e
+                                                  Incomplete i -> i
+                                                ) | item <- l]
                     Val x -> Result x
                     Add x y -> calc (weval x vars) (weval y vars) (vadd)
                     Sub x y -> calc (weval x vars) (weval y vars) (vsub)
