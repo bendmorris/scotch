@@ -98,9 +98,16 @@ weval exp vars = case exp of
                                                                          (Result (Str ""), List []) -> pattern_match b d
                                                                          otherwise -> False
                                                                   where result = weval c vars
+                       is_function id [] = False
+                       is_function id (h:t) = if fst h == id && length (fst (snd h)) > 1 then True else is_function id t
                        funcall f [] = f
                        funcall f (h:t) = case fst h of
-                                            Name _ -> Def (fst h) (eager_eval (snd h)) (funcall f t)
+                                            Name _ -> Def (fst h) argval (funcall f t)
+                                                      where argval = case snd h of
+                                                                       Var (Name v) -> if is_function (Name v) vars 
+                                                                                       then Var (Name v) 
+                                                                                       else eager_eval (snd h)
+                                                                       otherwise -> (eager_eval (snd h))
                                             Split x y -> case eager_eval (snd h) of
                                                             Val (List l) -> if length l > 0 then Def (Name x) (eager_eval (head l)) (
                                                                                                  Def (Name y) (Val (List (tail l))) (
