@@ -51,8 +51,8 @@ wexecute verbose (h:t) bindings line =
                                                                  return []
                                                 otherwise -> do new <- newBindings
                                                                 wexecute verbose t (new ++ bindings') (line+1)
-     -- if the line consists of all whitespace, continue to the next line
-     else wexecute verbose t (bindings) (line+1)
+       -- if the line consists of all whitespace, continue to the next line
+       else wexecute verbose t (bindings) (line+1)
      where input = h
            -- scope is determined by amount of leading whitespace
            scope = whitespace input
