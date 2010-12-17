@@ -16,6 +16,7 @@ type ScopedBinding = (Int, Binding)
 unscope :: [ScopedBinding] -> [Binding]
 unscope [] = []
 unscope (h:t) = (snd h) : unscope t
+type Closure = (Call, [Binding])
 
 
 -- a value with its corresponding type

@@ -53,21 +53,23 @@ weval exp vars = case exp of
                     EagerDef id x y -> weval y ((id, ([], eager_eval x)) : vars)
                     Defun id params x y -> weval y ((id, (params, x)) : (id, ([], Val (HFunc id))): vars)
                     Var x -> weval (snd definition) vars
-                             where definition = var_binding x vars
+                             where definition = fst $ var_binding x vars
                     Func f args -> case vardef of
                                      Val (HFunc (h)) -> if length params > 0 
                                                         then weval (funcall (expr)
                                                                     (zip params args)) vars'
-                                                        else case snd $ var_binding fp vars of
-                                                               Func f' args' -> weval (Func f' (args' ++ args)) vars'
+                                                        else case snd $ fst $ var_binding fp vars of
+                                                               Func f' args' -> weval (Func f' (args' ++ args)) vars
                                                                otherwise -> Exception $ "Function " ++ (show f) ++ " doesn't match any existing pattern."
+                                     Func f' args' -> weval (Func f' (args' ++ args)) vars
                                      otherwise -> Exception $ "Variable " ++ (show f) ++ " isn't a function"
                                    where fp = case vardef of
                                                 Val (HFunc (f')) -> f'
-                                         vardef = snd $ var_binding f vars
+                                                otherwise -> f
+                                         vardef = snd $ fst $ var_binding f vars
                                          binding = func_binding fp args vars
                                          definition = fst binding
-                                         vars' = snd binding
+                                         vars' = snd $ var_binding f vars
                                          params = fst definition
                                          expr = snd definition
                     If cond x y -> case (weval cond vars) of
@@ -80,17 +82,17 @@ weval exp vars = case exp of
                                             Result v -> Val (List (forloop id [Val v] y))
                                             otherwise -> Undefined (show x)) vars
                     Output x y -> weval y vars
-                 where var_binding :: Id -> [Binding] -> Call
-                       var_binding x [] = ([], Undefined ("Variable " ++ show x))
+                 where var_binding :: Id -> [Binding] -> Closure
+                       var_binding x [] = (([], Undefined ("Variable " ++ show x)), [])
                        var_binding x (h:t) = if (fst h) == x && 
                                                 length (fst (snd h)) == 0 && 
                                                 snd (snd h) /= Var (fst h)
                                              then case snd (snd h) of
                                                     Var v -> if v == x then var_binding x t
                                                                        else var_binding v vars
-                                                    otherwise -> snd h
+                                                    otherwise -> (snd h, (left vars ((length vars) - (length (h:t)))) ++ t)
                                              else var_binding x t
-                       func_binding :: Id -> [Expr] -> [Binding] -> (Call, [Binding])
+                       func_binding :: Id -> [Expr] -> [Binding] -> Closure
                        func_binding x args [] = (([], Undefined ("Function " ++ (show x) ++ " doesn't match any existing pattern.")), [])
                        func_binding x args (h:t) = if (show id) == (show x) &&
                                                       length args == length params &&
@@ -119,7 +121,7 @@ weval exp vars = case exp of
                        is_function id (h:t) = if fst h == id && length (fst (snd h)) > 0 
                                               then True 
                                               else is_function id t
-                       pointed id = case snd $ var_binding id vars of
+                       pointed id = case snd $ fst $ var_binding id vars of
                                       Var v -> pointed v
                                       otherwise -> id
                        -- funcall: list of (ID parameter, expression argument)
@@ -131,9 +133,7 @@ weval exp vars = case exp of
                                                                   else EagerDef (Name n) argval (funcall f t)
                                         otherwise -> EagerDef (Name n) argval (funcall f t)
                                       where argval = case arg of
-                                                       Var v -> case snd $ var_binding v vars of
-                                                                  Val (HFunc f) -> Val (HFunc f)
-                                                                  otherwise -> eager_eval arg
+                                                       Var v -> eager_eval arg
                                                        otherwise -> (eager_eval arg)
                             Split x y -> case eager_eval arg of
                                             Val (List l) -> if length l > 0 then Def (Name x) (eager_eval (head l)) (
