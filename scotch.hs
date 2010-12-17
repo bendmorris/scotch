@@ -75,16 +75,16 @@ loop verbose bindings state =
                                                                                         Result r -> Val r
                                                                                         Exception s -> Undefined s
                                                                                       )))]
-                                             Defun id params x Placeholder -> [(id, (params, x))]
+                                             Defun id params x Placeholder -> [(id, (params, x)), (id, ([], Val (HFunc id)))]
                                              otherwise -> []
                          -- output, if necessary
                          case parsed of
-                            Output x y -> case (eval x bindings) of
-                                            Result (Str s) -> putStrLn s
-                                            Incomplete i -> return ()
-                                            e -> putStrLn (show e)
-                            otherwise -> case result of
+                           Output x y -> case (eval x bindings) of
+                                           Result (Str s) -> putStrLn s
                                            Incomplete i -> return ()
-                                           otherwise -> putStrLn (show result)
+                                           e -> putStrLn (show e)
+                           otherwise -> case result of
+                                          Incomplete i -> return ()
+                                          otherwise -> putStrLn (show result)
                          -- continue loop
                          loop verbose (newBindings ++ (unscope imp) ++ bindings) state

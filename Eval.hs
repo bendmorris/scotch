@@ -47,7 +47,7 @@ weval exp vars = case exp of
                                                 otherwise -> Exception "Expected boolean"
                     Def id x y -> weval y ((id, ([], x)) : vars)
                     EagerDef id x y -> weval y ((id, ([], eager_eval x)) : vars)
-                    Defun id params x y -> weval y ((id, (params, x)) : vars)
+                    Defun id params x y -> weval y ((id, (params, x)) : (id, ([], Val (HFunc id))): vars)
                     Var x -> weval (snd definition) vars
                              where definition = var_binding x vars
                     Func f args -> if length params > 0 
@@ -73,12 +73,13 @@ weval exp vars = case exp of
                                             otherwise -> Undefined (show x)) vars
                     Output x y -> weval y vars
                  where var_binding :: Id -> [Binding] -> Call
-                       var_binding x [] = ([], Val (HFunc x))
+                       var_binding x [] = ([], Undefined ("Variable " ++ show x))
                        var_binding x (h:t) = if (fst h) == x && 
                                                 length (fst (snd h)) == 0 && 
                                                 snd (snd h) /= Var (fst h)
                                              then case snd (snd h) of
-                                                    Var v -> var_binding v vars
+                                                    Var v -> if v == x then var_binding x t
+                                                                       else var_binding v vars
                                                     otherwise -> snd h
                                              else var_binding x t
                        func_binding :: Id -> [Expr] -> [Binding] -> Call
@@ -92,19 +93,20 @@ weval exp vars = case exp of
                                                            (fst h, fst binding, snd binding)
                                                          binding = snd h
                        pattern_match [] [] = True
-                       pattern_match (a:b) (c:d) = case a of
-                                                     Name n -> pattern_match b d
-                                                     Split x y -> case weval c vars of
-                                                                    Result (List l) -> pattern_match b d
-                                                                    Result (Str l) -> pattern_match b d
-                                                                    otherwise -> False
-                                                     Pattern v -> if result == Result v 
-                                                                  then pattern_match b d
-                                                                  else case (result, v) of 
-                                                                         (Result (List []), Str "") -> pattern_match b d
-                                                                         (Result (Str ""), List []) -> pattern_match b d
-                                                                         otherwise -> False
-                                                                  where result = weval c vars
+                       pattern_match (a:b) (c:d) = 
+                         case a of
+                           Name n -> pattern_match b d
+                           Split x y -> case weval c vars of
+                                          Result (List l) -> pattern_match b d
+                                          Result (Str l) -> pattern_match b d
+                                          otherwise -> False
+                           Pattern v -> if result == Result v 
+                                        then pattern_match b d
+                                        else case (result, v) of 
+                                               (Result (List []), Str "") -> pattern_match b d
+                                               (Result (Str ""), List []) -> pattern_match b d
+                                               otherwise -> False
+                                        where result = weval c vars
                        is_function id [] = False
                        is_function id (h:t) = if fst h == id && length (fst (snd h)) > 0 
                                               then True 
@@ -115,7 +117,10 @@ weval exp vars = case exp of
                        -- funcall: list of (ID parameter, expression argument)
                        funcall f [] = f
                        funcall f (h:t) = case param of
-                                            Name n -> Def (Name n) argval (funcall f t)
+                                            Name n -> case argval of
+                                                        Var (Name v) -> if n == v then funcall f t
+                                                                                  else EagerDef (Name n) argval (funcall f t)
+                                                        otherwise -> EagerDef (Name n) argval (funcall f t)
                                                       where argval = case arg of
                                                                        Var v -> case snd $ var_binding v vars of
                                                                                   Val (HFunc f) -> Val (HFunc f)

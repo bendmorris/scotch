@@ -71,7 +71,7 @@ wexecute verbose (h:t) bindings line =
                                                                                          Result r -> Val r
                                                                                          Exception s -> Undefined s
                                                                                        ))))]
-                            Defun id params x Placeholder -> do return [(scope, (id, (params, x)))]
+                            Defun id params x Placeholder -> do return [(scope, (id, (params, x))), (scope, (id, ([], Val (HFunc id))))]
                             Import s -> do i <- importFile verbose scope s
                                            b <- case i of 
                                                   (False, _) -> do putStrLn ("Failed to import module " ++ show s)
