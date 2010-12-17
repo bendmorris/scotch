@@ -25,6 +25,7 @@ data Value = NumInt Integer
            | Bit Bool
            | List [Expr]
            | Null
+           | HFunc Id
            deriving Eq
 instance Show (Value) where
     show (Str s) = "\"" ++ s ++ "\""
@@ -33,6 +34,7 @@ instance Show (Value) where
     show (Bit True) = "true"
     show (Bit False) = "false"
     show (List l) = show l
+    show (HFunc f) = "func " ++ show f
     show (Null) = "null"
 
 -- a calculation, which may cause an exception if one of its members contains an exception

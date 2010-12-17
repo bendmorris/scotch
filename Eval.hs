@@ -53,11 +53,13 @@ weval exp vars = case exp of
                     Func f args -> if length params > 0 
                                    then weval (funcall (expr)
                                                (zip params args)) vars
-                                   else case snd $ var_binding f vars of
-                                          Var (Name f') -> weval (Func (Name f') args) vars
+                                   else case snd $ var_binding fp vars of
                                           Func f' args' -> weval (Func f' (args' ++ args)) vars
-                                          otherwise -> Exception $ "Function " ++ (show f) ++ " doesn't match any existing pattern." ++ show(var_binding f vars) ++ show vars
-                                   where definition = func_binding f args vars
+                                          otherwise -> Exception $ "Function " ++ (show f) ++ " doesn't match any existing pattern."
+                                   where fp = case snd $ var_binding f vars of
+                                                Val (HFunc (f')) -> f'
+                                                otherwise -> f
+                                         definition = func_binding fp args vars
                                          params = fst definition
                                          expr = snd definition
                     If cond x y -> case (weval cond vars) of
@@ -71,9 +73,13 @@ weval exp vars = case exp of
                                             otherwise -> Undefined (show x)) vars
                     Output x y -> weval y vars
                  where var_binding :: Id -> [Binding] -> Call
-                       var_binding x [] = ([], Undefined ("Variable " ++ (show x)))
-                       var_binding x (h:t) = if (fst h) == x && snd (snd h) /= Var (fst h)
-                                             then snd h
+                       var_binding x [] = ([], Val (HFunc x))
+                       var_binding x (h:t) = if (fst h) == x && 
+                                                length (fst (snd h)) == 0 && 
+                                                snd (snd h) /= Var (fst h)
+                                             then case snd (snd h) of
+                                                    Var v -> var_binding v vars
+                                                    otherwise -> snd h
                                              else var_binding x t
                        func_binding :: Id -> [Expr] -> [Binding] -> Call
                        func_binding x args [] = ([], Undefined ("Function " ++ (show x) ++ " doesn't match any existing pattern."))
@@ -111,9 +117,9 @@ weval exp vars = case exp of
                        funcall f (h:t) = case param of
                                             Name n -> Def (Name n) argval (funcall f t)
                                                       where argval = case arg of
-                                                                       Var v -> if is_function (pointed v) vars 
-                                                                                then Var v
-                                                                                else eager_eval arg
+                                                                       Var v -> case snd $ var_binding v vars of
+                                                                                  Val (HFunc f) -> Val (HFunc f)
+                                                                                  otherwise -> eager_eval arg
                                                                        Func a b -> Func a b
                                                                        otherwise -> (eager_eval arg)
                                             Split x y -> case eager_eval arg of
