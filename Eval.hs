@@ -50,20 +50,21 @@ weval exp vars = case exp of
                     Defun id params x y -> weval y ((id, (params, x)) : vars)
                     Var x -> weval (snd definition) vars
                              where definition = var_binding x vars
-                    Func f args -> if length (fst definition) > 0 
-                                   then weval (funcall (snd definition)
-                                               (zip (fst definition) args)) vars
+                    Func f args -> if length params > 0 
+                                   then weval (funcall (expr)
+                                               (zip params args)) vars
                                    else case snd $ var_binding f vars of
-                                          Var (Name v) -> weval (funcall (snd definition')
-                                                                 (zip (fst definition') args)) vars
-                                                          where definition' = func_binding (Name v) args vars
+                                          Var (Name f') -> weval (Func (Name f') args) vars
                                           Func f' args' -> weval (Func f' (args' ++ args)) vars
-                                          otherwise -> Exception "Function call doesn't match any existing patterns."
+                                          otherwise -> Exception $ "Function " ++ (show f) ++ " doesn't match any existing pattern." ++ show(var_binding f vars) ++ show vars
                                    where definition = func_binding f args vars
+                                         params = fst definition
+                                         expr = snd definition
                     If cond x y -> case (weval cond vars) of
                                      Result (Bit True) -> weval x vars
                                      Result (Bit False) -> weval y vars
-                                     otherwise -> Exception "Non-boolean condition"
+                                     Exception e -> Exception e
+                                     otherwise -> Exception $ "Non-boolean condition " ++ show cond
                     For id x y -> weval (case (weval x vars) of
                                             Result (List l) -> Val (List (forloop id l y))
                                             Result v -> Val (List (forloop id [Val v] y))
@@ -71,11 +72,11 @@ weval exp vars = case exp of
                     Output x y -> weval y vars
                  where var_binding :: Id -> [Binding] -> Call
                        var_binding x [] = ([], Undefined ("Variable " ++ (show x)))
-                       var_binding x (h:t) = if (show $ fst h) == (show x)
+                       var_binding x (h:t) = if (fst h) == x && snd (snd h) /= Var (fst h)
                                              then snd h
                                              else var_binding x t
                        func_binding :: Id -> [Expr] -> [Binding] -> Call
-                       func_binding x args [] = ([], Undefined ("Function " ++ (show x) ++ " doesn't match any existing patterns."))
+                       func_binding x args [] = ([], Undefined ("Function " ++ (show x) ++ " doesn't match any existing pattern."))
                        func_binding x args (h:t) = if (show id) == (show x) &&
                                                       length args == length params &&
                                                       pattern_match params args
@@ -99,17 +100,23 @@ weval exp vars = case exp of
                                                                          otherwise -> False
                                                                   where result = weval c vars
                        is_function id [] = False
-                       is_function id (h:t) = if fst h == id && length (fst (snd h)) > 1 then True else is_function id t
+                       is_function id (h:t) = if fst h == id && length (fst (snd h)) > 0 
+                                              then True 
+                                              else is_function id t
+                       pointed id = case snd $ var_binding id vars of
+                                      Var v -> pointed v
+                                      otherwise -> id
+                       -- funcall: list of (ID parameter, expression argument)
                        funcall f [] = f
-                       funcall f (h:t) = case fst h of
-                                            Name _ -> Def (fst h) argval (funcall f t)
-                                                      where argval = case snd h of
-                                                                       Var (Name v) -> if is_function (Name v) vars 
-                                                                                       then Var (Name v) 
-                                                                                       else eager_eval (snd h)
+                       funcall f (h:t) = case param of
+                                            Name n -> Def (Name n) argval (funcall f t)
+                                                      where argval = case arg of
+                                                                       Var v -> if is_function (pointed v) vars 
+                                                                                then Var v
+                                                                                else eager_eval arg
                                                                        Func a b -> Func a b
-                                                                       otherwise -> (eager_eval (snd h))
-                                            Split x y -> case eager_eval (snd h) of
+                                                                       otherwise -> (eager_eval arg)
+                                            Split x y -> case eager_eval arg of
                                                             Val (List l) -> if length l > 0 then Def (Name x) (eager_eval (head l)) (
                                                                                                  Def (Name y) (Val (List (tail l))) (
                                                                                                  funcall f t))
@@ -119,6 +126,8 @@ weval exp vars = case exp of
                                                                                                 funcall f t))
                                                                                            else Undefined "Can't split empty string"
                                             Pattern _ -> funcall f t
+                                            where param = fst h
+                                                  arg = snd h
                        eager_eval x = case (weval (x) vars) of
                                         Result r -> Val r
                                         Exception s -> Undefined s

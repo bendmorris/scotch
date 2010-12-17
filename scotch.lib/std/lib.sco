@@ -61,6 +61,7 @@ str([]) = ""
 
 int(h:t, n) = int(h) * (10 ^ n) + int(t, n-1)
 int([], n) = 0
+int(n) = int(head(split(str(n), ".")))
 int(h:t) = int(only(h:t, "0123456789"), len(only(h:t, "0123456789")) - 1)
 int('0') = 0
 int('1') = 1
@@ -85,3 +86,8 @@ foldl(f, z, h:t) = foldl(f, f(z, h), t)
 foldl(f, z, []) = z
 foldr(f, z, h:t) = f(h, foldr(a, z, t))
 foldr(f, z, []) = z
+
+filter(h:t, f) = case f(h) of \
+                   true -> h + filter(t, f), \
+                   otherwise -> filter(t, f)
+filter([], f) = []

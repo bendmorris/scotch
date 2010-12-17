@@ -1,4 +1,4 @@
-# pi
+# pi and natural number
 pi = 3.141592654
 e = 2.71828183
 
@@ -26,6 +26,10 @@ mean([]) = 0
 median'(h:t) = case len(h:t) of \
                  1 -> h, \
                  2 -> (h + head(t)) / 2.0, \
-                 otherwise -> median(left(t, len(t) - 1))
+                 otherwise -> median'(left(t, len(t) - 1))
+median'([]) = 0
 median(h:t) = median'(sort(h:t))
 median([]) = 0
+
+even(n) = int(n) / 2 == n / 2.0
+odd(n) = not even(n)

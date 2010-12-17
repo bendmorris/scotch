@@ -73,6 +73,7 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try skipStmt <|>
          try printStmt <|>
          try forStmt <|>
+         try notStmt <|>
          try valueStmt <|>
          try funcallStmt <|>
          try splitExpr <|>
@@ -165,6 +166,12 @@ forStmt =
      reservedOp ","
      expr <- expression
      return $ For (Name iterator) list expr
+     
+notStmt :: Parser Expr
+notStmt =
+  do reserved "not"
+     expr <- expression
+     return $ Not expr
 
 -- value parsers
 
