@@ -107,6 +107,7 @@ weval exp vars = case exp of
                                                                        Var (Name v) -> if is_function (Name v) vars 
                                                                                        then Var (Name v) 
                                                                                        else eager_eval (snd h)
+                                                                       Func a b -> Func a b
                                                                        otherwise -> (eager_eval (snd h))
                                             Split x y -> case eager_eval (snd h) of
                                                             Val (List l) -> if length l > 0 then Def (Name x) (eager_eval (head l)) (
