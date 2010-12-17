@@ -90,7 +90,7 @@ weval exp vars = case exp of
                                              then case snd (snd h) of
                                                     Var v -> if v == x then var_binding x t
                                                                        else var_binding v vars
-                                                    otherwise -> (snd h, (left vars ((length vars) - (length (h:t)))) ++ t)
+                                                    otherwise -> (snd h, (left vars ((length vars) - (length (h:t)))) ++ t ++ [h])
                                              else var_binding x t
                        func_binding :: Id -> [Expr] -> [Binding] -> Closure
                        func_binding x args [] = (([], Undefined ("Function " ++ (show x) ++ " doesn't match any existing pattern.")), [])
