@@ -62,6 +62,7 @@ veq (NumInt a) (NumInt b) = Result (Bit (a == b))
 veq (NumFloat a) (NumFloat b) = Result (Bit (a == b))
 veq (NumInt a) (NumFloat b) = Result (Bit ((realToFrac a) == b))
 veq (NumFloat a) (NumInt b) = Result (Bit (a == (realToFrac b)))
+veq (List a) (List b) = Result (Bit (a == b))
 veq (Str a) (Str b) = Result (Bit (a == b))
 veq (Bit a) (Bit b) = Result (Bit (a == b))
 veq a b = type_mismatch "=" a b
