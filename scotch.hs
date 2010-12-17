@@ -19,10 +19,6 @@ vFlag (h:t) = if h == "-v" then True else vFlag t
 iFlag [] = False
 iFlag (h:t) = if h == "-i" then True else iFlag t
 
-left [] 0 = []
-left (h:t) 0 = []
-left (h:t) n = h : (left t (n - 1))
-
 main = do args <- getArgs
           state <- initializeInput defaultSettings
           let verbose = vFlag args

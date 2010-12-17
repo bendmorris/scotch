@@ -9,6 +9,10 @@ evalList (h:t) = case h of
                    Val r -> evalList t
                    Undefined e -> Exception e
                    otherwise -> Exception "Non-value used in list."
+                   
+left [] 0 = []
+left (h:t) 0 = []
+left (h:t) n = h : (left t (n - 1))
 
 -- eval: computes the result of an expression as a Calculation
 weval :: Expr -> [Binding] -> Calculation
@@ -50,16 +54,20 @@ weval exp vars = case exp of
                     Defun id params x y -> weval y ((id, (params, x)) : (id, ([], Val (HFunc id))): vars)
                     Var x -> weval (snd definition) vars
                              where definition = var_binding x vars
-                    Func f args -> if length params > 0 
-                                   then weval (funcall (expr)
-                                               (zip params args)) vars
-                                   else case snd $ var_binding fp vars of
-                                          Func f' args' -> weval (Func f' (args' ++ args)) vars
-                                          otherwise -> Exception $ "Function " ++ (show f) ++ " doesn't match any existing pattern."
-                                   where fp = case snd $ var_binding f vars of
+                    Func f args -> case vardef of
+                                     Val (HFunc (h)) -> if length params > 0 
+                                                        then weval (funcall (expr)
+                                                                    (zip params args)) vars'
+                                                        else case snd $ var_binding fp vars of
+                                                               Func f' args' -> weval (Func f' (args' ++ args)) vars'
+                                                               otherwise -> Exception $ "Function " ++ (show f) ++ " doesn't match any existing pattern."
+                                     otherwise -> Exception $ "Variable " ++ (show f) ++ " isn't a function"
+                                   where fp = case vardef of
                                                 Val (HFunc (f')) -> f'
-                                                otherwise -> f
-                                         definition = func_binding fp args vars
+                                         vardef = snd $ var_binding f vars
+                                         binding = func_binding fp args vars
+                                         definition = fst binding
+                                         vars' = snd binding
                                          params = fst definition
                                          expr = snd definition
                     If cond x y -> case (weval cond vars) of
@@ -82,12 +90,12 @@ weval exp vars = case exp of
                                                                        else var_binding v vars
                                                     otherwise -> snd h
                                              else var_binding x t
-                       func_binding :: Id -> [Expr] -> [Binding] -> Call
-                       func_binding x args [] = ([], Undefined ("Function " ++ (show x) ++ " doesn't match any existing pattern."))
+                       func_binding :: Id -> [Expr] -> [Binding] -> (Call, [Binding])
+                       func_binding x args [] = (([], Undefined ("Function " ++ (show x) ++ " doesn't match any existing pattern.")), [])
                        func_binding x args (h:t) = if (show id) == (show x) &&
                                                       length args == length params &&
                                                       pattern_match params args
-                                                   then binding
+                                                   then (binding, t ++ vars)
                                                    else func_binding x args t
                                                    where (id, params, expr) =
                                                            (fst h, fst binding, snd binding)
@@ -116,29 +124,29 @@ weval exp vars = case exp of
                                       otherwise -> id
                        -- funcall: list of (ID parameter, expression argument)
                        funcall f [] = f
-                       funcall f (h:t) = case param of
-                                            Name n -> case argval of
-                                                        Var (Name v) -> if n == v then funcall f t
-                                                                                  else EagerDef (Name n) argval (funcall f t)
-                                                        otherwise -> EagerDef (Name n) argval (funcall f t)
-                                                      where argval = case arg of
-                                                                       Var v -> case snd $ var_binding v vars of
-                                                                                  Val (HFunc f) -> Val (HFunc f)
-                                                                                  otherwise -> eager_eval arg
-                                                                       Func a b -> Func a b
-                                                                       otherwise -> (eager_eval arg)
-                                            Split x y -> case eager_eval arg of
-                                                            Val (List l) -> if length l > 0 then Def (Name x) (eager_eval (head l)) (
-                                                                                                 Def (Name y) (Val (List (tail l))) (
-                                                                                                 funcall f t))
-                                                                                            else Undefined "Can't split empty list"
-                                                            Val (Str l) -> if length l > 0 then Def (Name x) (Val (Str ([head l]))) (
-                                                                                                Def (Name y) (Val (Str (tail l))) (
-                                                                                                funcall f t))
-                                                                                           else Undefined "Can't split empty string"
-                                            Pattern _ -> funcall f t
-                                            where param = fst h
-                                                  arg = snd h
+                       funcall f (h:t) = 
+                         case param of
+                            Name n -> case argval of
+                                        Var (Name v) -> if n == v then funcall f t
+                                                                  else EagerDef (Name n) argval (funcall f t)
+                                        otherwise -> EagerDef (Name n) argval (funcall f t)
+                                      where argval = case arg of
+                                                       Var v -> case snd $ var_binding v vars of
+                                                                  Val (HFunc f) -> Val (HFunc f)
+                                                                  otherwise -> eager_eval arg
+                                                       otherwise -> (eager_eval arg)
+                            Split x y -> case eager_eval arg of
+                                            Val (List l) -> if length l > 0 then Def (Name x) (eager_eval (head l)) (
+                                                                                 Def (Name y) (Val (List (tail l))) (
+                                                                                 funcall f t))
+                                                                            else Undefined "Can't split empty list"
+                                            Val (Str l) -> if length l > 0 then Def (Name x) (Val (Str ([head l]))) (
+                                                                                Def (Name y) (Val (Str (tail l))) (
+                                                                                funcall f t))
+                                                                           else Undefined "Can't split empty string"
+                            Pattern _ -> funcall f t
+                            where param = fst h
+                                  arg = snd h
                        eager_eval x = case (weval (x) vars) of
                                         Result r -> Val r
                                         Exception s -> Undefined s
