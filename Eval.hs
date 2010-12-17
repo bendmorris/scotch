@@ -95,7 +95,7 @@ weval exp vars = case exp of
                        func_binding x args (h:t) = if (show id) == (show x) &&
                                                       length args == length params &&
                                                       pattern_match params args
-                                                   then (binding, t ++ vars)
+                                                   then (binding, vars)
                                                    else func_binding x args t
                                                    where (id, params, expr) =
                                                            (fst h, fst binding, snd binding)
