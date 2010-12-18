@@ -25,7 +25,7 @@ tests := tests + test(apply(g, 1, 3), 6)
 
 f(x, y) = x + y
 a = f(1)
-tests := [test(a(2), 3)]
+tests := tests + test(a(2), 3)
 
 tests := tests + test(len("abcdefg"), 7)
 tests := tests + test(left("abcdefg", 3), "abc")
