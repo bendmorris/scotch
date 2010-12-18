@@ -18,12 +18,14 @@ inparams :: Id -> [(Id, Expr)] -> Expr
 inparams x [] = Placeholder
 inparams x (h:t) = if x == (fst h) then snd h else inparams x t
 
-inparamsid :: Id -> [(Id, Expr)] -> Id
-inparamsid x [] = x
+inparamsid :: Id -> [(Id, Expr)] -> (Id, [Expr])
+inparamsid x [] = (x, [])
 inparamsid x (h:t) = if x == (fst h) then
                        case snd h of
-                         Var v -> v
-                         Val (HFunc h) -> h
+                         Var v -> (v, [])
+                         Val (HFunc h) -> (h, [])
+                         Func f args -> (f, args)
+                         otherwise -> inparamsid x t
                       else inparamsid x t
 
 substitute :: Expr -> [(Id, Expr)] -> Expr
@@ -49,8 +51,9 @@ substitute exp params =
     Def id x y -> Def id (substitute x params) (substitute y params)
     Defun id p x y -> Defun id p (substitute x params) (substitute y params)
     If x y z -> If (substitute x params) (substitute y params) (substitute z params)
-    Func f args -> Func f' [substitute arg params | arg <- args]
-                   where f' = inparamsid f params
+    Func f args -> case inparamsid f params of
+                     (f', []) -> Func f' [substitute arg params | arg <- args]
+                     (f', otherargs) -> Func f' [substitute arg params | arg <- otherargs ++ args]
     otherwise -> otherwise
 
 -- eval: computes the result of an expression as a Calculation
