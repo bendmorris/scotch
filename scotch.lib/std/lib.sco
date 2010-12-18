@@ -43,6 +43,7 @@ rstrip(h:t) = rstrip(h:t, " ")
 strip(h:t) = strip(h:t, " ")
 strip(h:t, s) = lstrip(rstrip(h:t, s), s)
 
+
 split(h:t, s) = (if h == s then "" + rest \
                            else [h + head(rest)] + tail(rest)) \
                            where rest := split(t, s)
@@ -62,7 +63,7 @@ str([]) = ""
 int(h:t, n) = int(h) * (10 ^ n) + int(t, n-1)
 int([], n) = 0
 int(n) = int(head(split(str(n), ".")))
-int(h:t) = int(only(h:t, "0123456789"), len(only(h:t, "0123456789")) - 1)
+int(h:t) = (int(a, len(a) - 1)) where a = only(h:t, "0123456789")
 int('0') = 0
 int('1') = 1
 int('2') = 2
@@ -87,7 +88,7 @@ foldl(f, z, []) = z
 foldr(f, z, h:t) = f(h, foldr(a, z, t))
 foldr(f, z, []) = z
 
-filter(h:t, f) = case f(h) of \
-                   true -> h + filter(t, f), \
-                   otherwise -> filter(t, f)
-filter([], f) = []
+filter(f, h:t) = case f(h) of \
+                   true -> h + filter(f, t), \
+                   otherwise -> filter(f, t)
+filter(f, []) = []
