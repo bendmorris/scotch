@@ -42,8 +42,13 @@ whiteSpace = Token.whiteSpace       lexer -- parses whitespace
 stringLit  = Token.stringLiteral    lexer -- parses a string
 charLit    = Token.charLiteral      lexer -- parses a character literal
 
-parser :: Parser Expr
-parser = try expression <|> do return Skip
+parser :: Parser [PosExpr]
+parser = many statement
+
+statement :: Parser PosExpr
+statement = whiteSpace >> do pos <- getPosition
+                             expr <- expression
+                             return (Just pos, expr)
 
 -- expression parsers
 
@@ -298,6 +303,6 @@ operators = [[Infix  (reservedOp "^"   >> return (Exp             )) AssocLeft],
               Infix  (reservedOp "|"   >> return (Or              )) AssocLeft ]
              ]
 
-read s = case (parse parser "" s) of
-            Right r -> r
-            otherwise -> Undefined "Parse error"
+read n s = case (parse parser n s) of
+             Right r -> r
+             otherwise -> [(Nothing, Undefined "Parse error")]

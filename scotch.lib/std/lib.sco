@@ -3,8 +3,8 @@
 len(h:t) = 1 + len(t)
 len([]) = 0
 
-range(start, n, step) = start + \
-                        if start + step > n then [] \
+range(start, n, step) = start + 
+                        if start + step > n then [] 
                                             else range(start + step, n, step)
 range(start, n) = range(start, n, 1)
 range(n) = range(n-1) + n
@@ -44,12 +44,12 @@ strip(h:t) = strip(h:t, " ")
 strip(h:t, s) = lstrip(rstrip(h:t, s), s)
 
 
-split(h:t, s) = (if h == s then "" + rest \
-                           else [h + head(rest)] + tail(rest)) \
+split(h:t, s) = (if h == s then "" + rest 
+                           else [h + head(rest)] + tail(rest)) 
                            where rest := split(t, s)
 split([], s) = []
 
-replace(h:t, s, r) = if prefix(h:t, s) then r + replace(right(h:t, len(h:t) - len(s)), s, r) \
+replace(h:t, s, r) = if prefix(h:t, s) then r + replace(right(h:t, len(h:t) - len(s)), s, r) 
                                        else h + replace(t, s, r)
 replace([], s, r) = []
 
@@ -88,7 +88,7 @@ foldl(f, z, []) = z
 foldr(f, z, h:t) = f(h, foldr(a, z, t))
 foldr(f, z, []) = z
 
-filter(f, h:t) = case f(h) of \
-                   true -> h + filter(f, t), \
+filter(f, h:t) = case f(h) of 
+                   true -> h + filter(f, t),
                    otherwise -> filter(f, t)
 filter(f, []) = []

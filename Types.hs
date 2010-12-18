@@ -1,5 +1,7 @@
 module Types where
 
+import Text.ParserCombinators.Parsec
+
 -- a bindable identifier
 data Id = Name String | Pattern Value | Split String String deriving Eq
 instance Show(Id) where
@@ -103,3 +105,5 @@ instance Show(Expr) where
     show (Output x y) = se "print" [x, y]
     show (Placeholder) = "**nothing**"
     show (Import s) = "import " ++ (show s)
+    
+type PosExpr = (Maybe SourcePos, Expr)

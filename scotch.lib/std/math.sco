@@ -23,9 +23,9 @@ sum(h:t) = foldl(add, 0, h:t)
 prod(h:t) = foldl(multiply, 0, h:t)
 mean(h:t) = sum(h:t) / len(h:t)
 mean([]) = 0
-median'(h:t) = case len(h:t) of \
-                 1 -> h, \
-                 2 -> (h + head(t)) / 2.0, \
+median'(h:t) = case len(h:t) of 
+                 1 -> h, 
+                 2 -> (h + head(t)) / 2.0, 
                  otherwise -> median'(left(t, len(t) - 1))
 median'([]) = 0
 median(h:t) = median'(sort(h:t))
