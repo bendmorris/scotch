@@ -47,7 +47,8 @@ parser = many statement
 
 statement :: Parser PosExpr
 statement = whiteSpace >> do pos <- getPosition
-                             expr <- expression
+                             expr <- try subscriptStmt <|>
+                                     expression
                              return (Just pos, expr)
 
 -- expression parsers
@@ -79,7 +80,6 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try printStmt <|>
          try forStmt <|>
          try notStmt <|>
-         try subscriptStmt <|>
          try valueStmt <|>
          try funcallStmt <|>
          try splitExpr <|>
@@ -187,29 +187,11 @@ notStmt =
      
 subscriptStmt :: Parser Expr
 subscriptStmt =
-  try (do id <- identifier
-          reservedOp "["
-          subs <- expression
-          reservedOp "]"
-          return $ Subs subs (Var (Name id)))
-  <|>
-  try (do list <- listValue
-          reservedOp "["
-          subs <- expression
-          reservedOp "]"
-          return $ Subs subs (Val list))
-  <|>
-  try (do list <- funcallStmt
-          reservedOp "["
-          subs <- expression
-          reservedOp "]"
-          return $ Subs subs (list))
-  <|>
-  (do list <- strValue
-      reservedOp "["
-      subs <- expression
-      reservedOp "]"
-      return $ Subs subs (Val list))
+  do expr <- expression
+     reservedOp "["
+     subs <- expression
+     reservedOp "]"
+     return $ Subs subs expr
 
 -- value parsers
 

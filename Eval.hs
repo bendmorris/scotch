@@ -79,13 +79,13 @@ weval exp vars =
                                        Result (NumInt n) -> if n >= 0 && 
                                                                n < (fromIntegral (length l))
                                                             then weval (l !! (fromIntegral n)) vars
-                                                            else Exception (show n ++ " member not in list")
+                                                            else Exception ("Member " ++ show n ++ " not in list")
                                        otherwise -> Exception ("Non-numerical subscript " ++ show otherwise)
                   Result (Str s) -> case (weval n vars) of
                                        Result (NumInt n) -> if n >= 0 && 
                                                                n < (fromIntegral (length s))
                                                             then Result (Str ([s !! (fromIntegral n)]))
-                                                            else Exception (show n ++ " member not in list")
+                                                            else Exception ("Member " ++ show n ++ " not in list")
                                        otherwise -> Exception ("Non-numerical subscript " ++ show otherwise)
                   otherwise -> Exception "Subscript of non-list"
     Add x y -> calc (weval x vars) (weval y vars) (vadd)
