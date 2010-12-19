@@ -51,6 +51,7 @@ data Expr =
             Undefined String                -- undefined
           | Skip                            -- returns Null
           | Val (Value)                     -- value
+          | Subs Expr Expr                  -- list subscript
           | Add Expr Expr                   -- addition
           | Sub Expr Expr                   -- subtraction
           | Prod Expr Expr                  -- product
@@ -84,6 +85,7 @@ instance Show(Expr) where
     show (Undefined s) = s
     show Skip = "Skip"
     show (Val v) = show v
+    show (Subs n s) = show s ++ "[" ++ show n ++ "]"
     show (Add x y) = se "+" [x, y]
     show (Sub x y) = se "-" [x, y]
     show (Prod x y) = se "*" [x, y]

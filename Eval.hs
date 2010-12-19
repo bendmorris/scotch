@@ -35,6 +35,7 @@ substitute exp params =
              where newname = inparams x params
     Val (List l) -> Val (List ([substitute e params | e <- l]))
     Val v -> Val v
+    Subs n x -> Subs (substitute n params) (substitute x params)
     Add x y -> Add (substitute x params) (substitute y params)
     Sub x y -> Sub (substitute x params) (substitute y params)
     Prod x y -> Prod (substitute x params) (substitute y params)
@@ -73,6 +74,20 @@ weval exp vars =
                                   Incomplete i -> i
                                 ) | item <- l]
     Val x -> Result x
+    Subs n x -> case (weval x vars) of
+                  Result (List l) -> case (weval n vars) of
+                                       Result (NumInt n) -> if n >= 0 && 
+                                                               n < (fromIntegral (length l))
+                                                            then weval (l !! (fromIntegral n)) vars
+                                                            else Exception (show n ++ " member not in list")
+                                       otherwise -> Exception ("Non-numerical subscript " ++ show otherwise)
+                  Result (Str s) -> case (weval n vars) of
+                                       Result (NumInt n) -> if n >= 0 && 
+                                                               n < (fromIntegral (length s))
+                                                            then Result (Str ([s !! (fromIntegral n)]))
+                                                            else Exception (show n ++ " member not in list")
+                                       otherwise -> Exception ("Non-numerical subscript " ++ show otherwise)
+                  otherwise -> Exception "Subscript of non-list"
     Add x y -> calc (weval x vars) (weval y vars) (vadd)
     Sub x y -> calc (weval x vars) (weval y vars) (vsub)
     Prod x y -> calc (weval x vars) (weval y vars) (vprod)
