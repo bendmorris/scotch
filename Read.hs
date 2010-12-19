@@ -19,7 +19,8 @@ languageDef =
                                       "print", "skip",
                                       "true", "false",
                                       "and", "or", "not",
-                                      "where", "case", "otherwise"
+                                      "where", "case", "otherwise",
+                                      "do"
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
                                       "<", ">", "and", "or", "not", ":", "->",
@@ -103,16 +104,16 @@ importStmt =
      mod <- moduleName
      return $ Import mod
 
-defprocStmt = try defprocFun <|> defprocVar
+defprocStmt = try defprocFun <|> try defprocVar
 
 defprocVar :: Parser Expr
 defprocVar =
   do var <- identifier
      reservedOp "="
      reserved "do"
-     exprs <- many (do expr <- expression
-                       reservedOp ";"
-                       return expr)
+     exprs <- many $ try (do expr <- whiteSpace >> expression
+                             reservedOp ";"
+                             return expr)
      return $ Defproc (Name var) [] exprs Placeholder
 
 defprocFun :: Parser Expr
@@ -121,9 +122,9 @@ defprocFun =
      params <- parens idList
      reservedOp "="
      reserved "do"
-     exprs <- many (do expr <- expression
-                       reservedOp ";"
-                       return expr)
+     exprs <- many $ try (do expr <- whiteSpace >> expression
+                             reservedOp ";"
+                             return expr)
      return $ Defproc (Name var) params exprs Placeholder
 
 defunStmt :: Parser Expr
@@ -342,6 +343,6 @@ operators = [[Infix  (reservedOp "^"   >> return (Exp             )) AssocLeft],
               Infix  (reservedOp "|"   >> return (Or              )) AssocLeft ]
              ]
 
-read n s = case (parse parser n s) of
-             Right r -> r
-             otherwise -> [(Nothing, Undefined "Parse error")]
+read name s = case (parse parser name s) of
+                Right r -> r
+                otherwise -> [(Nothing, Undefined "Parse error")]

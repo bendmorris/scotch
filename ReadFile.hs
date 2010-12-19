@@ -16,15 +16,6 @@ split' c l
   | otherwise = Just (h, drop 1 t)
   where (h, t) = span (/=c) l
 
--- determines the amount of whitespace in a line (includes comments)
-whitespace :: String -> Int
-whitespace [] = 0
-whitespace (h:t) = case h of 
-                     ' ' -> 1 + (whitespace t) 
-                     '\t' -> 4 + (whitespace t)
-                     '#' -> 1 + (whitespace [' ' | c <- t])
-                     otherwise -> 0
-
 -- removes all bindings that are no longer relevant at the current scope
 scoped_bindings :: Int -> [ScopedBinding] -> [ScopedBinding]
 scoped_bindings _ [] = []
@@ -57,10 +48,10 @@ wexecute verbose (h:t) bindings =
                     Nothing -> ""
            line = case position of
                     Just p -> sourceLine p
-                    Nothing -> 0
+                    Nothing -> 1
            column = case position of
                      Just p -> sourceColumn p
-                     Nothing -> 0
+                     Nothing -> 1
            -- parse the code
            showPosition = name ++ ": Line " ++ show line ++ ", column " ++ show column
            position = fst h
@@ -102,13 +93,6 @@ wexecute verbose (h:t) bindings =
                                 val <- wexecute verbose t (new ++ bindings')
                                 return val
 
-replace :: Eq a => [a] -> [a] -> [a] -> [a]
-replace [] _ _ = []
-replace s find repl =
-    if take (length find) s == find
-        then repl ++ (replace (drop (length find) s) find repl)
-        else [head s] ++ (replace (tail s) find repl)
-
 -- returns a qualified file name from a list of identifiers provided by an import statement        
 importFileName [] = ".sco"
 importFileName (h:t) = "/" ++ h ++ (importFileName t)
@@ -142,4 +126,4 @@ execute verbose file bindings = do input <- readFile file
                                    let parsed = Read.read file input
                                    wexecute verbose 
                                             parsed 
-                                            ([(0, binding) | binding <- bindings])
+                                            ([(1, binding) | binding <- bindings])

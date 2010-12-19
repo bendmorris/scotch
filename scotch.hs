@@ -51,8 +51,8 @@ loop verbose bindings state =
         Just input -> do -- parse input
                          let parsed = snd $ head $ (Read.read "Interpreter" input)
                          imp' <- case parsed of
-                                   Import s -> importFile verbose 0 s
-                                   otherwise -> do return (False, [(0, (Pattern (Bit False), ([], Val $ Bit False)))])
+                                   Import s -> importFile verbose 1 s
+                                   otherwise -> do return (False, [(1, (Pattern (Bit False), ([], Val $ Bit False)))])
                          imp <- case imp' of
                                   (False, []) -> do -- the imported module failed to open
                                                     putStrLn ("Failed to open " ++ show (parsed))
@@ -75,7 +75,7 @@ loop verbose bindings state =
                                           Defun id params x Placeholder -> do return [(id, (params, x)), (id, ([], Val (HFunc id)))]
                                           Defproc id params x Placeholder -> do return [(id, (params, Val (Proc x))), (id, ([], Val (HFunc id)))]
                                           otherwise -> case result of
-                                                         Result (Proc p) -> do new <- (wexecute verbose [(Nothing, e) | e <- p] [(0, binding) | binding <- bindings])
+                                                         Result (Proc p) -> do new <- (wexecute verbose [(Nothing, e) | e <- p] [(1, binding) | binding <- bindings])
                                                                                return $ unscope new
                                                          otherwise -> do return []
                          -- output, if necessary
