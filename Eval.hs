@@ -56,6 +56,7 @@ substitute exp params =
     Func f args -> case inparamsid f params of
                      (f', []) -> Func f' [substitute arg params | arg <- args]
                      (f', otherargs) -> Func f' [substitute arg params | arg <- otherargs ++ args]
+    Output x y -> Output (substitute x params) (substitute y params)
     otherwise -> otherwise
 
 -- eval: computes the result of an expression as a Calculation
