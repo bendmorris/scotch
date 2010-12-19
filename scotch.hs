@@ -47,6 +47,7 @@ loop verbose bindings state =
      case line of
         Nothing -> return ()
         Just "quit" -> closeInput state
+        Just "restart" -> main
         Just input -> do -- parse input
                          let parsed = snd $ head $ (Read.read "Interpreter" input)
                          imp' <- case parsed of
