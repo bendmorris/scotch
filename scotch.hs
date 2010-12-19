@@ -85,7 +85,8 @@ loop verbose bindings state =
                                            Incomplete i -> return ()
                                            e -> putStrLn (show e)
                            otherwise -> case result of
-                                          Incomplete i -> return ()                                          
+                                          Incomplete i -> return ()
+                                          Result (Proc p) -> return ()
                                           otherwise -> putStrLn (show result)
                          -- continue loop
                          loop verbose (newBindings ++ (unscope imp) ++ bindings) state
