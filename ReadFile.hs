@@ -79,6 +79,7 @@ wexecute verbose (h:t) bindings =
                                                                                          Exception s -> Undefined s
                                                                                        ))))]
                             Defun id params x Placeholder -> do return [(scope, (id, (params, x))), (scope, (id, ([], Val (HFunc id))))]
+                            Defproc id params x Placeholder -> do return [(scope, (id, (params, Val (Proc x)))), (scope, (id, ([], Val (HFunc id))))]
                             Import s -> do i <- importFile verbose scope s
                                            b <- case i of 
                                                   (False, _) -> do putStrLn ("Failed to import module " ++ show s)
@@ -86,9 +87,9 @@ wexecute verbose (h:t) bindings =
                                                   (True, i) -> do return i
                                            return b
                                            
-                            otherwise -> do return []
-           -- interpret another file and add its final definitions to the stack            
-            
+                            otherwise -> case result of
+                                           Result (Proc p) -> wexecute verbose [(position, e) | e <- p] bindings
+                                           otherwise -> do return []            
            output x = case (eval x unscoped) of
                         Exception e -> do putStrLn ("Exception on line " ++ (show line) ++ ":\n\t" ++ e)
                                           return []

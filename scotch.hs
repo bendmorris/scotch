@@ -66,14 +66,18 @@ loop verbose bindings state =
                          if verbose then putStrLn (show parsed)
                                     else return ()
                          -- determine whether any definitions were made
-                         let newBindings = case parsed of
-                                             Def id x Placeholder -> [(id, ([], x))]
-                                             EagerDef id x Placeholder -> [(id, ([], (case eval x bindings of
-                                                                                        Result r -> Val r
-                                                                                        Exception s -> Undefined s
-                                                                                      )))]
-                                             Defun id params x Placeholder -> [(id, (params, x)), (id, ([], Val (HFunc id)))]
-                                             otherwise -> []
+                         newBindings <- case parsed of
+                                          Def id x Placeholder -> do return [(id, ([], x))]
+                                          EagerDef id x Placeholder -> do return [(id, ([], (case eval x bindings of
+                                                                                              Result r -> Val r
+                                                                                              Exception s -> Undefined s
+                                                                                             )))]
+                                          Defun id params x Placeholder -> do return [(id, (params, x)), (id, ([], Val (HFunc id)))]
+                                          Defproc id params x Placeholder -> do return [(id, (params, Val (Proc x))), (id, ([], Val (HFunc id)))]
+                                          otherwise -> case result of
+                                                         Result (Proc p) -> do new <- (wexecute verbose [(Nothing, e) | e <- p] [(0, binding) | binding <- bindings])
+                                                                               return $ unscope new
+                                                         otherwise -> do return []
                          -- output, if necessary
                          case parsed of
                            Output x y -> case (eval x bindings) of
@@ -81,7 +85,7 @@ loop verbose bindings state =
                                            Incomplete i -> return ()
                                            e -> putStrLn (show e)
                            otherwise -> case result of
-                                          Incomplete i -> return ()
+                                          Incomplete i -> return ()                                          
                                           otherwise -> putStrLn (show result)
                          -- continue loop
                          loop verbose (newBindings ++ (unscope imp) ++ bindings) state

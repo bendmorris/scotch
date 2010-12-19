@@ -34,6 +34,7 @@ substitute exp params =
     Var x -> if newname == Placeholder then Var x else newname
              where newname = inparams x params
     Val (List l) -> Val (List ([substitute e params | e <- l]))
+    Val (Proc p) -> Val (Proc ([substitute e params | e <- p]))
     Val v -> Val v
     Subs n x -> Subs (substitute n params) (substitute x params)
     Add x y -> Add (substitute x params) (substitute y params)
@@ -109,7 +110,12 @@ weval exp vars =
                                 otherwise -> Exception "Expected boolean"
     Def id x y -> weval y ((id, ([], x)) : vars)
     EagerDef id x y -> weval y ((id, ([], eager_eval x)) : vars)
-    Defun id params x y -> weval y ((id, (params, x)) : (id, ([], Val (HFunc id))): vars)
+    Defun id params x y -> weval y ((id, (params, x)) : 
+                                    (id, ([], Val (HFunc id))) : 
+                                    vars)
+    Defproc id params x y -> weval y ((id, (params, Val (Proc x))) : 
+                                      (id, ([], Val (HFunc id))) : 
+                                      vars)
     Var x -> weval (snd definition) vars
              where definition = var_binding x vars
     Func f args -> case vardef of
@@ -138,7 +144,7 @@ weval exp vars =
                             otherwise -> Undefined (show x)) vars
     Output x y -> weval y vars
  where var_binding :: Id -> [Binding] -> Call
-       var_binding x [] = ([], Undefined ("Variable " ++ show x))
+       var_binding x [] = ([], Undefined ("Undefined variable " ++ show x))
        var_binding x (h:t) = if (fst h) == x && 
                                 length (fst (snd h)) == 0 && 
                                 snd (snd h) /= Var (fst h)

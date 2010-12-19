@@ -9,8 +9,8 @@ import qualified Text.ParserCombinators.Parsec.Token as Token
 import Types
 
 languageDef =
-  emptyDef { Token.commentStart    = "#-",
-             Token.commentEnd      = "-#",
+  emptyDef { Token.commentStart    = "{-",
+             Token.commentEnd      = "-}",
              Token.commentLine     = "#",
              Token.identStart      = letter,
              Token.identLetter     = alphaNum <|> oneOf "_!'",
@@ -47,8 +47,7 @@ parser = many statement
 
 statement :: Parser PosExpr
 statement = whiteSpace >> do pos <- getPosition
-                             expr <- try subscriptStmt <|>
-                                     expression
+                             expr <- try subscriptStmt <|> expression
                              return (Just pos, expr)
 
 -- expression parsers
@@ -103,6 +102,29 @@ importStmt =
   do reserved "import"
      mod <- moduleName
      return $ Import mod
+
+defprocStmt = try defprocFun <|> defprocVar
+
+defprocVar :: Parser Expr
+defprocVar =
+  do var <- identifier
+     reservedOp "="
+     reserved "do"
+     exprs <- many (do expr <- expression
+                       reservedOp ";"
+                       return expr)
+     return $ Defproc (Name var) [] exprs Placeholder
+
+defprocFun :: Parser Expr
+defprocFun =
+  do var <- identifier
+     params <- parens idList
+     reservedOp "="
+     reserved "do"
+     exprs <- many (do expr <- expression
+                       reservedOp ";"
+                       return expr)
+     return $ Defproc (Name var) params exprs Placeholder
 
 defunStmt :: Parser Expr
 defunStmt =
@@ -187,7 +209,9 @@ notStmt =
      
 subscriptStmt :: Parser Expr
 subscriptStmt =
-  do expr <- expression
+  do expr <- try valueStmt <|> 
+             try varcallStmt <|>
+             funcallStmt
      reservedOp "["
      subs <- expression
      reservedOp "]"
@@ -279,7 +303,7 @@ varcallStmt =
      return $ Var (Name var)
 
 assignment :: Parser Expr
-assignment = try defunStmt <|> try eagerStmt <|> try assignStmt
+assignment = try defprocStmt <|> try defunStmt <|> try eagerStmt <|> try assignStmt
      
 nestwhere [] wexpr = wexpr
 nestwhere (h:t) wexpr = case h of

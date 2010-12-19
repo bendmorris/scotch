@@ -28,6 +28,7 @@ data Value = NumInt Integer
            | List [Expr]
            | Null
            | HFunc Id
+           | Proc [Expr]
            deriving Eq
 instance Show (Value) where
     show (Str s) = "\"" ++ s ++ "\""
@@ -37,10 +38,13 @@ instance Show (Value) where
     show (Bit False) = "false"
     show (List l) = show l
     show (HFunc f) = "func " ++ show f
+    show (Proc p) = "proc " ++ show p
     show (Null) = "null"
 
 -- a calculation, which may cause an exception if one of its members contains an exception
-data Calculation = Exception String | Result (Value) | Incomplete (Expr) deriving Eq
+data Calculation = Exception String | 
+                   Result (Value) | 
+                   Incomplete (Expr) deriving Eq
 instance Show (Calculation) where
     show (Result r) = show r
     show (Exception s) = "Exception: " ++ s
@@ -68,8 +72,9 @@ data Expr =
           | Def Id Expr Expr                -- identifier assignment
           | EagerDef Id Expr Expr           -- identifier assignment
           | Defun Id [Id] Expr Expr         -- function definition
+          | Defproc Id [Id] [Expr] Expr     -- procedure definition
           | Var Id                          -- identifier
-          | Func Id [Expr]                  -- function cal
+          | Func Id [Expr]                  -- function call
           | If Expr Expr Expr               -- conditional
           | For Id (Expr) (Expr)            -- iteration
           | Output (Expr) (Expr)            -- output
@@ -100,6 +105,7 @@ instance Show(Expr) where
     show (Def a b c) = "(def " ++ (show a) ++ se' [b, c] ++ ")"
     show (EagerDef a b c) = "(eager def " ++ (show a) ++ se' [b, c] ++ ")"
     show (Defun a b c d) = "(defun " ++ (show a) ++ " " ++ (show b) ++ se' [c, d] ++ ")"
+    show (Defproc a b c d) = "(defproc " ++ (show a) ++ " " ++ (show b) ++ "{" ++ (show c) ++ "}" ++ (show d) ++ ")"
     show (Var v) = "var " ++ show v
     show (Func f p) = "(func " ++ (show f) ++ " " ++ (show p) ++ ")"
     show (If cond x y) = se "if" [cond, x, y]
