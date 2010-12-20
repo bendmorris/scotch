@@ -94,31 +94,34 @@ wexecute verbose (h:t) bindings =
                                 return val
 
 -- returns a qualified file name from a list of identifiers provided by an import statement        
-importFileName [] = ".sco"
-importFileName (h:t) = "/" ++ h ++ (importFileName t)
+importFileName s = importName s ++ ".sco"
+importName [] = ""
+importName (h:t) = "/" ++ h ++ (importName t)
 -- returns (was the import successful?, list of imported bindings)
 importFile verbose scope s = do currDir <- getCurrentDirectory
                                 full_path <- splitExecutablePath
-                                let exepath = (fst full_path) ++ "scotch.lib"
-                                currDir_exists <- doesFileExist (currDir ++ importFileName s)
-                                exepath_exists <- doesFileExist (exepath ++ importFileName s)
-                                -- search current directory, then executable directory
-                                let path = case (s !! 0) of
-                                             "std" -> case exepath_exists of
-                                                        True -> exepath ++ (importFileName s)
-                                                        False -> ""
-                                             otherwise -> case (currDir_exists, exepath_exists) of
-                                                            (True, _) -> currDir ++ importFileName s
-                                                            (False, True) -> exepath ++ importFileName s
-                                                            (False, False) -> ""
-                                val <- case path of 
-                                         "" -> do return []
-                                         otherwise -> execute verbose (path) []
-                                let success = case path of
-                                                "" -> False
-                                                otherwise -> True
-                                let newval = [(scope, snd binding) | binding <- val]
-                                return (success, newval)
+                                let libpath = (fst full_path) ++ "scotch.lib"
+                                let ifn = importFileName s
+                                let idn = importName s
+                                currDir_file <- doesFileExist (currDir ++ ifn)
+                                currDir_dir <- doesDirectoryExist (currDir ++ idn)
+                                exeDir_file <- doesFileExist (libpath ++ ifn)
+                                exeDir_dir <- doesDirectoryExist (libpath ++ idn)
+                                let path | currDir_file = currDir ++ ifn
+                                         | currDir_dir = currDir ++ idn
+                                         | exeDir_file = libpath ++ ifn
+                                         | exeDir_dir = libpath ++ idn
+                                         | otherwise = ""
+                                let dir = currDir_dir || exeDir_dir
+                                if dir then importFile verbose scope (s ++ ["main"])
+                                 else do val <- case path of 
+                                                  "" -> do return []
+                                                  otherwise -> execute verbose (path) []
+                                         let success = case path of
+                                                         "" -> False
+                                                         otherwise -> True
+                                         let newval = [(scope, snd binding) | binding <- val]
+                                         return (success, newval)
 
 -- interpret the contents of a file
 execute :: Bool -> String -> [Binding] -> IO [ScopedBinding]
