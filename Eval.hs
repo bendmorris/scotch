@@ -8,7 +8,7 @@ evalList [] = Result (Bit True)
 evalList (h:t) = case h of
                    Val r -> evalList t
                    Undefined e -> Exception e
-                   otherwise -> Exception "Non-value used in list."
+                   otherwise -> Exception "Non-value used in list"
                    
 left [] 0 = []
 left (h:t) 0 = []

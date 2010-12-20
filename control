@@ -1,0 +1,6 @@
+Package: scotch-lang
+Version: 0.1 
+Architecture: all
+Maintainer: Ben Morris [ben@bendmorris.com]
+Provides: scotch-lang
+Description: Scotch, a developer-friendly functional programming language.
