@@ -20,7 +20,8 @@ languageDef =
                                       "true", "false",
                                       "and", "or", "not",
                                       "where", "case", "otherwise",
-                                      "do"
+                                      "do",
+                                      "int", "float", "str"
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
                                       "<", ">", "and", "or", "not", ":", "->",
@@ -80,6 +81,7 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try printStmt <|>
          try forStmt <|>
          try notStmt <|>
+         try conversionStmt <|>
          try valueStmt <|>
          try funcallStmt <|>
          try splitExpr <|>
@@ -207,6 +209,22 @@ notStmt =
   do reserved "not"
      expr <- expression
      return $ Not expr
+     
+conversionStmt :: Parser Expr
+conversionStmt = try toIntStmt <|> try toFloatStmt <|> toStrStmt
+
+toIntStmt =
+  do reserved "int"
+     expr <- parens expression
+     return $ ToInt expr
+toFloatStmt =
+  do reserved "float"
+     expr <- parens expression
+     return $ ToFloat expr
+toStrStmt =
+  do reserved "str"
+     expr <- parens expression
+     return $ ToStr expr
      
 subscriptStmt :: Parser Expr
 subscriptStmt =

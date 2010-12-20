@@ -36,6 +36,9 @@ substitute exp params =
     Val (List l) -> Val (List ([substitute e params | e <- l]))
     Val (Proc p) -> Val (Proc ([substitute e params | e <- p]))
     Val v -> Val v
+    ToInt x -> ToInt (substitute x params)
+    ToFloat x -> ToFloat (substitute x params)
+    ToStr x -> ToStr (substitute x params)
     Subs n x -> Subs (substitute n params) (substitute x params)
     Add x y -> Add (substitute x params) (substitute y params)
     Sub x y -> Sub (substitute x params) (substitute y params)
@@ -76,6 +79,19 @@ weval exp vars =
                                   Incomplete i -> i
                                 ) | item <- l]
     Val x -> Result x
+    ToInt x -> case (weval x vars) of
+                 Result (NumInt i) -> Result $ NumInt i
+                 Result (NumFloat f) -> Result $ NumInt (truncate f)
+                 Result (Str s) -> Result $ NumInt (read s)
+                 otherwise -> Exception ("Can't convert " ++ show otherwise ++ " to integer.")
+    ToFloat x -> case (weval x vars) of
+                         Result (NumInt i) -> Result $ NumFloat (fromIntegral i)
+                         Result (NumFloat f) -> Result $ NumFloat f
+                         Result (Str s) -> Result $ NumFloat (read s :: Double)
+                         otherwise -> Exception ("Can't convert " ++ show otherwise ++ " to float.")
+    ToStr x -> case (weval x vars) of                       
+                 Result (Str s) -> Result $ Str s
+                 otherwise -> Result $ Str (show otherwise)
     Subs n x -> case (weval x vars) of
                   Result (List l) -> case (weval n vars) of
                                        Result (NumInt n) -> if n >= 0 && 

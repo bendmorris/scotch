@@ -55,6 +55,9 @@ data Expr =
             Undefined String                -- undefined
           | Skip                            -- returns Null
           | Val (Value)                     -- value
+          | ToInt (Expr)                    -- conversion to integer
+          | ToFloat (Expr)                  -- conversion to float
+          | ToStr (Expr)                    -- conversion to string
           | Subs Expr Expr                  -- list subscript
           | Add Expr Expr                   -- addition
           | Sub Expr Expr                   -- subtraction
