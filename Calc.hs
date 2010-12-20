@@ -46,6 +46,11 @@ vprod (NumInt a) (NumFloat b) = Result (NumFloat ((realToFrac a) * b))
 vprod (NumFloat a) (NumInt b) = Result (NumFloat (a * (realToFrac b)))
 vprod a b = type_mismatch "*" a b
 -- division
+div_by_zero = Exception "Division by zero"
+vdiv (NumInt a) (NumInt 0) = div_by_zero
+vdiv (NumInt a) (NumFloat 0) = div_by_zero
+vdiv (NumFloat a) (NumInt 0) = div_by_zero
+vdiv (NumFloat a) (NumFloat 0) = div_by_zero
 vdiv (NumInt a) (NumInt b) = Result (NumInt (a `div` b))
 vdiv (NumFloat a) (NumFloat b) = Result (NumFloat (a / b))
 vdiv (NumInt a) (NumFloat b) = Result (NumFloat ((realToFrac a) / b))
