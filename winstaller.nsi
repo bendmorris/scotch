@@ -1,5 +1,6 @@
 # define the name of the installer
 outfile "scotch-0.1-installer.exe"
+icon "scotch.ico"
  
 # define the directory to install to, the desktop in this case as specified  
 # by the predefined $DESKTOP variable
@@ -16,7 +17,6 @@ setOutPath $INSTDIR
 # define what to install and place it in the output path
 
 file /r "installer\*.*"
-# icon "scotch.ico"
-createShortCut "$SMPROGRAMS\Scotch 0.1.lnk" "$INSTDIR\scotch.exe"
+createShortCut "$SMPROGRAMS\Scotch 0.1\Scotch.lnk" "$INSTDIR\scotch.exe"
  
 sectionEnd
