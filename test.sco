@@ -30,6 +30,15 @@ tests := tests + test(a(2), 3)
 tests := tests + test(len("abcdefg"), 7)
 tests := tests + test(left("abcdefg", 3), "abc")
 tests := tests + test(int("1234567"), 1234567)
+
+a = do b = 123;
+       c = 456;
+       
+a
+tests := tests + test(b, 123)
+tests := tests + test(c, 456)
+
+
 print tests
 print (if all((for test in tests, if test == "yes" then true else false))
         then "All tests passed."
