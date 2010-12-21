@@ -309,12 +309,12 @@ floatStmt =
 
 listValue :: Parser Value
 listValue =
-  do exprs <- squares exprList
+  do exprs <- squares (sepBy value (oneOf ","))
      return $ List exprs
 listStmt :: Parser Expr
 listStmt =
-  do list <- listValue
-     return $ Val list
+  do exprs <- squares exprList
+     return $ ListExpr exprs
      
      
 funcallStmt :: Parser Expr

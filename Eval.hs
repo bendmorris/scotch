@@ -5,10 +5,9 @@ import Calc
 
 -- evalList: checks a list for exceptions
 evalList [] = Result (Bit True)
-evalList (h:t) = case h of
-                   Val r -> evalList t
+evalList (h:t) = case h of                   
                    Undefined e -> Exception e
-                   otherwise -> Exception "Non-value used in list"
+                   otherwise -> evalList t
                    
 left [] 0 = []
 left (h:t) 0 = []
@@ -38,6 +37,7 @@ substitute exp params =
     ToInt x -> ToInt (substitute x params)
     ToFloat x -> ToFloat (substitute x params)
     ToStr x -> ToStr (substitute x params)
+    ListExpr l -> ListExpr ([substitute e params | e <- l])
     Subs n x -> Subs (substitute n params) (substitute x params)
     Add x y -> Add (substitute x params) (substitute y params)
     Sub x y -> Sub (substitute x params) (substitute y params)
@@ -71,14 +71,16 @@ weval exp vars =
     Undefined s -> Exception (s)
     Placeholder -> Incomplete (Placeholder)
     Skip -> Result Null
-    Val (List l) -> case (evalList r) of
-                        Result _ -> Result (List r)
-                        Exception e -> Exception e
-                    where r = [(case (weval item vars) of
-                                  Result r -> Val r
-                                  Exception e -> Undefined e
-                                  Incomplete i -> i
-                                ) | item <- l]
+    ListExpr l -> case (evalList l) of
+                    Result _ -> Result (List [case eval item vars of
+                                                Result r -> r
+                                              | item <- l])
+                    Exception e -> Exception e
+                  where r = [(case (weval item vars) of
+                                Result r -> Val r
+                                Exception e -> Undefined e
+                                Incomplete i -> i
+                              ) | item <- l]
     Val x -> Result x
     ToInt x -> case (weval x vars) of
                  Result (NumInt i) -> Result $ NumInt i
@@ -97,7 +99,7 @@ weval exp vars =
                   Result (List l) -> case (weval n vars) of
                                        Result (NumInt n) -> if n >= 0 && 
                                                                n < (fromIntegral (length l))
-                                                            then weval (l !! (fromIntegral n)) vars
+                                                            then Result (l !! (fromIntegral n))
                                                             else Exception ("Member " ++ show n ++ " not in list")
                                        otherwise -> Exception ("Non-numerical subscript " ++ show otherwise)
                   Result (Str s) -> case (weval n vars) of
@@ -140,12 +142,12 @@ weval exp vars =
                      Val (HFunc (h)) -> if length params > 0 
                                         then case expr of
                                                Func f' args' -> if fp == f' 
-                                                                then tailcall fp [substitute (args' !! n) (zip params args) | n <- [0 .. (length args) - 1]] args'
+                                                                then tailcall fp args args'
                                                                 else newcall
                                                otherwise -> newcall
                                         else case snd $ var_binding fp vars of
                                                Func f' args' -> weval (Func f' (args' ++ args)) vars
-                                               otherwise -> Exception $ "Function " ++ (show f) ++ " doesn't match any existing pattern."
+                                               otherwise -> Exception $ show expr
                      Func f' args' -> weval (Func f' (args' ++ args)) vars
                      otherwise -> Exception $ "Variable " ++ (show f) ++ " isn't a function"
                    where fp = case vardef of
@@ -157,9 +159,9 @@ weval exp vars =
                          expr = snd definition
                          newcall = weval (substitute expr (funcall (zip params args))) vars
                          tailcall f args args' = if definition' == definition 
-                                                  then tailcall f [case weval (substitute (args' !! n) (zip params args)) vars of
+                                                  then tailcall f [case weval (substitute (args' !! n) (funcall (zip params args))) vars of
                                                                      Result r -> Val r
-                                                                     otherwise -> Undefined (show otherwise)
+                                                                     otherwise -> Undefined $ show otherwise
                                                                    | n <- [0 .. (length args') - 1]] args'
                                                   else weval (substitute (snd definition') (funcall (zip (fst definition') args))) vars
                                                  where definition' = func_binding f args vars
@@ -170,8 +172,8 @@ weval exp vars =
                      Exception e -> Exception e
                      otherwise -> Exception $ "Non-boolean condition " ++ show cond
     For id x y -> weval (case (weval x vars) of
-                            Result (List l) -> Val (List (forloop id l y))
-                            Result v -> Val (List (forloop id [Val v] y))
+                            Result (List l) -> ListExpr (forloop id [Val item | item <- l] y)
+                            Result v -> ListExpr (forloop id [Val v] y)
                             otherwise -> Undefined (show x)) vars
     Range start end step -> case (weval start vars) of
                               Result v -> case v of
@@ -179,7 +181,7 @@ weval exp vars =
                                                           Result w -> case w of
                                                                         NumInt j -> case (weval step vars) of
                                                                                       Result u -> case u of
-                                                                                                    NumInt k -> Result $ List [Val (NumInt x) | x <- [i, i+k .. j]]
+                                                                                                    NumInt k -> Result $ List [NumInt x | x <- [i, i+k .. j]]
                                                                                                     otherwise -> Exception "Non-integer argument in range"
                                                                                       Exception e -> Exception e
                                                                                       otherwise -> Exception "Non-integer argument in range"
@@ -239,14 +241,14 @@ weval exp vars =
          case param of
             Name n -> h : funcall t
             Split x y -> case eager_eval arg of
-                            Val (List l) -> if length l > 0 then (Name x, eager_eval (head l)) :
-                                                                 (Name y, Val (List (tail l))) :
-                                                                 funcall t
-                                                            else [(Name x, Undefined "Can't split empty list")]
-                            Val (Str l) -> if length l > 0 then (Name x, Val (Str [head l])) :
-                                                                (Name y, Val (Str (tail l))) :
+                           Val (List l) -> if length l > 0 then (Name x, Val (head l)) :
+                                                                (Name y, Val (List (tail l))) :
                                                                 funcall t
-                                                           else [(Name x, Undefined "Can't split empty string")]
+                                                           else [(Name x, Undefined "Can't split empty list")]
+                           Val (Str l) -> if length l > 0 then (Name x, Val (Str [head l])) :
+                                                               (Name y, Val (Str (tail l))) :
+                                                               funcall t
+                                                          else [(Name x, Undefined "Can't split empty string")]
             Pattern _ -> funcall t
             where param = fst h
                   arg = snd h

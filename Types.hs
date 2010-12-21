@@ -27,7 +27,7 @@ data Value = NumInt Integer
            | NumDec Decimal
            | Str String
            | Bit Bool
-           | List [Expr]
+           | List [Value]
            | Null
            | HFunc Id
            | Proc [Expr]
@@ -58,6 +58,7 @@ data Expr =
             Undefined String                -- undefined
           | Skip                            -- returns Null
           | Val (Value)                     -- value
+          | ListExpr [Expr]                 -- list expression
           | ToInt (Expr)                    -- conversion to integer
           | ToFloat (Expr)                  -- conversion to float
           | ToStr (Expr)                    -- conversion to string
@@ -97,6 +98,7 @@ instance Show(Expr) where
     show (Undefined s) = s
     show Skip = "Skip"
     show (Val v) = show v
+    show (ListExpr l) = show l
     show (ToInt i) = "int(" ++ show i ++ ")"
     show (ToFloat f) = "float(" ++ show f ++ ")"
     show (ToStr s) = "str(" ++ show s ++ ")"
