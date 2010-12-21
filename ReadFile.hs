@@ -113,10 +113,15 @@ importFile verbose scope s = do currDir <- getCurrentDirectory
                                          | exeDir_dir = libpath ++ idn
                                          | otherwise = ""
                                 let dir = currDir_dir || exeDir_dir
+                                stdlib <- if s == ["std", "lib"] then do return (False, []) 
+                                                                 else importFile verbose 1 ["std", "lib"]
+                                let builtin = case stdlib of
+                                               (True, b) -> unscope b
+                                               (False, _) -> []
                                 if dir then importFile verbose scope (s ++ ["main"])
                                  else do val <- case path of 
                                                   "" -> do return []
-                                                  otherwise -> execute verbose (path) []
+                                                  otherwise -> execute verbose path builtin
                                          let success = case path of
                                                          "" -> False
                                                          otherwise -> True
