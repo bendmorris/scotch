@@ -159,6 +159,22 @@ weval exp vars =
                             Result (List l) -> Val (List (forloop id l y))
                             Result v -> Val (List (forloop id [Val v] y))
                             otherwise -> Undefined (show x)) vars
+    Range start end step -> case (weval start vars) of
+                              Result v -> case v of
+                                            NumInt i -> case (weval end vars) of
+                                                          Result w -> case w of
+                                                                        NumInt j -> case (weval step vars) of
+                                                                                      Result u -> case u of
+                                                                                                    NumInt k -> Result $ List [Val (NumInt x) | x <- [i, i+k .. j]]
+                                                                                                    otherwise -> Exception "Non-integer argument in range"
+                                                                                      Exception e -> Exception e
+                                                                                      otherwise -> Exception "Non-integer argument in range"
+                                                                        otherwise -> Exception "Non-integer argument in range"
+                                                          Exception e -> Exception e
+                                                          otherwise -> Exception "Non-integer argument in range"
+                                            otherwise -> Exception "Non-integer argument in range"
+                              Exception e -> Exception e
+                              otherwise -> Exception "Non-integer argument in range"
     Output x y -> weval y vars
  where var_binding :: Id -> [Binding] -> Call
        var_binding x [] = ([], Undefined ("Undefined variable " ++ show x))

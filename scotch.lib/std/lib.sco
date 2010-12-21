@@ -4,14 +4,6 @@
 len(h:t) = 1 + len(t)
 len([]) = 0
 
-# Returns a list of numbers from \start to \n, using step size \step.
-range(start, n, step) = start + 
-                        if start + step > n then [] 
-                                            else range(start + step, n, step)
-range(start, n) = range(start, n, 1)
-range(n) = range(n-1) + n
-range(0) = []
-
 # Returns the first element in a string or list.
 head(h:t) = h
 head([]) = []
@@ -79,7 +71,7 @@ right(h:t, n) = reverse(left(reverse(h:t), n))
 
 foldl(f, z, h:t) = foldl(f, f(z, h), t)
 foldl(f, z, []) = z
-foldr(f, z, h:t) = f(h, foldr(a, z, t))
+foldr(f, z, h:t) = f(h, foldr(f, z, t))
 foldr(f, z, []) = z
 
 filter(f, h:t) = case f(h) of 

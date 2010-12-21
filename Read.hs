@@ -79,6 +79,7 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try caseStmt <|>
          try skipStmt <|>
          try printStmt <|>
+         try rangeStmt <|>
          try forStmt <|>
          try notStmt <|>
          try conversionStmt <|>
@@ -193,6 +194,29 @@ printStmt =
   do reserved "print"
      expr <- expression
      return $ Output (expr) Placeholder
+     
+rangeStmt :: Parser Expr
+rangeStmt =
+  try (do reserved "range"
+          reservedOp "("
+          expr1 <- expression
+          reservedOp ","
+          expr2 <- expression
+          reservedOp ","
+          expr3 <- expression
+          reservedOp ")"
+          return $ Range expr1 expr2 expr3)
+  <|> try (do reserved "range"
+              reservedOp "("
+              expr1 <- expression
+              reservedOp ","
+              expr2 <- expression
+              reservedOp ")"
+              return $ Range expr1 expr2 (Val (NumInt 1)))
+  <|> try (do reserved "range"
+              expr <- parens expression
+              return $ Range (Val (NumInt 1)) expr (Val (NumInt 1)))
+
      
 forStmt :: Parser Expr
 forStmt =

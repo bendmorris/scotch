@@ -1,5 +1,6 @@
 module Types where
 
+import Data.Decimal
 import Text.ParserCombinators.Parsec
 
 -- a bindable identifier
@@ -23,6 +24,7 @@ unscope (h:t) = (snd h) : unscope t
 -- a value with its corresponding type
 data Value = NumInt Integer
            | NumFloat Double
+           | NumDec Decimal
            | Str String
            | Bit Bool
            | List [Expr]
@@ -34,6 +36,7 @@ instance Show (Value) where
     show (Str s) = "\"" ++ s ++ "\""
     show (NumInt n) = show n
     show (NumFloat n) = show n
+    show (NumDec n) = show n
     show (Bit True) = "true"
     show (Bit False) = "false"
     show (List l) = show l
@@ -80,6 +83,7 @@ data Expr =
           | Func Id [Expr]                  -- function call
           | If Expr Expr Expr               -- conditional
           | For Id (Expr) (Expr)            -- iteration
+          | Range (Expr) (Expr) (Expr)      -- range
           | Output (Expr) (Expr)            -- output
           | Placeholder                     -- the next statement should go here
           | Import [String]                 -- import module
