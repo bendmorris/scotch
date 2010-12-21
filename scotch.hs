@@ -49,7 +49,10 @@ loop verbose bindings state =
         Just "quit" -> closeInput state
         Just "restart" -> main
         Just input -> do -- parse input
-                         let parsed = snd $ head $ (Read.read "Interpreter" input)
+                         let readinput = Read.read "Interpreter" input
+                         let parsed = case readinput of 
+                                        [] -> Skip
+                                        otherwise -> snd $ head $ (readinput)
                          imp' <- case parsed of
                                    Import s -> importFile verbose 1 s
                                    otherwise -> do return (False, [(1, (Pattern (Bit False), ([], Val $ Bit False)))])

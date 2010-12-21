@@ -34,10 +34,8 @@ lexer = Token.makeTokenParser languageDef
 identifier = Token.identifier       lexer -- parses an identifier
 reserved   = Token.reserved         lexer -- parses a reserved name
 reservedOp = Token.reservedOp       lexer -- parses an operator
-parens     = Token.parens           lexer -- parses surrounding parenthesis:
-                                          --   parens p
-                                          -- takes care of the parenthesis and
-                                          -- uses p to parse what's inside them
+parens     = Token.parens           lexer -- parses surrounding parentheses
+squares    = Token.squares          lexer -- parses square brackets
 integer    = Token.integer          lexer -- parses an integer
 float      = Token.float            lexer -- parses a float
 whiteSpace = Token.whiteSpace       lexer -- parses whitespace
@@ -90,9 +88,7 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try whereStmt
   <|>
   (do list <- listStmt
-      reservedOp "["
-      subs <- expression
-      reservedOp "]"
+      subs <- squares expression
       return $ Subs subs (list))
 
 -- syntax parsers
@@ -255,9 +251,7 @@ subscriptStmt =
   do expr <- try valueStmt <|> 
              try varcallStmt <|>
              funcallStmt
-     reservedOp "["
-     subs <- expression
-     reservedOp "]"
+     subs <- squares expression
      return $ Subs subs expr
 
 -- value parsers
@@ -318,9 +312,7 @@ floatStmt =
 
 listValue :: Parser Value
 listValue =
-  do reservedOp "["
-     exprs <- exprList
-     reservedOp "]"
+  do exprs <- squares exprList
      return $ List exprs
 listStmt :: Parser Expr
 listStmt =
