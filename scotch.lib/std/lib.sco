@@ -36,8 +36,9 @@ contains(h:t, s) = if prefix(h:t, s) then true else contains(t, s)
 contains([], s) = false
 
 # Returns the number of times \s appears in \h:t.
-count(h:t, s) = (if prefix(h:t, s) then 1 else 0) + count(t, s)
-count([], s) = 0
+count(h:t, s, a) = count(t, s, a + (if prefix(h:t, s) then 1 else 0))
+count([], s, a) = a
+count(l, s) = count(l, s, 0)
 
 # Removes all characters in \s from the left of a string.
 lstrip(h:t, s) = if contains(s, h) then lstrip(t, s) else h + t
