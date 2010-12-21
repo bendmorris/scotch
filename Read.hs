@@ -85,11 +85,8 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try funcallStmt <|>
          try splitExpr <|>
          try varcallStmt <|>
-         try whereStmt
-  <|>
-  (do list <- listStmt
-      subs <- squares expression
-      return $ Subs subs (list))
+         try whereStmt <|>
+         subscriptStmt
 
 -- syntax parsers
 

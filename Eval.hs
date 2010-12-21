@@ -33,7 +33,6 @@ substitute exp params =
   case exp of
     Var x -> if newname == Placeholder then Var x else newname
              where newname = inparams x params
-    Val (List l) -> Val (List ([substitute e params | e <- l]))
     Val (Proc p) -> Val (Proc ([substitute e params | e <- p]))
     Val v -> Val v
     ToInt x -> ToInt (substitute x params)
@@ -139,7 +138,11 @@ weval exp vars =
              where definition = var_binding x vars
     Func f args -> case vardef of
                      Val (HFunc (h)) -> if length params > 0 
-                                        then weval (substitute expr (funcall (zip params args))) vars
+                                        then case expr of
+                                               Func f' args' -> if fp == f' 
+                                                                then tailcall fp [substitute (args' !! n) (zip params args) | n <- [0 .. (length args) - 1]] args'
+                                                                else newcall
+                                               otherwise -> newcall
                                         else case snd $ var_binding fp vars of
                                                Func f' args' -> weval (Func f' (args' ++ args)) vars
                                                otherwise -> Exception $ "Function " ++ (show f) ++ " doesn't match any existing pattern."
@@ -152,6 +155,15 @@ weval exp vars =
                          definition = func_binding fp args vars
                          params = fst definition
                          expr = snd definition
+                         newcall = weval (substitute expr (funcall (zip params args))) vars
+                         tailcall f args args' = if definition' == definition 
+                                                  then tailcall f [case weval (substitute (args' !! n) (zip params args)) vars of
+                                                                     Result r -> Val r
+                                                                     otherwise -> Undefined (show otherwise)
+                                                                   | n <- [0 .. (length args') - 1]] args'
+                                                  else weval (substitute (snd definition') (funcall (zip (fst definition') args))) vars
+                                                 where definition' = func_binding f args vars
+                                                 
     If cond x y -> case (weval cond vars) of
                      Result (Bit True) -> weval x vars
                      Result (Bit False) -> weval y vars

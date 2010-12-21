@@ -97,6 +97,9 @@ instance Show(Expr) where
     show (Undefined s) = s
     show Skip = "Skip"
     show (Val v) = show v
+    show (ToInt i) = "int(" ++ show i ++ ")"
+    show (ToFloat f) = "float(" ++ show f ++ ")"
+    show (ToStr s) = "str(" ++ show s ++ ")"
     show (Subs n s) = show s ++ "[" ++ show n ++ "]"
     show (Add x y) = se "+" [x, y]
     show (Sub x y) = se "-" [x, y]
@@ -117,6 +120,7 @@ instance Show(Expr) where
     show (Func f p) = "(func " ++ (show f) ++ " " ++ (show p) ++ ")"
     show (If cond x y) = se "if" [cond, x, y]
     show (For x y z) = "(for " ++ (show x) ++ " in " ++ (show y) ++ " " ++ (show z) ++ ")"
+    show (Range x y z) = "range(" ++ (show x) ++ "," ++ (show y) ++ "," ++ (show z) ++ ")"
     show (Output x y) = se "print" [x, y]
     show (Placeholder) = "**nothing**"
     show (Import s) = "import " ++ (show s)
