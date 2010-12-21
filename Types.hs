@@ -31,6 +31,7 @@ data Value = NumInt Integer
            | Null
            | HFunc Id
            | Proc [Expr]
+           | UndefinedValue String
            deriving Eq
 instance Show (Value) where
     show (Str s) = "\"" ++ s ++ "\""
@@ -43,6 +44,7 @@ instance Show (Value) where
     show (HFunc f) = "func " ++ show f
     show (Proc p) = "proc " ++ show p
     show (Null) = "null"
+    show (UndefinedValue s) = show s
 
 -- a calculation, which may cause an exception if one of its members contains an exception
 data Calculation = Exception String | 

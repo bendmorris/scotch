@@ -7,6 +7,7 @@ import Calc
 evalList [] = Result (Bit True)
 evalList (h:t) = case h of                   
                    Undefined e -> Exception e
+                   Val (UndefinedValue e) -> Exception e
                    otherwise -> evalList t
                    
 left [] 0 = []
@@ -72,16 +73,23 @@ weval exp vars =
     Placeholder -> Incomplete (Placeholder)
     Skip -> Result Null
     ListExpr l -> case (evalList l) of
-                    Result _ -> Result (List [case eval item vars of
-                                                Result r -> r
-                                              | item <- l])
+                    Result _ -> case evalList [Val item | item <- l'] of
+                                  Exception e -> Exception e
+                                  otherwise -> Result $ List l'
+                                where l' = [case eval item vars of
+                                              Result r -> r
+                                              Exception e -> UndefinedValue (e)
+                                              otherwise -> UndefinedValue (show otherwise)
+                                            | item <- l]
                     Exception e -> Exception e
                   where r = [(case (weval item vars) of
                                 Result r -> Val r
                                 Exception e -> Undefined e
                                 Incomplete i -> i
                               ) | item <- l]
-    Val x -> Result x
+    Val x -> case x of
+               UndefinedValue s -> Exception s
+               otherwise -> Result x
     ToInt x -> case (weval x vars) of
                  Result (NumInt i) -> Result $ NumInt i
                  Result (NumFloat f) -> Result $ NumInt (truncate f)
