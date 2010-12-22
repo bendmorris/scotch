@@ -49,13 +49,18 @@ instance Show (Value) where
     show (File f) = "<<" ++ show f ++ ">>"
 
 -- a calculation, which may cause an exception if one of its members contains an exception
-data Calculation = Exception String | 
-                   Result (Value) | 
-                   Incomplete (Expr) deriving Eq
+data Calculation = Exception String
+                 | Result (Value) 
+                 | Incomplete (Expr) 
+                 | PrintOutput String
+                 | FileOutput String String
+                   deriving Eq
 instance Show (Calculation) where
     show (Result r) = show r
     show (Exception s) = "Exception: " ++ s
     show (Incomplete e) = show e
+    show (PrintOutput p) = show p
+    show (FileOutput f x) = show f ++ " " ++ show x
 
 -- represents an arithmetic expression
 data Expr = 
@@ -89,11 +94,12 @@ data Expr =
           | If Expr Expr Expr               -- conditional
           | For Id (Expr) (Expr)            -- iteration
           | Range (Expr) (Expr) (Expr)      -- range
-          | Output (Expr) (Expr)            -- output
+          | Output Expr                     -- output
           | Placeholder                     -- the next statement should go here
           | Import [String]                 -- import module
           | FileObj Expr                    -- file object
           | FileRead Expr                   -- read file
+          | FileWrite Expr Expr             -- write to file
           deriving Eq
 se' :: (Show a) => [a] -> String
 se' [] = []
@@ -129,10 +135,11 @@ instance Show(Expr) where
     show (If cond x y) = se "if" [cond, x, y]
     show (For x y z) = "(for " ++ (show x) ++ " in " ++ (show y) ++ " " ++ (show z) ++ ")"
     show (Range x y z) = "range(" ++ (show x) ++ "," ++ (show y) ++ "," ++ (show z) ++ ")"
-    show (Output x y) = se "print" [x, y]
+    show (Output x) = "print " ++ show x
     show (Placeholder) = "**nothing**"
     show (Import s) = "import " ++ (show s)
     show (FileObj f) = "<<" ++ show f ++ ">>"
-    show (FileRead f) = "read <" ++ show f ++ ">"
+    show (FileRead f) = "read " ++ show f
+    show (FileWrite f x) = "write " ++ show f ++ " " ++ show x
     
 type PosExpr = (Maybe SourcePos, Expr)

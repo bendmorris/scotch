@@ -49,18 +49,14 @@ wexecute verbose (h:t) bindings =
                          otherwise -> case result of
                                         Result (Proc p) -> wexecute verbose [(position, e) | e <- p] bindings
                                         otherwise -> do return []            
-     case parsed of
-        -- output if the parsed code results in output
-        Output x y -> output x newBindings
-        otherwise -> case result of
-                         Exception e -> do putStrLn ("\nException in " ++ (showPosition) ++ "\n" ++ e ++ "\n")
-                                           return []
-                         otherwise -> case parsed of
-                                        -- output if the evaluated code results in output
-                                        Output x y -> do output x newBindings
-                                                         return []
-                                        otherwise -> do new <- newBindings
-                                                        wexecute verbose t (new ++ bindings')
+     case result of
+       Exception e -> do putStrLn ("\nException in " ++ (showPosition) ++ "\n" ++ e ++ "\n")
+                         return []
+       PrintOutput x -> do putStrLn x 
+                           new <- newBindings
+                           wexecute verbose t (new ++ bindings')
+       otherwise -> do new <- newBindings
+                       wexecute verbose t (new ++ bindings')
      where -- scope is determined by amount of leading whitespace
            scope = column
            name = case position of
@@ -78,19 +74,6 @@ wexecute verbose (h:t) bindings =
            -- remove any bindings no longer relevant at current scope
            bindings' = scoped_bindings scope bindings
            unscoped = unscope bindings'
-           output x newBindings = 
-             case (eval x unscoped) of
-                Exception e -> do putStrLn ("Exception on line " ++ (show line) ++ ":\n\t" ++ e)
-                                  return []
-                Result (Str s) -> do putStrLn s
-                                     new <- newBindings
-                                     val <- wexecute verbose t (new ++ bindings')
-                                     return val
-                s -> do putStrLn (show s)
-                        new <- newBindings
-                        val <- wexecute verbose t (new ++ bindings')
-                        return val
-
 
 -- returns a qualified file name from a list of identifiers provided by an import statement        
 importFileName s = importName s ++ ".sco"

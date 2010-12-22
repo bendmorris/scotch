@@ -85,14 +85,11 @@ loop verbose bindings state =
                                                                                return $ unscope new
                                                          otherwise -> do return []
                          -- output, if necessary
-                         case parsed of
-                           Output x y -> case (eval x bindings) of
-                                           Result (Str s) -> putStrLn s
-                                           Incomplete i -> return ()
-                                           e -> putStrLn (show e)
-                           otherwise -> case result of
-                                          Incomplete i -> return ()
-                                          Result (Proc p) -> return ()
-                                          otherwise -> putStrLn (show result)
+                         case result of
+                           Incomplete i -> return ()
+                           Result (Proc p) -> return ()
+                           PrintOutput p -> putStrLn p
+                           FileOutput f x -> writeFile f x
+                           otherwise -> putStrLn (show result)
                          -- continue loop
                          loop verbose (newBindings ++ (unscope imp) ++ bindings) state

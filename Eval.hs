@@ -151,11 +151,19 @@ weval exp vars =
                                             otherwise -> Exception "Non-integer argument in range"
                               Exception e -> Exception e
                               otherwise -> Exception "Non-integer argument in range"
-    Output x y -> weval y vars
+    Output x -> case (weval x vars) of
+                  Result (Str s) -> PrintOutput s
+                  Result r -> PrintOutput (show r)
+                  otherwise -> otherwise
     FileObj f -> case weval f vars of
                    Result (Str s) -> Result $ File s
                    otherwise -> Exception "Non-string filename"
     FileRead f -> Incomplete (Placeholder)
+    FileWrite f x -> case (weval f vars) of
+                       Result (File f) -> case (weval x vars) of
+                                            Result (Str s) -> FileOutput f s
+                                            otherwise -> Exception $ "Write non-string " ++ show otherwise
+                       otherwise -> Exception $ "Write to non-file " ++ show otherwise
  where var_binding :: Id -> [Binding] -> Call
        var_binding x [] = ([], Undefined ("Undefined variable " ++ show x))
        var_binding x (h:t) = if (fst h) == x && 
@@ -305,9 +313,8 @@ subfile exp vars =
     For id x y -> do x' <- subfile x vars
                      y' <- subfile y vars
                      return $ For id x' y'
-    Output x y -> do x' <- subfile x vars
-                     y' <- subfile y vars
-                     return $ Output x' y'
+    Output x -> do x' <- subfile x vars
+                   return $ Output x'
     FileRead f -> do case weval f vars of
                        Result (File f) -> do exists <- doesFileExist f
                                              case exists of 
