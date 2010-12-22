@@ -1,5 +1,6 @@
 module Eval where
 
+import System.Directory
 import Types
 import Calc
 import Substitute
@@ -237,18 +238,14 @@ subfile exp vars =
   case exp of
     Val (Proc p) -> do list <- iolist [subfile e vars | e <- p]
                        return $ Val (Proc list)
-    FileRead f -> do let filename = case weval f vars of
-                                      Result (File f) -> f
-                                      otherwise -> "Error"
-                     contents <- readFile filename
-                     return $ Val $ Str contents
     ToInt x -> do x' <- subfile x vars
                   return $ ToInt x'
     ToFloat x -> do x' <- subfile x vars
                     return $ ToFloat x'
     ToStr x -> do x' <- subfile x vars
                   return $ ToStr x'
-    --ListExpr l -> ListExpr ([subfile e vars | e <- l])
+    ListExpr l -> do list <- iolist [subfile e vars | e <- l]
+                     return $ ListExpr list
     Subs x y -> do x' <- subfile x vars
                    y' <- subfile y vars
                    return $ Subs x' y'
@@ -311,4 +308,11 @@ subfile exp vars =
     Output x y -> do x' <- subfile x vars
                      y' <- subfile y vars
                      return $ Output x' y'
+    FileRead f -> do case weval f vars of
+                       Result (File f) -> do exists <- doesFileExist f
+                                             case exists of 
+                                               True -> do contents <- readFile f
+                                                          return $ Val $ Str contents
+                                               False -> return $ Undefined "File does not exist"
+                       otherwise -> do return $ Undefined "Invalid file"
     otherwise -> do return otherwise

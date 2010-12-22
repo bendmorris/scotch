@@ -46,7 +46,7 @@ instance Show (Value) where
     show (Proc p) = "proc " ++ show p
     show (Null) = "null"
     show (UndefinedValue s) = show s
-    show (File f) = "<" ++ show f ++ ">"
+    show (File f) = "<<" ++ show f ++ ">>"
 
 -- a calculation, which may cause an exception if one of its members contains an exception
 data Calculation = Exception String | 
@@ -132,7 +132,7 @@ instance Show(Expr) where
     show (Output x y) = se "print" [x, y]
     show (Placeholder) = "**nothing**"
     show (Import s) = "import " ++ (show s)
-    show (FileObj f) = "<" ++ show f ++ ">"
+    show (FileObj f) = "<<" ++ show f ++ ">>"
     show (FileRead f) = "read <" ++ show f ++ ">"
     
 type PosExpr = (Maybe SourcePos, Expr)
