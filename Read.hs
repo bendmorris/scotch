@@ -217,16 +217,25 @@ rangeStmt =
               expr <- parens expression
               return $ Range (Val (NumInt 1)) expr (Val (NumInt 1)))
 
-     
-forStmt :: Parser Expr
-forStmt =
-  do reserved "for"
-     iterator <- identifier
+inStmt :: Parser (String, Expr)
+inStmt = 
+  do iterator <- identifier
      reserved "in"
      list <- expression
      reservedOp ","
+     return (iterator, list)
+     
+nestedListComp (h:t) expr = For (Name (fst h)) (snd h) (nestedListComp t expr)
+nestedListComp [] expr = expr
+
+listCompStmt :: Parser Expr
+listCompStmt =
+  do reserved "for"
+     ins <- many (try inStmt)
      expr <- expression
-     return $ For (Name iterator) list expr
+     return $ nestedListComp ins expr
+     
+forStmt = squares listCompStmt
      
 notStmt :: Parser Expr
 notStmt =
