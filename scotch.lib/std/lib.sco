@@ -94,6 +94,13 @@ sum(l) = sum(l, 0)
 prod(h:t) = foldl(multiply, 0, h:t)
 
 sort(h:t) = qsort(h:t)
-qsort(h:t) = (qsort(less) + h + qsort(more)) 
-             where less = filter(gt(h), t), more = filter(lte(h), t)
-qsort([]) = []
+qsort(h:t, n) = (case len(h:t) < n of
+                   true -> h:t, 
+                   false -> (qsort(less) + h + qsort(more)))
+                where less = filter(gt(h), t), more = filter(lte(h), t)
+qsort([], n) = []
+qsort(l) = qsort(l, 1)
+insert(x, h:t, a) = if x > h then h + insert(x, t) else ([x] + [h] + t)
+insert(x, [], a) = a + x
+insort(h:t) = insert(h, (insort(t)))
+insort([]) = []
