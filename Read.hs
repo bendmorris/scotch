@@ -25,7 +25,7 @@ languageDef =
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
                                       "<", ">", "and", "or", "not", ":", "->",
-                                      "<=", ">="
+                                      "<=", ">=", "+="
                                      ]
            }
            
@@ -137,8 +137,15 @@ eagerStmt =
      w <- whiteSpace
      reservedOp ":="
      w <- whiteSpace
-     expr1 <- expression
-     return $ EagerDef (Name var) expr1 Placeholder
+     expr <- expression
+     return $ EagerDef (Name var) expr Placeholder
+     
+accumulateStmt :: Parser Expr
+accumulateStmt =
+  do var <- identifier
+     reservedOp "+="
+     expr <- expression
+     return $ EagerDef (Name var) (Add (Var (Name var)) (expr)) Placeholder
      
 assignStmt :: Parser Expr
 assignStmt =
@@ -335,7 +342,11 @@ varcallStmt =
      return $ Var (Name var)
 
 assignment :: Parser Expr
-assignment = try defprocStmt <|> try defunStmt <|> try eagerStmt <|> try assignStmt
+assignment = try defprocStmt <|> 
+             try defunStmt <|> 
+             try accumulateStmt <|> 
+             try eagerStmt <|> 
+             assignStmt
      
 nestwhere [] wexpr = wexpr
 nestwhere (h:t) wexpr = case h of
@@ -358,9 +369,9 @@ gtEq x y = Not (Lt x y)
 
 operators :: [[ Operator Char st Expr ]]
 operators = [[Infix  (reservedOp "^"   >> return (Exp             )) AssocLeft],
-             [Infix  (reservedOp "*"   >> return (Prod            )) AssocLeft ,
+             [Infix  (reservedOp "*"   >> return (Prod            )) AssocLeft,
               Infix  (reservedOp "/"   >> return (Div             )) AssocLeft],
-             [Infix  (reservedOp "+"   >> return (Add             )) AssocLeft ,
+             [Infix  (reservedOp "+"   >> return (Add             )) AssocLeft,
               Infix  (reservedOp "-"   >> return (Sub             )) AssocLeft],
              [Infix  (reservedOp "=="  >> return (Eq              )) AssocLeft,
               Infix  (reservedOp "<="  >> return (ltEq            )) AssocLeft,
