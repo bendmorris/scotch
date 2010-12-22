@@ -15,14 +15,7 @@ fib(n) = fib'(0,1,n)
 # square root
 sqrt(n) = n ^ 0.5
 
-# arithmetic, sum, product, mean
-add(x, y) = x + y
-subtract(x, y) = x - y
-multiply(x, y) = x * y
-divide(x, y) = x / y
-sum(h:t, s) = foldl(add, s, h:t)
-sum(l) = sum(l, 0)
-prod(h:t) = foldl(multiply, 0, h:t)
+# mean, median
 mean(h:t) = sum(h:t) / len(h:t)
 mean([]) = 0
 median'(h:t) = case len(h:t) of 

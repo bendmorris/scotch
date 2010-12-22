@@ -79,3 +79,21 @@ filter(f, h:t) = case f(h) of
                    true -> h + filter(f, t),
                    otherwise -> filter(f, t)
 filter(f, []) = []
+
+add(x, y) = x + y
+subtract(x, y) = x - y
+multiply(x, y) = x * y
+divide(x, y) = x / y
+gt(x, y) = x > y
+gte(x, y) = x >= y
+lt(x, y) = x < y
+lte(x, y) = x <= y
+eq(x, y) = x == y
+sum(h:t, s) = foldl(add, s, h:t)
+sum(l) = sum(l, 0)
+prod(h:t) = foldl(multiply, 0, h:t)
+
+sort(h:t) = qsort(h:t)
+qsort(h:t) = (qsort(less) + h + qsort(more)) 
+             where less = filter(gt(h), t), more = filter(lte(h), t)
+qsort([]) = []
