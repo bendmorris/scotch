@@ -2,6 +2,7 @@ module Eval where
 
 import Types
 import Calc
+import Substitute
 
 -- evalList: checks a list for exceptions
 evalList [] = Result (Bit True)
@@ -13,56 +14,6 @@ evalList (h:t) = case h of
 left [] 0 = []
 left (h:t) 0 = []
 left (h:t) n = h : (left t (n - 1))
-
-inparams :: Id -> [(Id, Expr)] -> Expr
-inparams x [] = Placeholder
-inparams x (h:t) = if x == (fst h) then snd h else inparams x t
-
-inparamsid :: Id -> [(Id, Expr)] -> (Id, [Expr])
-inparamsid x [] = (x, [])
-inparamsid x (h:t) = if x == (fst h) then
-                       case snd h of
-                         Var v -> (v, [])
-                         Val (HFunc h) -> (h, [])
-                         Func f args -> (f, args)
-                         otherwise -> inparamsid x t
-                      else inparamsid x t
-
-substitute :: Expr -> [(Id, Expr)] -> Expr
-substitute exp params =
-  case exp of
-    Var x -> if newname == Placeholder then Var x else newname
-             where newname = inparams x params
-    Val (Proc p) -> Val (Proc ([substitute e params | e <- p]))
-    Val v -> Val v
-    ToInt x -> ToInt (substitute x params)
-    ToFloat x -> ToFloat (substitute x params)
-    ToStr x -> ToStr (substitute x params)
-    ListExpr l -> ListExpr ([substitute e params | e <- l])
-    Subs n x -> Subs (substitute n params) (substitute x params)
-    Add x y -> Add (substitute x params) (substitute y params)
-    Sub x y -> Sub (substitute x params) (substitute y params)
-    Prod x y -> Prod (substitute x params) (substitute y params)
-    Div x y -> Div (substitute x params) (substitute y params)
-    Exp x y -> Exp (substitute x params) (substitute y params)
-    Eq x y -> Eq (substitute x params) (substitute y params)
-    InEq x y -> InEq (substitute x params) (substitute y params)
-    Gt x y -> Gt (substitute x params) (substitute y params)
-    Lt x y -> Lt (substitute x params) (substitute y params)
-    And x y -> And (substitute x params) (substitute y params)
-    Or x y -> Or (substitute x params) (substitute y params)
-    Not x -> Not (substitute x params)
-    EagerDef id x y -> EagerDef id (substitute x params) (substitute y params)
-    Def id x y -> Def id (substitute x params) (substitute y params)
-    Defun id p x y -> Defun id p (substitute x params) (substitute y params)
-    If x y z -> If (substitute x params) (substitute y params) (substitute z params)
-    For id x y -> For id (substitute x params) (substitute y params)
-    Range start stop step -> Range (substitute start params) (substitute stop params) (substitute step params)
-    Func f args -> case inparamsid f params of
-                     (f', []) -> Func f' [substitute arg params | arg <- args]
-                     (f', otherargs) -> Func f' [substitute arg params | arg <- otherargs ++ args]
-    Output x y -> Output (substitute x params) (substitute y params)
-    otherwise -> otherwise
 
 -- eval: computes the result of an expression as a Calculation
 weval :: Expr -> [Binding] -> Calculation
@@ -269,3 +220,89 @@ weval exp vars =
                                 
 eval :: Expr -> [Binding] -> Calculation
 eval exp bindings = weval exp bindings
+
+
+
+
+
+iolist :: [IO Expr] -> IO [Expr]
+iolist [] = do return []
+iolist (h:t) = do item <- h
+                  rest <- iolist t
+                  return (item:rest)
+
+subfile :: Expr -> [Binding] -> IO Expr
+subfile exp vars =
+  case exp of
+    Val (Proc p) -> do list <- iolist [subfile e vars | e <- p]
+                       return $ Val (Proc list)
+    FileRead f -> do let filename = case weval f vars of
+                                      Result (Str s) -> s
+                                      otherwise -> "Error"
+                     contents <- readFile filename
+                     return $ Val $ Str contents
+    ToInt x -> do x' <- subfile x vars
+                  return $ ToInt x'
+    ToFloat x -> do x' <- subfile x vars
+                    return $ ToFloat x'
+    ToStr x -> do x' <- subfile x vars
+                  return $ ToStr x'
+    --ListExpr l -> ListExpr ([subfile e vars | e <- l])
+    Subs x y -> do x' <- subfile x vars
+                   y' <- subfile y vars
+                   return $ Subs x' y'
+    Add x y -> do x' <- subfile x vars
+                  y' <- subfile y vars
+                  return $ Add x' y'
+    Sub x y -> do x' <- subfile x vars
+                  y' <- subfile y vars
+                  return $ Sub x' y'
+    Prod x y -> do x' <- subfile x vars
+                   y' <- subfile y vars
+                   return $ Prod x' y'
+    Div x y -> do x' <- subfile x vars
+                  y' <- subfile y vars
+                  return $ Div x' y'
+    Exp x y -> do x' <- subfile x vars
+                  y' <- subfile y vars
+                  return $ Exp x' y'
+    Eq x y -> do x' <- subfile x vars
+                 y' <- subfile y vars
+                 return $ Eq x' y'
+    InEq x y -> do x' <- subfile x vars
+                   y' <- subfile y vars
+                   return $ InEq x' y'
+    Gt x y -> do x' <- subfile x vars
+                 y' <- subfile y vars
+                 return $ Gt x' y'
+    Lt x y -> do x' <- subfile x vars
+                 y' <- subfile y vars
+                 return $ Lt x' y'
+    And x y -> do x' <- subfile x vars
+                  y' <- subfile y vars
+                  return $ And x' y'
+    Or x y -> do x' <- subfile x vars
+                 y' <- subfile y vars
+                 return $ Or x' y'
+    Not x -> do x' <- subfile x vars
+                return $ Not x'
+    EagerDef id x y -> do x' <- subfile x vars
+                          y' <- subfile y vars
+                          return $ EagerDef id x' y'
+    Def id x y -> do x' <- subfile x vars
+                     y' <- subfile y vars
+                     return $ Def id x' y'
+    Defun id p x y -> do x' <- subfile x vars
+                         y' <- subfile y vars
+                         return $ Defun id p x' y'
+    If x y z -> do x' <- subfile x vars
+                   y' <- subfile y vars
+                   z' <- subfile z vars
+                   return $ If x' y' z'
+    For id x y -> do x' <- subfile x vars
+                     y' <- subfile y vars
+                     return $ For id x' y'
+    Output x y -> do x' <- subfile x vars
+                     y' <- subfile y vars
+                     return $ Output x' y'
+    otherwise -> do return otherwise

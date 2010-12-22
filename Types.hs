@@ -32,6 +32,7 @@ data Value = NumInt Integer
            | HFunc Id
            | Proc [Expr]
            | UndefinedValue String
+           | ReadFile String
            deriving Eq
 instance Show (Value) where
     show (Str s) = "\"" ++ s ++ "\""
@@ -90,6 +91,7 @@ data Expr =
           | Output (Expr) (Expr)            -- output
           | Placeholder                     -- the next statement should go here
           | Import [String]                 -- import module
+          | FileRead Expr                   -- read file
           deriving Eq
 se' :: (Show a) => [a] -> String
 se' [] = []
@@ -128,5 +130,6 @@ instance Show(Expr) where
     show (Output x y) = se "print" [x, y]
     show (Placeholder) = "**nothing**"
     show (Import s) = "import " ++ (show s)
+    show (FileRead f) = "read <" ++ show f ++ ">"
     
 type PosExpr = (Maybe SourcePos, Expr)

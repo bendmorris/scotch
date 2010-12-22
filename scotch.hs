@@ -7,6 +7,7 @@ import Data.List
 import Types
 import Read
 import Eval
+import Substitute
 import System.Console.Haskeline
 import System.Console.Haskeline.IO
 import ReadFile
@@ -52,9 +53,9 @@ loop verbose bindings state =
                           loop verbose bindings state
         Just input -> do -- parse input
                          let readinput = Read.read "Interpreter" input
-                         let parsed = case readinput of 
-                                        [] -> Skip
-                                        otherwise -> snd $ head $ (readinput)
+                         parsed <- subfile (case readinput of 
+                                                 [] -> Skip
+                                                 otherwise -> snd $ head $ (readinput)) bindings
                          imp' <- case parsed of
                                    Import s -> importFile verbose 1 s
                                    otherwise -> do return (False, [(1, (Pattern (Bit False), ([], Val $ Bit False)))])

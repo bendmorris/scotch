@@ -36,6 +36,7 @@ reserved   = Token.reserved         lexer -- parses a reserved name
 reservedOp = Token.reservedOp       lexer -- parses an operator
 parens     = Token.parens           lexer -- parses surrounding parentheses
 squares    = Token.squares          lexer -- parses square brackets
+angles     = Token.angles           lexer -- parses angled brackets
 integer    = Token.integer          lexer -- parses an integer
 float      = Token.float            lexer -- parses a float
 whiteSpace = Token.whiteSpace       lexer -- parses whitespace
@@ -76,6 +77,7 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try ifStmt <|>
          try caseStmt <|>
          try skipStmt <|>
+         try readStmt <|>
          try printStmt <|>
          try rangeStmt <|>
          try forStmt <|>
@@ -187,6 +189,11 @@ caseStmt =
      
 skipStmt :: Parser Expr
 skipStmt = reserved "skip" >> return Skip
+
+readStmt :: Parser Expr
+readStmt =
+  do expr <- angles expression
+     return $ FileRead (expr)
 
 printStmt :: Parser Expr
 printStmt =
