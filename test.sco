@@ -43,7 +43,7 @@ tests += test(mean([5,3,2,4,1]), 3)
 tests += test(sort([5,4,3,2,1]), [1,2,3,4,5])
 
 print tests
-print (if all((for test in tests, if test == "yes" then true else false))
+print (if all(([for test in tests, if test == "yes" then true else false]))
         then "All tests passed."
         else "Some tests failed.")
 

@@ -55,7 +55,7 @@ loop verbose bindings state =
                          let readinput = Read.read "Interpreter" input
                          parsed <- subfile (case readinput of 
                                                  [] -> Skip
-                                                 otherwise -> snd $ head $ (readinput)) bindings
+                                                 otherwise -> snd $ head $ (readinput)) bindings                         
                          imp' <- case parsed of
                                    Import s -> importFile verbose 1 s
                                    otherwise -> do return (False, [(1, (Pattern (Bit False), ([], Val $ Bit False)))])
