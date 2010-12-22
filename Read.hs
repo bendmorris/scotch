@@ -47,7 +47,7 @@ parser = many statement
 
 statement :: Parser PosExpr
 statement = whiteSpace >> do pos <- getPosition
-                             expr <- try subscriptStmt <|> expression
+                             expr <- expression
                              return (Just pos, expr)
 
 -- expression parsers
@@ -85,8 +85,7 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try funcallStmt <|>
          try splitExpr <|>
          try varcallStmt <|>
-         try whereStmt <|>
-         subscriptStmt
+         try whereStmt
 
 -- syntax parsers
 
@@ -259,14 +258,6 @@ toStrStmt =
      expr <- parens expression
      return $ ToStr expr
      
-subscriptStmt :: Parser Expr
-subscriptStmt =
-  do expr <- try valueStmt <|> 
-             try varcallStmt <|>
-             funcallStmt
-     subs <- squares expression
-     return $ Subs subs expr
-
 -- value parsers
 
 exprList :: Parser [Expr]
@@ -375,9 +366,11 @@ whereStmt =
 
 ltEq x y = Not (Gt x y)
 gtEq x y = Not (Lt x y)
+subs x y = Subs y x
 
 operators :: [[ Operator Char st Expr ]]
-operators = [[Infix  (reservedOp "^"   >> return (Exp             )) AssocLeft],
+operators = [[Infix  (reservedOp "@"   >> return (subs            )) AssocLeft],
+             [Infix  (reservedOp "^"   >> return (Exp             )) AssocLeft],
              [Infix  (reservedOp "*"   >> return (Prod            )) AssocLeft,
               Infix  (reservedOp "/"   >> return (Div             )) AssocLeft],
              [Infix  (reservedOp "+"   >> return (Add             )) AssocLeft,
