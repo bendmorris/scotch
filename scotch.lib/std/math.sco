@@ -3,8 +3,9 @@ pi = 3.141592654
 e = 2.71828183
 
 # factorial
-fact(n) = n * fact(n-1)
-fact(1) = 1
+fact(n, a) = fact(n-1, a*n)
+fact(0, a) = a
+fact(n) = fact(n, 1)
 
 # calculate the nth fibonacci number
 fib'(a,b,n) = fib'(b,a+b,n-1)
