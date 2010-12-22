@@ -62,11 +62,15 @@ term :: Parser Expr
 term = try syntax <|>
        parens expression
      
-value = try listValue <|> try strValue <|> try floatValue <|> try intValue
+value = try listValue <|> 
+        try strValue <|> 
+        try floatValue <|> 
+        try intValue
 valueStmt = try listStmt <|>
             try strStmt <|>
             try floatStmt <|>
-            try intStmt
+            try intStmt <|>
+            try fileStmt
      
 syntax :: Parser Expr
 syntax = try (reserved "true" >> return (Val (Bit True))) <|>
@@ -192,7 +196,8 @@ skipStmt = reserved "skip" >> return Skip
 
 readStmt :: Parser Expr
 readStmt =
-  do expr <- angles expression
+  do reserved "read"
+     expr <- parens expression
      return $ FileRead (expr)
 
 printStmt :: Parser Expr
@@ -289,13 +294,17 @@ idList :: Parser [Id]
 idList = do id <- sepBy (whiteSpace >> identifierOrValue) (oneOf ",")
             return $ id
 
+fileStmt :: Parser Expr
+fileStmt =
+  do expr <- angles expression
+     return $ FileObj expr
+
 strValue :: Parser Value
 strValue = 
   try (do chars <- stringLit
           return $ Str chars) <|>
   try (do char <- charLit
           return $ Str [char])
-   
 strStmt :: Parser Expr
 strStmt =
   do str <- strValue

@@ -88,7 +88,7 @@ weval exp vars =
                                 Bit b -> Result (Bit (not b))
                                 otherwise -> Exception "Expected boolean"
     Def id x y -> weval y ((id, ([], x)) : vars)
-    EagerDef id x y -> weval y ((id, ([], eager_eval x)) : vars)
+    EagerDef id x y -> weval y ((id, ([], eager_eval x vars)) : vars)
     Defun id params x y -> weval y ((id, (params, x)) : 
                                     (id, ([], Val (HFunc id))) : 
                                     vars)
@@ -151,6 +151,9 @@ weval exp vars =
                               Exception e -> Exception e
                               otherwise -> Exception "Non-integer argument in range"
     Output x y -> weval y vars
+    FileObj f -> case weval f vars of
+                   Result (Str s) -> Result $ File s
+                   otherwise -> Exception "Non-string filename"
  where var_binding :: Id -> [Binding] -> Call
        var_binding x [] = ([], Undefined ("Undefined variable " ++ show x))
        var_binding x (h:t) = if (fst h) == x && 
@@ -199,7 +202,7 @@ weval exp vars =
        funcall (h:t) = 
          case param of
             Name n -> h : funcall t
-            Split x y -> case eager_eval arg of
+            Split x y -> case eager_eval arg vars of
                            Val (List l) -> if length l > 0 then (Name x, Val (head l)) :
                                                                 (Name y, Val (List (tail l))) :
                                                                 funcall t
@@ -211,9 +214,6 @@ weval exp vars =
             Pattern _ -> funcall t
             where param = fst h
                   arg = snd h
-       eager_eval x = case (weval (x) vars) of
-                        Result r -> Val r
-                        Exception s -> Undefined s
        forloop :: Id -> [Expr] -> Expr -> [Expr]
        forloop id [] y = []
        forloop id (h:t) y = [Def id h y] ++ (forloop id t y)
@@ -221,9 +221,9 @@ weval exp vars =
 eval :: Expr -> [Binding] -> Calculation
 eval exp bindings = weval exp bindings
 
-
-
-
+eager_eval x vars = case (weval (x) vars) of
+                      Result r -> Val r
+                      Exception s -> Undefined s
 
 iolist :: [IO Expr] -> IO [Expr]
 iolist [] = do return []
@@ -237,7 +237,7 @@ subfile exp vars =
     Val (Proc p) -> do list <- iolist [subfile e vars | e <- p]
                        return $ Val (Proc list)
     FileRead f -> do let filename = case weval f vars of
-                                      Result (Str s) -> s
+                                      Result (File f) -> f
                                       otherwise -> "Error"
                      contents <- readFile filename
                      return $ Val $ Str contents
@@ -286,15 +286,20 @@ subfile exp vars =
                  return $ Or x' y'
     Not x -> do x' <- subfile x vars
                 return $ Not x'
-    EagerDef id x y -> do x' <- subfile x vars
-                          y' <- subfile y vars
+    EagerDef id x y -> do x' <- subfile x vars'
+                          y' <- subfile y vars'
                           return $ EagerDef id x' y'
-    Def id x y -> do x' <- subfile x vars
-                     y' <- subfile y vars
+                          where vars' = ((id, ([], eager_eval x vars)) : vars)
+    Def id x y -> do x' <- subfile x vars'
+                     y' <- subfile y vars'
                      return $ Def id x' y'
-    Defun id p x y -> do x' <- subfile x vars
-                         y' <- subfile y vars
+                     where vars' = ((id, ([], x)) : vars)
+    Defun id p x y -> do x' <- subfile x vars'
+                         y' <- subfile y vars'
                          return $ Defun id p x' y'
+                         where vars' = ((id, (p, x)) : 
+                                        (id, ([], Val (HFunc id))) : 
+                                        vars)
     If x y z -> do x' <- subfile x vars
                    y' <- subfile y vars
                    z' <- subfile z vars

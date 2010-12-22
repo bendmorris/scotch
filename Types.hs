@@ -32,7 +32,7 @@ data Value = NumInt Integer
            | HFunc Id
            | Proc [Expr]
            | UndefinedValue String
-           | ReadFile String
+           | File String
            deriving Eq
 instance Show (Value) where
     show (Str s) = "\"" ++ s ++ "\""
@@ -46,6 +46,7 @@ instance Show (Value) where
     show (Proc p) = "proc " ++ show p
     show (Null) = "null"
     show (UndefinedValue s) = show s
+    show (File f) = "<" ++ show f ++ ">"
 
 -- a calculation, which may cause an exception if one of its members contains an exception
 data Calculation = Exception String | 
@@ -91,6 +92,7 @@ data Expr =
           | Output (Expr) (Expr)            -- output
           | Placeholder                     -- the next statement should go here
           | Import [String]                 -- import module
+          | FileObj Expr                    -- file object
           | FileRead Expr                   -- read file
           deriving Eq
 se' :: (Show a) => [a] -> String
