@@ -132,6 +132,7 @@ instance Show(Expr) where
     show (Output x y) = se "print" [x, y]
     show (Placeholder) = "**nothing**"
     show (Import s) = "import " ++ (show s)
+    show (FileObj f) = "<" ++ show f ++ ">"
     show (FileRead f) = "read <" ++ show f ++ ">"
     
 type PosExpr = (Maybe SourcePos, Expr)

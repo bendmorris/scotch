@@ -26,21 +26,41 @@ scoped_bindings scope (h:t) = if scope < (fst h) then scoped_bindings scope t
 wexecute :: Bool -> [PosExpr] -> [ScopedBinding] -> IO [ScopedBinding]
 wexecute _ [] bindings = do return bindings
 wexecute verbose (h:t) bindings = 
-  do -- ensure that the line is not entirely whitespace or comments
-     do if verbose then putStrLn (show parsed)
-                   else return ()
-        case parsed of
-           -- output if the parsed code results in output
-           Output x y -> output x               
-           otherwise -> case result of
-                            Exception e -> do putStrLn ("\nException in " ++ (showPosition) ++ "\n" ++ e ++ "\n")
-                                              return []
-                            otherwise -> case parsed of
-                                            -- output if the evaluated code results in output
-                                            Output x y -> do output x
-                                                             return []
-                                            otherwise -> do new <- newBindings
-                                                            wexecute verbose t (new ++ bindings')
+  do parsed <- subfile (snd h) unscoped
+     -- evaluate the parsed code
+     let result = eval parsed unscoped
+     if verbose then putStrLn (show parsed)
+                else return ()        
+     let newBindings = case parsed of
+                         Def id x Placeholder -> do return [(scope, (id, ([], x)))]
+                         EagerDef id x Placeholder -> do return [(scope, (id, ([], (case eval x unscoped of
+                                                                                      Result r -> Val r
+                                                                                      Exception s -> Undefined s
+                                                                                    ))))]
+                         Defun id params x Placeholder -> do return [(scope, (id, (params, x))), (scope, (id, ([], Val (HFunc id))))]
+                         Defproc id params x Placeholder -> do return [(scope, (id, (params, Val (Proc x)))), (scope, (id, ([], Val (HFunc id))))]
+                         Import s -> do i <- importFile verbose scope s
+                                        b <- case i of 
+                                               (False, _) -> do putStrLn ("Failed to import module " ++ show s)
+                                                                return []
+                                               (True, i) -> do return i
+                                        return b
+                                        
+                         otherwise -> case result of
+                                        Result (Proc p) -> wexecute verbose [(position, e) | e <- p] bindings
+                                        otherwise -> do return []            
+     case parsed of
+        -- output if the parsed code results in output
+        Output x y -> output x newBindings
+        otherwise -> case result of
+                         Exception e -> do putStrLn ("\nException in " ++ (showPosition) ++ "\n" ++ e ++ "\n")
+                                           return []
+                         otherwise -> case parsed of
+                                        -- output if the evaluated code results in output
+                                        Output x y -> do output x newBindings
+                                                         return []
+                                        otherwise -> do new <- newBindings
+                                                        wexecute verbose t (new ++ bindings')
      where -- scope is determined by amount of leading whitespace
            scope = column
            name = case position of
@@ -54,44 +74,23 @@ wexecute verbose (h:t) bindings =
                      Nothing -> 1
            -- parse the code
            showPosition = name ++ ": Line " ++ show line ++ ", column " ++ show column
-           position = fst h
-           parsed = snd h
+           position = fst h           
            -- remove any bindings no longer relevant at current scope
            bindings' = scoped_bindings scope bindings
            unscoped = unscope bindings'
-           -- evaluate the parsed code
-           result = eval parsed unscoped
-           -- determine whether any new definitions were made, and apply them at this scope
-           newBindings :: IO ([ScopedBinding])
-           newBindings = case parsed of
-                            Def id x Placeholder -> do return [(scope, (id, ([], x)))]
-                            EagerDef id x Placeholder -> do return [(scope, (id, ([], (case eval x unscoped of
-                                                                                         Result r -> Val r
-                                                                                         Exception s -> Undefined s
-                                                                                       ))))]
-                            Defun id params x Placeholder -> do return [(scope, (id, (params, x))), (scope, (id, ([], Val (HFunc id))))]
-                            Defproc id params x Placeholder -> do return [(scope, (id, (params, Val (Proc x)))), (scope, (id, ([], Val (HFunc id))))]
-                            Import s -> do i <- importFile verbose scope s
-                                           b <- case i of 
-                                                  (False, _) -> do putStrLn ("Failed to import module " ++ show s)
-                                                                   return []
-                                                  (True, i) -> do return i
-                                           return b
-                                           
-                            otherwise -> case result of
-                                           Result (Proc p) -> wexecute verbose [(position, e) | e <- p] bindings
-                                           otherwise -> do return []            
-           output x = case (eval x unscoped) of
-                        Exception e -> do putStrLn ("Exception on line " ++ (show line) ++ ":\n\t" ++ e)
-                                          return []
-                        Result (Str s) -> do putStrLn s
-                                             new <- newBindings
-                                             val <- wexecute verbose t (new ++ bindings')
-                                             return val
-                        s -> do putStrLn (show s)
-                                new <- newBindings
-                                val <- wexecute verbose t (new ++ bindings')
-                                return val
+           output x newBindings = 
+             case (eval x unscoped) of
+                Exception e -> do putStrLn ("Exception on line " ++ (show line) ++ ":\n\t" ++ e)
+                                  return []
+                Result (Str s) -> do putStrLn s
+                                     new <- newBindings
+                                     val <- wexecute verbose t (new ++ bindings')
+                                     return val
+                s -> do putStrLn (show s)
+                        new <- newBindings
+                        val <- wexecute verbose t (new ++ bindings')
+                        return val
+
 
 -- returns a qualified file name from a list of identifiers provided by an import statement        
 importFileName s = importName s ++ ".sco"

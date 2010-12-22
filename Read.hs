@@ -21,11 +21,12 @@ languageDef =
                                       "and", "or", "not",
                                       "where", "case", "otherwise",
                                       "do",
-                                      "int", "float", "str"
+                                      "int", "float", "str",
+                                      "read"
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
                                       "<", ">", "and", "or", "not", ":", "->",
-                                      "<=", ">=", "+="
+                                      "<=", ">=", "+=", "<<", ">>"
                                      ]
            }
            
@@ -35,7 +36,7 @@ identifier = Token.identifier       lexer -- parses an identifier
 reserved   = Token.reserved         lexer -- parses a reserved name
 reservedOp = Token.reservedOp       lexer -- parses an operator
 parens     = Token.parens           lexer -- parses surrounding parentheses
-squares    = Token.squares          lexer -- parses square brackets
+brackets   = Token.brackets         lexer -- parses square brackets
 angles     = Token.angles           lexer -- parses angled brackets
 integer    = Token.integer          lexer -- parses an integer
 float      = Token.float            lexer -- parses a float
@@ -69,8 +70,7 @@ value = try listValue <|>
 valueStmt = try listStmt <|>
             try strStmt <|>
             try floatStmt <|>
-            try intStmt <|>
-            try fileStmt
+            try intStmt
      
 syntax :: Parser Expr
 syntax = try (reserved "true" >> return (Val (Bit True))) <|>
@@ -87,11 +87,12 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try forStmt <|>
          try notStmt <|>
          try conversionStmt <|>
+         try fileStmt <|>
          try valueStmt <|>
          try funcallStmt <|>
          try splitExpr <|>
          try varcallStmt <|>
-         try whereStmt
+         whereStmt
 
 -- syntax parsers
 
@@ -155,9 +156,7 @@ accumulateStmt =
 assignStmt :: Parser Expr
 assignStmt =
   do var <- identifier
-     w <- whiteSpace
      reservedOp "="
-     w <- whiteSpace
      expr1 <- expression
      return $ Def (Name var) expr1 Placeholder
            
@@ -246,7 +245,7 @@ listCompStmt =
      expr <- expression
      return $ nestedListComp ins expr
      
-forStmt = squares listCompStmt
+forStmt = brackets listCompStmt
      
 notStmt :: Parser Expr
 notStmt =
@@ -296,7 +295,9 @@ idList = do id <- sepBy (whiteSpace >> identifierOrValue) (oneOf ",")
 
 fileStmt :: Parser Expr
 fileStmt =
-  do expr <- angles expression
+  do reservedOp "<<"
+     expr <- expression
+     reservedOp ">>"
      return $ FileObj expr
 
 strValue :: Parser Value
@@ -313,7 +314,6 @@ strStmt =
 intValue :: Parser Value
 intValue =
   do value <- integer
-     whitespace <- whiteSpace
      return $ NumInt value
 intStmt :: Parser Expr
 intStmt =
@@ -332,11 +332,11 @@ floatStmt =
 
 listValue :: Parser Value
 listValue =
-  do exprs <- squares (sepBy value (oneOf ","))
+  do exprs <- brackets (sepBy value (oneOf ","))
      return $ List exprs
 listStmt :: Parser Expr
 listStmt =
-  do exprs <- squares exprList
+  do exprs <- brackets exprList
      return $ ListExpr exprs
      
      

@@ -154,6 +154,7 @@ weval exp vars =
     FileObj f -> case weval f vars of
                    Result (Str s) -> Result $ File s
                    otherwise -> Exception "Non-string filename"
+    FileRead f -> Incomplete (Placeholder)
  where var_binding :: Id -> [Binding] -> Call
        var_binding x [] = ([], Undefined ("Undefined variable " ++ show x))
        var_binding x (h:t) = if (fst h) == x && 
