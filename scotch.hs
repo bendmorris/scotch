@@ -82,7 +82,9 @@ loop verbose bindings state =
                                           Defun id params x Placeholder -> do return [(id, (params, x)), (id, ([], Val (HFunc id)))]
                                           Defproc id params x Placeholder -> do return [(id, (params, Val (Proc x))), (id, ([], Val (HFunc id)))]
                                           otherwise -> case result of
-                                                         Result (Proc p) -> do new <- (wexecute verbose [(Nothing, e) | e <- p] [(1, binding) | binding <- bindings])
+                                                         Result (Proc p) -> do new <- (wexecute verbose 
+                                                                                                [(Nothing, e) | e <- p] 
+                                                                                                (rescope bindings))
                                                                                return $ unscope new
                                                          otherwise -> do return []
                          -- output, if necessary

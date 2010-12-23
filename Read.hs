@@ -22,7 +22,7 @@ languageDef =
                                       "where", "case", "otherwise",
                                       "do",
                                       "int", "float", "str",
-                                      "read"
+                                      "read", "write", "append"
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
                                       "<", ">", "and", "or", "not", ":", "->",
@@ -33,6 +33,7 @@ languageDef =
 lexer = Token.makeTokenParser languageDef
 
 identifier = Token.identifier       lexer -- parses an identifier
+symbol     = Token.symbol           lexer -- parses a symbol
 reserved   = Token.reserved         lexer -- parses a reserved name
 reservedOp = Token.reservedOp       lexer -- parses an operator
 parens     = Token.parens           lexer -- parses surrounding parentheses
@@ -203,20 +204,20 @@ readStmt =
 writeStmt :: Parser Expr
 writeStmt =
   do reserved "write"
-     reservedOp "("
+     symbol "("
      file <- expression
-     reservedOp ","
+     symbol ","
      expr <- expression
-     reservedOp ")"
+     symbol ")"
      return $ FileWrite file expr
 appendStmt :: Parser Expr
 appendStmt =
   do reserved "append"
-     reservedOp "("
+     symbol "("
      file <- expression
-     reservedOp ","
+     symbol ","
      expr <- expression
-     reservedOp ")"
+     symbol ")"
      return $ FileAppend file expr
 
 printStmt :: Parser Expr
