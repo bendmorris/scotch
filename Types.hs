@@ -54,6 +54,7 @@ data Calculation = Exception String
                  | Incomplete (Expr) 
                  | PrintOutput String
                  | FileOutput String String
+                 | FileOutputA String String
                    deriving Eq
 instance Show (Calculation) where
     show (Result r) = show r
@@ -61,6 +62,7 @@ instance Show (Calculation) where
     show (Incomplete e) = show e
     show (PrintOutput p) = show p
     show (FileOutput f x) = show f ++ " " ++ show x
+    show (FileOutputA f x) = show f ++ " " ++ show x
 
 -- represents an arithmetic expression
 data Expr = 
@@ -100,6 +102,7 @@ data Expr =
           | FileObj Expr                    -- file object
           | FileRead Expr                   -- read file
           | FileWrite Expr Expr             -- write to file
+          | FileAppend Expr Expr            -- append to file
           deriving Eq
 se' :: (Show a) => [a] -> String
 se' [] = []
@@ -141,5 +144,5 @@ instance Show(Expr) where
     show (FileObj f) = "<<" ++ show f ++ ">>"
     show (FileRead f) = "read " ++ show f
     show (FileWrite f x) = "write " ++ show f ++ " " ++ show x
-    
+    show (FileAppend f x) = "append " ++ show f ++ " " ++ show x
 type PosExpr = (Maybe SourcePos, Expr)

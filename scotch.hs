@@ -90,6 +90,7 @@ loop verbose bindings state =
                            Result (Proc p) -> return ()
                            PrintOutput p -> putStrLn p
                            FileOutput f x -> writeFile f x
+                           FileOutputA f x -> appendFile f x
                            otherwise -> putStrLn (show result)
                          -- continue loop
                          loop verbose (newBindings ++ (unscope imp) ++ bindings) state

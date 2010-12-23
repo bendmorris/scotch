@@ -82,6 +82,7 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try caseStmt <|>
          try skipStmt <|>
          try writeStmt <|>
+         try appendStmt <|>
          try readStmt <|>
          try printStmt <|>
          try rangeStmt <|>
@@ -208,6 +209,15 @@ writeStmt =
      expr <- expression
      reservedOp ")"
      return $ FileWrite file expr
+appendStmt :: Parser Expr
+appendStmt =
+  do reserved "append"
+     reservedOp "("
+     file <- expression
+     reservedOp ","
+     expr <- expression
+     reservedOp ")"
+     return $ FileAppend file expr
 
 printStmt :: Parser Expr
 printStmt =

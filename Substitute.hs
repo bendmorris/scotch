@@ -51,4 +51,6 @@ substitute exp params =
                      (f', otherargs) -> Func f' [substitute arg params | arg <- otherargs ++ args]
     Output x -> Output (substitute x params)
     FileRead x -> FileRead (substitute x params)
+    FileWrite f x -> FileWrite (substitute f params) (substitute x params)
+    FileAppend f x -> FileAppend (substitute f params) (substitute x params)
     otherwise -> otherwise

@@ -164,6 +164,11 @@ weval exp vars =
                                             Result (Str s) -> FileOutput f s
                                             otherwise -> Exception $ "Write non-string " ++ show otherwise
                        otherwise -> Exception $ "Write to non-file " ++ show otherwise
+    FileAppend f x -> case (weval f vars) of
+                        Result (File f) -> case (weval x vars) of
+                                             Result (Str s) -> FileOutputA f s
+                                             otherwise -> Exception $ "Write non-string " ++ show otherwise
+                        otherwise -> Exception $ "Write to non-file " ++ show otherwise
  where var_binding :: Id -> [Binding] -> Call
        var_binding x [] = ([], Undefined ("Undefined variable " ++ show x))
        var_binding x (h:t) = if (fst h) == x && 
