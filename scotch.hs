@@ -4,13 +4,14 @@ import System
 import System.Environment.Executable
 import System.Directory
 import Data.List
-import Types
-import Read
-import Eval
-import Substitute
 import System.Console.Haskeline
 import System.Console.Haskeline.IO
 import ReadFile
+import Types
+import Bindings
+import Read
+import Eval
+import Substitute
 
 
 version = "0.1"
@@ -93,4 +94,4 @@ loop verbose bindings state =
                            FileOutputA f x -> appendFile f x
                            otherwise -> putStrLn (show result)
                          -- continue loop
-                         loop verbose (newBindings ++ (unscope imp) ++ bindings) state
+                         loop verbose (unscope (addBindings ((rescope newBindings) ++ imp) (rescope bindings))) state

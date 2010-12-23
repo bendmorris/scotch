@@ -6,21 +6,9 @@ import System.Environment.Executable
 import Text.ParserCombinators.Parsec
 import Read
 import Types
+import Bindings
 import Eval
 
-split :: Char -> String -> [String]
-split = unfoldr . split'
-split' :: Char -> String -> Maybe (String, String)
-split' c l
-  | null l = Nothing
-  | otherwise = Just (h, drop 1 t)
-  where (h, t) = span (/=c) l
-
--- removes all bindings that are no longer relevant at the current scope
-scoped_bindings :: Int -> [ScopedBinding] -> [ScopedBinding]
-scoped_bindings _ [] = []
-scoped_bindings scope (h:t) = if scope < (fst h) then scoped_bindings scope t
-                                                 else h : (scoped_bindings scope t)
 
 -- interpret a list of code lines using a list of scoped bindings
 wexecute :: Bool -> [PosExpr] -> [ScopedBinding] -> IO [ScopedBinding]
@@ -53,14 +41,13 @@ wexecute verbose (h:t) bindings =
        Exception e -> do putStrLn ("\nException in " ++ (showPosition) ++ "\n" ++ e ++ "\n")
                          return []
        PrintOutput x -> do putStrLn x 
-                           new <- newBindings
-                           wexecute verbose t (new ++ bindings')
+                           wexecute verbose t bindings'
        FileOutput f x -> do writeFile f x
-                            wexecute verbose t (bindings')
+                            wexecute verbose t bindings'
        FileOutputA f x -> do appendFile f x
-                             wexecute verbose t (bindings')
+                             wexecute verbose t bindings'
        otherwise -> do new <- newBindings
-                       wexecute verbose t (new ++ bindings')
+                       wexecute verbose t (addBindings new bindings')
      where -- scope is determined by amount of leading whitespace
            scope = column
            name = case position of

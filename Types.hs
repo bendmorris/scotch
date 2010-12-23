@@ -9,17 +9,6 @@ instance Show(Id) where
     show (Name s) = s
     show (Pattern v) = show v
     show (Split a b) = "(" ++ show a ++ " : " ++ show b ++ ")"
--- a list of identifiers (empty list for variables) and an expression containing them
-type Call = ([Id], Expr)
--- binds an ID to a Call
-type Binding = (Id, Call)
--- binding with associated scope (amount of whitespace)
-type ScopedBinding = (Int, Binding)
--- given a scoped binding, returns an unscoped binding
-unscope :: [ScopedBinding] -> [Binding]
-unscope [] = []
-unscope (h:t) = (snd h) : unscope t
-
 
 -- a value with its corresponding type
 data Value = NumInt Integer

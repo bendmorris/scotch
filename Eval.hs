@@ -2,6 +2,7 @@ module Eval where
 
 import System.Directory
 import Types
+import Bindings
 import Calc
 import Substitute
 
