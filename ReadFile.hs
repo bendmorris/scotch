@@ -56,9 +56,9 @@ wexecute verbose (h:t) bindings =
                            new <- newBindings
                            wexecute verbose t (new ++ bindings')
        FileOutput f x -> do writeFile f x
-                            return []
+                            wexecute verbose t (bindings')
        FileOutputA f x -> do appendFile f x
-                             return []
+                             wexecute verbose t (bindings')
        otherwise -> do new <- newBindings
                        wexecute verbose t (new ++ bindings')
      where -- scope is determined by amount of leading whitespace
