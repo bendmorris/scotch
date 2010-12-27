@@ -4,7 +4,9 @@ version = "0.1"
 
 copyright = "Copyright (c) 2010 Ben Morris. All rights reserved."
 
-license := copyright {-+ "
+license := copyright + "\n\nScotch is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\nScotch is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\n\nSee <http://www.gnu.org/licenses/> for more information about the GNU General Public License."
+
+{-+ "
 
 Scotch is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
