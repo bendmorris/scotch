@@ -29,9 +29,9 @@ evalList (h:t) = case h of
                    Val (Undefined e) -> Exception e
                    otherwise -> evalList t
 
--- eval: computes the Val of an expression as far as possible
-weval :: Expr -> [Binding] -> Expr
-weval exp vars = case exp of
+-- eval: computes the value of an expression as far as possible
+eval :: Expr -> [Binding] -> Expr
+eval exp vars = case exp of
   Import s ->           Skip
   ListExpr l ->         case (evalList l) of
                           Val _ -> case evalList [Val item | item <- l'] of
@@ -43,68 +43,68 @@ weval exp vars = case exp of
                                                  otherwise -> Undefined (show otherwise)
                                                | item <- l]
                           Exception e -> Exception e
-                        where r = [(case (weval item vars) of
+                        where r = [(case (eval item vars) of
                                       Val r -> Val r
                                       Exception e -> Exception e
                                     ) | item <- l]
   Val x ->              case x of
                           Undefined s -> Exception s
                           otherwise -> Val x
-  ToInt x ->            case (weval x vars) of
+  ToInt x ->            case (eval x vars) of
                           Val (NumInt i) -> Val $ NumInt i
                           Val (NumFloat f) -> Val $ NumInt (truncate f)
                           Val (Str s) -> Val $ NumInt (read s)
                           otherwise -> Exception ("Can't convert " ++ show otherwise ++ " to integer.")
-  ToFloat x ->          case (weval x vars) of
+  ToFloat x ->          case (eval x vars) of
                           Val (NumInt i) -> Val $ NumFloat (fromIntegral i)
                           Val (NumFloat f) -> Val $ NumFloat f
                           Val (Str s) -> Val $ NumFloat (read s :: Double)
                           otherwise -> Exception ("Can't convert " ++ show otherwise ++ " to float.")
-  ToStr x ->            case (weval x vars) of                       
+  ToStr x ->            case (eval x vars) of                       
                           Val (Str s) -> Val $ Str s
                           otherwise -> Val $ Str (show otherwise)
-  Subs n x ->           case (weval x vars) of
-                          Val (List l) -> case (weval n vars) of
+  Subs n x ->           case (eval x vars) of
+                          Val (List l) -> case (eval n vars) of
                                             Val (NumInt n) -> if n >= 0 && 
                                                                  n < (fromIntegral (length l))
                                                               then Val (l !! (fromIntegral n))
                                                               else Exception ("Member " ++ show n ++ " not in list")
                                             otherwise ->      Exception ("Non-numerical subscript " ++ show otherwise)
-                          Val (Str s) ->  case (weval n vars) of
+                          Val (Str s) ->  case (eval n vars) of
                                             Val (NumInt n) -> if n >= 0 && 
                                                                  n < (fromIntegral (length s))
                                                               then Val (Str ([s !! (fromIntegral n)]))
                                                               else Exception ("Member " ++ show n ++ " not in list")
                                             otherwise ->      Exception ("Non-numerical subscript " ++ show otherwise)
                           otherwise ->    Exception "Subscript of non-list"
-  Add x y ->            calc (weval x vars) (weval y vars) (vadd)
-  Sub x y ->            calc (weval x vars) (weval y vars) (vsub)
-  Prod x y ->           calc (weval x vars) (weval y vars) (vprod)
-  Div x y ->            calc (weval x vars) (weval y vars) (vdiv)
-  Exp x y ->            calc (weval x vars) (weval y vars) (vexp)
-  Eq x y ->             calc (weval x vars) (weval y vars) (veq)
-  InEq x y ->           case calc (weval x vars) (weval y vars) (veq) of
+  Add x y ->            calc (eval x vars) (eval y vars) (vadd)
+  Sub x y ->            calc (eval x vars) (eval y vars) (vsub)
+  Prod x y ->           calc (eval x vars) (eval y vars) (vprod)
+  Div x y ->            calc (eval x vars) (eval y vars) (vdiv)
+  Exp x y ->            calc (eval x vars) (eval y vars) (vexp)
+  Eq x y ->             calc (eval x vars) (eval y vars) (veq)
+  InEq x y ->           case calc (eval x vars) (eval y vars) (veq) of
                           Val (Bit True) -> Val (Bit False)
                           Val (Bit False) -> Val (Bit True)
                           otherwise -> otherwise                    
-  Gt x y ->             calc (weval x vars) (weval y vars) (vgt)
-  Lt x y ->             calc (weval x vars) (weval y vars) (vlt)                    
-  And x y ->            calc (weval x vars) (weval y vars) (vand)
-  Or x y ->             calc (weval x vars) (weval y vars) (vor)
-  Not x ->              case weval x vars of
+  Gt x y ->             calc (eval x vars) (eval y vars) (vgt)
+  Lt x y ->             calc (eval x vars) (eval y vars) (vlt)                    
+  And x y ->            calc (eval x vars) (eval y vars) (vand)
+  Or x y ->             calc (eval x vars) (eval y vars) (vor)
+  Not x ->              case eval x vars of
                           Exception s -> Exception s
                           Val r -> case r of
                                      Bit b -> Val (Bit (not b))
                                      otherwise -> Exception "Expected boolean"
-  Def f x y ->          weval y ((f, ([], x)) : vars)
-  EagerDef f x y ->     weval y ((f, ([], eager_eval x vars)) : vars)
-  Defun f p x y ->      weval y ((f, (p, x)) : 
+  Def f x y ->          eval y ((f, ([], x)) : vars)
+  EagerDef f x y ->     eval y ((f, ([], eager_eval x vars)) : vars)
+  Defun f p x y ->      eval y ((f, (p, x)) : 
                                  (f, ([], Val (HFunc f))) : 
                                  vars)
-  Defproc f p x y ->    weval y ((f, (p, Val (Proc x))) : 
+  Defproc f p x y ->    eval y ((f, (p, Val (Proc x))) : 
                                  (f, ([], Val (HFunc f))) : 
                                  vars)
-  Var x ->              weval (snd (var_binding x vars)) vars
+  Var x ->              eval (snd (var_binding x vars)) vars
   Func f args ->        case vardef of
                           Val (HFunc (h)) -> if length params > 0 
                                              then case expr of
@@ -113,9 +113,9 @@ weval exp vars = case exp of
                                                                      else newcall
                                                     otherwise -> newcall
                                              else case snd $ var_binding fp vars of
-                                                    Func f' args' -> weval (Func f' (args' ++ args)) vars
+                                                    Func f' args' -> eval (Func f' (args' ++ args)) vars
                                                     otherwise -> Exception $ show expr
-                          Func f' args' -> weval (Func f' (args' ++ args)) vars
+                          Func f' args' -> eval (Func f' (args' ++ args)) vars
                           otherwise -> Exception $ "Variable " ++ (show f) ++ " isn't a function"
                         where fp = case vardef of
                                      Val (HFunc (f')) -> f'
@@ -124,29 +124,29 @@ weval exp vars = case exp of
                               definition = func_binding fp args vars
                               params = fst definition
                               expr = snd definition
-                              newcall = weval (substitute expr (funcall (zip params args))) vars
+                              newcall = eval (substitute expr (funcall (zip params args))) vars
                               tailcall f args args' = if definition' == definition 
-                                                      then tailcall f [case weval (substitute (args' !! n) (funcall (zip params args))) vars of
+                                                      then tailcall f [case eval (substitute (args' !! n) (funcall (zip params args))) vars of
                                                                         Val r -> Val r
                                                                         otherwise -> Exception $ show otherwise
                                                                        | n <- [0 .. (length args') - 1]] args'
-                                                      else weval (substitute (snd definition') (funcall (zip (fst definition') args))) vars
+                                                      else eval (substitute (snd definition') (funcall (zip (fst definition') args))) vars
                                                       where definition' = func_binding f args vars
                                                  
-  If cond x y ->        case (weval cond vars) of
-                          Val (Bit True) -> weval x vars
-                          Val (Bit False) -> weval y vars
+  If cond x y ->        case (eval cond vars) of
+                          Val (Bit True) -> eval x vars
+                          Val (Bit False) -> eval y vars
                           Exception e -> Exception e
                           otherwise -> Exception $ "Non-boolean condition " ++ show cond
-  For id x y ->         weval (case (weval x vars) of
+  For id x y ->         eval (case (eval x vars) of
                                  Val (List l) -> ListExpr (forloop id [Val item | item <- l] y)
                                  Val v -> ListExpr (forloop id [Val v] y)
                                  otherwise -> Exception (show x)) vars
-  Range from to step -> case (weval from vars) of
+  Range from to step -> case (eval from vars) of
                           Val v -> case v of
-                                     NumInt i -> case (weval to vars) of
+                                     NumInt i -> case (eval to vars) of
                                                    Val w -> case w of
-                                                              NumInt j -> case (weval step vars) of
+                                                              NumInt j -> case (eval step vars) of
                                                                             Val u -> case u of
                                                                                        NumInt k -> Val $ List [NumInt x | x <- [i, i+k .. j]]
                                                                                        otherwise -> Exception "Non-integer argument in range"
@@ -158,17 +158,17 @@ weval exp vars = case exp of
                                      otherwise -> Exception "Non-integer argument in range"
                           Exception e -> Exception e
                           otherwise -> Exception "Non-integer argument in range"
-  FileObj f ->          case weval f vars of
+  FileObj f ->          case eval f vars of
                           Val (Str s) -> Val $ File s
                           otherwise -> Exception "Non-string filename"
-  Output x ->           Output (weval x vars)
-  FileWrite f x ->      case (weval f vars) of
-                          Val (File f) -> case (weval x vars) of
+  Output x ->           Output (eval x vars)
+  FileWrite f x ->      case (eval f vars) of
+                          Val (File f) -> case (eval x vars) of
                                             Val (Str s) -> FileWrite (Val (File f)) (Val (Str s))
                                             otherwise -> Exception $ "Write non-string " ++ show otherwise
                           otherwise -> Exception $ "Write to non-file " ++ show otherwise
-  FileAppend f x ->     case (weval f vars) of
-                          Val (File f) -> case (weval x vars) of
+  FileAppend f x ->     case (eval f vars) of
+                          Val (File f) -> case (eval x vars) of
                                             Val (Str s) -> FileAppend (Val (File f)) (Val (Str s))
                                             otherwise -> Exception $ "Write non-string " ++ show otherwise
                           otherwise -> Exception $ "Write to non-file " ++ show otherwise
@@ -197,7 +197,7 @@ weval exp vars = case exp of
        pattern_match (a:b) (c:d) = 
          case a of
            Name n -> pattern_match b d
-           Split x y -> case weval c vars of
+           Split x y -> case eval c vars of
                           Val (List l) -> pattern_match b d
                           Val (Str l) -> pattern_match b d
                           otherwise -> False
@@ -207,7 +207,7 @@ weval exp vars = case exp of
                                (Val (List []), Str "") -> pattern_match b d
                                (Val (Str ""), List []) -> pattern_match b d
                                otherwise -> False
-                        where result = weval c vars
+                        where result = eval c vars
        is_function id [] = False
        is_function id (h:t) = if fst h == id && length (fst (snd h)) > 0 
                               then True 
@@ -236,11 +236,6 @@ weval exp vars = case exp of
        forloop :: Id -> [Expr] -> Expr -> [Expr]
        forloop id [] y = []
        forloop id (h:t) y = [Def id h y] ++ (forloop id t y)
-                                
-eval :: Expr -> [Binding] -> Expr
-eval exp bindings = weval exp bindings
-
-eager_eval x vars = weval x vars
 
 iolist :: [IO Expr] -> IO [Expr]
 iolist [] = do return []
@@ -322,7 +317,7 @@ subfile exp vars =
                      return $ For id x' y'
     Output x -> do x' <- subfile x vars
                    return $ Output x'
-    FileRead f -> do case weval f vars of
+    FileRead f -> do case eval f vars of
                        Val (File f) -> do exists <- doesFileExist f
                                           case exists of 
                                             True -> do contents <- readFile f
