@@ -97,7 +97,7 @@ eval exp vars = case exp of
                                      Bit b -> Val (Bit (not b))
                                      otherwise -> Exception "Expected boolean"
   Def f x y ->          eval y ((f, ([], x)) : vars)
-  EagerDef f x y ->     eval y ((f, ([], eager_eval x vars)) : vars)
+  EagerDef f x y ->     eval y ((f, ([], eval x vars)) : vars)
   Defun f p x y ->      eval y ((f, (p, x)) : 
                                  (f, ([], Val (HFunc f))) : 
                                  vars)
@@ -221,7 +221,7 @@ eval exp vars = case exp of
        funcall (h:t) = 
          case param of
             Name n -> h : funcall t
-            Split x y -> case eager_eval arg vars of
+            Split x y -> case eval arg vars of
                            Val (List l) -> if length l > 0 then (Name x, Val (head l)) :
                                                                 (Name y, Val (List (tail l))) :
                                                                 funcall t
@@ -297,7 +297,7 @@ subfile exp vars =
     EagerDef id x y -> do x' <- subfile x vars'
                           y' <- subfile y vars'
                           return $ EagerDef id x' y'
-                          where vars' = ((id, ([], eager_eval x vars)) : vars)
+                          where vars' = ((id, ([], eval x vars)) : vars)
     Def id x y -> do x' <- subfile x vars'
                      y' <- subfile y vars'
                      return $ Def id x' y'
