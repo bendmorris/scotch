@@ -28,10 +28,6 @@ evalList (h:t) = case h of
                    Exception e -> Exception e
                    Val (Undefined e) -> Exception e
                    otherwise -> evalList t
-                   
-left [] 0 = []
-left (h:t) 0 = []
-left (h:t) n = h : (left t (n - 1))
 
 -- eval: computes the Val of an expression as far as possible
 weval :: Expr -> [Binding] -> Expr
