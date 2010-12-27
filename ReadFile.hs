@@ -37,10 +37,7 @@ wexecute verbose (h:t) bindings =
                 else return ()        
      let newBindings = case parsed of
                          Def id x Skip -> do return [(scope, (id, ([], x)))]
-                         EagerDef id x Skip -> do return [(scope, (id, ([], (case eval x unscoped of
-                                                                                      Val r -> Val r
-                                                                                      Exception s -> Exception s
-                                                                                    ))))]
+                         EagerDef id x Skip -> do return [(scope, (id, ([], eval x unscoped)))]
                          Defun id params x Skip -> do return [(scope, (id, (params, x))), (scope, (id, ([], Val (HFunc id))))]
                          Defproc id params x Skip -> do return [(scope, (id, (params, Val (Proc x)))), (scope, (id, ([], Val (HFunc id))))]
                          Import s -> do i <- importFile verbose scope s
