@@ -1,5 +1,24 @@
 # these functions will be imported by the Scotch interpreter automatically
 
+version = "0.1"
+
+copyright = "Copyright (c) 2010 Ben Morris. All rights reserved."
+
+license := copyright {-+ "
+
+Scotch is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Scotch is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+See <http://www.gnu.org/licenses/> for more information about the
+GNU General Public License."-}
+
 # Returns the length of a string or list.
 len(h:t) = 1 + len(t)
 len([]) = 0
