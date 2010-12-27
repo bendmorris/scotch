@@ -183,6 +183,7 @@ eval exp vars = case exp of
                                                        else var_binding v vars
                                     otherwise -> snd h
                              else var_binding x t
+                             
        func_binding :: Id -> [Expr] -> [Binding] -> Call
        func_binding x args [] = ([], Exception ("Function " ++ (show x) ++ " doesn't match any existing pattern."))
        func_binding x args (h:t) = if (show id) == (show x) &&
@@ -193,6 +194,7 @@ eval exp vars = case exp of
                                    where (id, params, expr) =
                                            (fst h, fst binding, snd binding)
                                          binding = snd h
+                                         
        pattern_match [] [] = True
        pattern_match (a:b) (c:d) = 
          case a of
@@ -208,13 +210,7 @@ eval exp vars = case exp of
                                (Val (Str ""), List []) -> pattern_match b d
                                otherwise -> False
                         where result = eval c vars
-       is_function id [] = False
-       is_function id (h:t) = if fst h == id && length (fst (snd h)) > 0 
-                              then True 
-                              else is_function id t
-       pointed id = case snd $ var_binding id vars of
-                      Var v -> pointed v
-                      otherwise -> id
+                        
        -- funcall: list of (ID parameter, expression argument)
        funcall :: [(Id, Expr)] -> [(Id, Expr)]
        funcall [] = []
