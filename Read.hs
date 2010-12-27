@@ -42,7 +42,7 @@ languageDef =
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
                                       "<", ">", "and", "or", "not", ":", "->",
-                                      "<=", ">=", "+=", "<<", ">>"
+                                      "<=", ">=", "+=", "<<", ">>", ".."
                                      ]
            }
            
@@ -244,25 +244,20 @@ printStmt =
      
 rangeStmt :: Parser Expr
 rangeStmt =
-  try (do reserved "range"
-          reservedOp "("
+  try (do reservedOp "["
           expr1 <- expression
-          reservedOp ","
+          reservedOp ".."
           expr2 <- expression
           reservedOp ","
           expr3 <- expression
-          reservedOp ")"
+          reservedOp "]"
           return $ Range expr1 expr2 expr3)
-  <|> try (do reserved "range"
-              reservedOp "("
+  <|> try (do reservedOp "["
               expr1 <- expression
-              reservedOp ","
+              reservedOp ".."
               expr2 <- expression
-              reservedOp ")"
+              reservedOp "]"
               return $ Range expr1 expr2 (Val (NumInt 1)))
-  <|> try (do reserved "range"
-              expr <- parens expression
-              return $ Range (Val (NumInt 1)) expr (Val (NumInt 1)))
 
 inStmt :: Parser (String, Expr)
 inStmt = 

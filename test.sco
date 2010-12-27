@@ -16,8 +16,8 @@ tests += test(apply(g, 1), 2)
 tests += test(split("a.b.c", "."), ["a","b","c"])
 
 import std.math
-tests += test(filter(even, range(10)), [2,4,6,8,10])
-tests += test(foldl(add, 0, range(100)), 5050)
+tests += test(filter(even, [1..10]), [2,4,6,8,10])
+tests += test(foldl(add, 0, [1..100]), 5050)
 
 apply(f, x, n) = f(x) + apply(f, x, n-1)
 apply(f, x, 0) = 0
