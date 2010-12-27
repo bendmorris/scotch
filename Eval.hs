@@ -38,7 +38,6 @@ weval :: Expr -> [Binding] -> Expr
 weval exp vars = 
   case exp of
     Import s -> Skip
-    Skip -> Val Null
     ListExpr l -> case (evalList l) of
                     Val _ -> case evalList [Val item | item <- l'] of
                                   Exception e -> Exception e

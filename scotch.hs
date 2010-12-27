@@ -102,12 +102,13 @@ loop verbose bindings state =
                                                          otherwise -> do return []
                          -- output, if necessary
                          case result of
-                           Val (Proc p) -> return ()
                            Output p -> case p of 
                                          Val (Str s) -> putStrLn s
                                          otherwise -> putStrLn (show p)
                            FileWrite (Val (File f)) (Val (Str x)) -> writeFile f x
                            FileAppend (Val (File f)) (Val (Str x)) -> appendFile f x
-                           otherwise -> putStrLn (show result)
+                           Val (Proc p) -> return ()
+                           Val v -> putStrLn (show result)
+                           otherwise -> return ()
                          -- continue loop
                          loop verbose (unscope (addBindings ((rescope newBindings) ++ imp) (rescope bindings))) state
