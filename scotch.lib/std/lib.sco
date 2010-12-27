@@ -22,8 +22,9 @@ See <http://www.gnu.org/licenses/> for more information about the
 GNU General Public License."-}
 
 # Returns the length of a string or list.
-len(h:t) = 1 + len(t)
-len([]) = 0
+len'(h:t, a) = len'(t, a+1)
+len'([], a) = a
+len(l) = len'(l, 0)
 
 # Returns the first element in a string or list.
 head(h:t) = h

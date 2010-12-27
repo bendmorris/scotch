@@ -18,8 +18,8 @@ module Calc where
 
 import Types
 
-type_mismatch f a b = Exception ("Type mismatch: " ++ 
-                                                   (show a) ++ " " ++ f ++ " " ++ (show b))
+type_mismatch f a b = Exception $ "Type mismatch: " ++ 
+                                  show a ++ " " ++ f ++ " " ++ show b
 
 -- calc: calls a function on the value of two Calculations, resulting in an exception if
 --       either Calculation previously resulted in an exception
