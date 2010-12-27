@@ -109,6 +109,7 @@ loop verbose bindings state =
                            FileAppend (Val (File f)) (Val (Str x)) -> appendFile f x
                            Val (Proc p) -> return ()
                            Val v -> putStrLn (show result)
+                           Exception e -> putStrLn $ show $ Exception e 
                            otherwise -> return ()
                          -- continue loop
                          loop verbose (unscope (addBindings ((rescope newBindings) ++ imp) (rescope bindings))) state
