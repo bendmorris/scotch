@@ -55,7 +55,7 @@ main = do args <- getArgs
                     if interpret then loop verbose (unscope newbindings) state
                                  else return ()
             -- otherwise, start the interpreter
-            else do putStrLn ("Scotch interpreter, version " ++ version)                    
+            else do putStrLn ("Scotch interpreter, version " ++ version)
                     loop verbose unscoped state
 
 -- the interpreter's main REPL loop
@@ -90,26 +90,24 @@ loop verbose bindings state =
                                     else return ()
                          -- determine whether any definitions were made
                          newBindings <- case parsed of
-                                          Def id x Placeholder -> do return [(id, ([], x))]
-                                          EagerDef id x Placeholder -> do return [(id, ([], (case eval x bindings of
-                                                                                              Result r -> Val r
-                                                                                              Exception s -> Undefined s
-                                                                                             )))]
-                                          Defun id params x Placeholder -> do return [(id, (params, x)), (id, ([], Val (HFunc id)))]
-                                          Defproc id params x Placeholder -> do return [(id, (params, Val (Proc x))), (id, ([], Val (HFunc id)))]
+                                          Def id x Skip -> do return [(id, ([], x))]
+                                          EagerDef id x Skip -> do return [(id, ([], eval x bindings))]
+                                          Defun id params x Skip -> do return [(id, (params, x)), (id, ([], Val (HFunc id)))]
+                                          Defproc id params x Skip -> do return [(id, (params, Val (Proc x))), (id, ([], Val (HFunc id)))]
                                           otherwise -> case result of
-                                                         Result (Proc p) -> do new <- (wexecute verbose 
-                                                                                                [(Nothing, e) | e <- p] 
-                                                                                                (rescope bindings))
-                                                                               return $ unscope new
+                                                         Val (Proc p) -> do new <- (wexecute verbose 
+                                                                                    [(Nothing, e) | e <- p] 
+                                                                                    (rescope bindings))
+                                                                            return $ unscope new
                                                          otherwise -> do return []
                          -- output, if necessary
                          case result of
-                           Incomplete i -> return ()
-                           Result (Proc p) -> return ()
-                           PrintOutput p -> putStrLn p
-                           FileOutput f x -> writeFile f x
-                           FileOutputA f x -> appendFile f x
+                           Val (Proc p) -> return ()
+                           Output p -> case p of 
+                                         Val (Str s) -> putStrLn s
+                                         otherwise -> putStrLn (show p)
+                           FileWrite (Val (File f)) (Val (Str x)) -> writeFile f x
+                           FileAppend (Val (File f)) (Val (Str x)) -> appendFile f x
                            otherwise -> putStrLn (show result)
                          -- continue loop
                          loop verbose (unscope (addBindings ((rescope newBindings) ++ imp) (rescope bindings))) state

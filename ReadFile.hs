@@ -36,13 +36,13 @@ wexecute verbose (h:t) bindings =
      if verbose then putStrLn (show parsed)
                 else return ()        
      let newBindings = case parsed of
-                         Def id x Placeholder -> do return [(scope, (id, ([], x)))]
-                         EagerDef id x Placeholder -> do return [(scope, (id, ([], (case eval x unscoped of
-                                                                                      Result r -> Val r
-                                                                                      Exception s -> Undefined s
+                         Def id x Skip -> do return [(scope, (id, ([], x)))]
+                         EagerDef id x Skip -> do return [(scope, (id, ([], (case eval x unscoped of
+                                                                                      Val r -> Val r
+                                                                                      Exception s -> Exception s
                                                                                     ))))]
-                         Defun id params x Placeholder -> do return [(scope, (id, (params, x))), (scope, (id, ([], Val (HFunc id))))]
-                         Defproc id params x Placeholder -> do return [(scope, (id, (params, Val (Proc x)))), (scope, (id, ([], Val (HFunc id))))]
+                         Defun id params x Skip -> do return [(scope, (id, (params, x))), (scope, (id, ([], Val (HFunc id))))]
+                         Defproc id params x Skip -> do return [(scope, (id, (params, Val (Proc x)))), (scope, (id, ([], Val (HFunc id))))]
                          Import s -> do i <- importFile verbose scope s
                                         b <- case i of 
                                                (False, _) -> do putStrLn ("Failed to import module " ++ show s)
@@ -51,17 +51,19 @@ wexecute verbose (h:t) bindings =
                                         return b
                                         
                          otherwise -> case result of
-                                        Result (Proc p) -> wexecute verbose [(position, e) | e <- p] bindings
+                                        Val (Proc p) -> wexecute verbose [(position, e) | e <- p] bindings
                                         otherwise -> do return []            
      case result of
        Exception e -> do putStrLn ("\nException in " ++ (showPosition) ++ "\n" ++ e ++ "\n")
                          return []
-       PrintOutput x -> do putStrLn x 
-                           wexecute verbose t bindings'
-       FileOutput f x -> do writeFile f x
-                            wexecute verbose t bindings'
-       FileOutputA f x -> do appendFile f x
-                             wexecute verbose t bindings'
+       Output x -> do case x of
+                        Val (Str s) -> putStrLn s
+                        otherwise -> putStrLn (show x)
+                      wexecute verbose t bindings'
+       FileWrite (Val (File f)) (Val (Str x)) -> do writeFile f x
+                                                    wexecute verbose t bindings'
+       FileAppend (Val (File f)) (Val (Str x)) -> do appendFile f x
+                                                     wexecute verbose t bindings'
        otherwise -> do new <- newBindings
                        wexecute verbose t (addBindings new bindings')
      where -- scope is determined by amount of leading whitespace

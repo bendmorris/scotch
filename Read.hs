@@ -135,7 +135,7 @@ defprocVar =
      exprs <- many $ try (do expr <- whiteSpace >> expression
                              reservedOp ";"
                              return expr)
-     return $ Defproc (Name var) [] exprs Placeholder
+     return $ Defproc (Name var) [] exprs Skip
 
 defprocFun :: Parser Expr
 defprocFun =
@@ -146,7 +146,7 @@ defprocFun =
      exprs <- many $ try (do expr <- whiteSpace >> expression
                              reservedOp ";"
                              return expr)
-     return $ Defproc (Name var) params exprs Placeholder
+     return $ Defproc (Name var) params exprs Skip
 
 defunStmt :: Parser Expr
 defunStmt =
@@ -154,7 +154,7 @@ defunStmt =
      params <- parens idList
      reservedOp "="
      expr <- expression
-     return $ Defun (Name var) params expr Placeholder
+     return $ Defun (Name var) params expr Skip
 
 eagerStmt :: Parser Expr
 eagerStmt =
@@ -163,21 +163,21 @@ eagerStmt =
      reservedOp ":="
      w <- whiteSpace
      expr <- expression
-     return $ EagerDef (Name var) expr Placeholder
+     return $ EagerDef (Name var) expr Skip
      
 accumulateStmt :: Parser Expr
 accumulateStmt =
   do var <- identifier
      reservedOp "+="
      expr <- expression
-     return $ EagerDef (Name var) (Add (Var (Name var)) (expr)) Placeholder
+     return $ EagerDef (Name var) (Add (Var (Name var)) (expr)) Skip
      
 assignStmt :: Parser Expr
 assignStmt =
   do var <- identifier
      reservedOp "="
      expr1 <- expression
-     return $ Def (Name var) expr1 Placeholder
+     return $ Def (Name var) expr1 Skip
            
 ifStmt :: Parser Expr
 ifStmt =
@@ -189,9 +189,9 @@ ifStmt =
      expr2 <- expression
      return $ If cond expr1 expr2
      
-nestedCase [] = Undefined "No match found for case expression"
+nestedCase [] = Exception "No match found for case expression"
 nestedCase (h:t) = case h of
-                     If (Eq (b) (Placeholder)) c _ -> c
+                     If (Eq (b) (Skip)) c _ -> c
                      If a b _ -> If a b (nestedCase t)
      
 caseStmt :: Parser Expr
@@ -200,12 +200,12 @@ caseStmt =
      check <- whiteSpace >> expression
      reserved "of"
      cases <- sepBy (do cond <- whiteSpace >> (try (do reserved "otherwise"
-                                                       return Placeholder
+                                                       return Skip
                                                        ) <|> 
                                                try expression)
                         reservedOp "->"
                         expr <- expression
-                        return $ If (Eq (check) (cond)) (expr) (Placeholder)
+                        return $ If (Eq (check) (cond)) (expr) (Skip)
                         ) (oneOf ",")
      return $ nestedCase cases
      
@@ -403,9 +403,9 @@ assignment = try defprocStmt <|>
      
 nestwhere [] wexpr = wexpr
 nestwhere (h:t) wexpr = case h of
-                          Defun a b c Placeholder -> Defun a b c (nestwhere t wexpr)
-                          EagerDef a b Placeholder -> EagerDef a b (nestwhere t wexpr)
-                          Def a b Placeholder -> Def a b (nestwhere t wexpr)
+                          Defun a b c Skip -> Defun a b c (nestwhere t wexpr)
+                          EagerDef a b Skip -> EagerDef a b (nestwhere t wexpr)
+                          Def a b Skip -> Def a b (nestwhere t wexpr)
                           otherwise -> nestwhere t wexpr
 
 whereStmt :: Parser Expr
@@ -442,4 +442,4 @@ operators = [[Infix  (reservedOp "@"   >> return (subs            )) AssocLeft],
 
 read name s = case (parse parser name s) of
                 Right r -> r
-                otherwise -> [(Nothing, Undefined "Parse error")]
+                otherwise -> [(Nothing, Exception "Parse error")]

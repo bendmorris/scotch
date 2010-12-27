@@ -19,7 +19,7 @@ module Substitute where
 import Types
 
 inparams :: Id -> [(Id, Expr)] -> Expr
-inparams x [] = Placeholder
+inparams x [] = Skip
 inparams x (h:t) = if x == (fst h) then snd h else inparams x t
 
 inparamsid :: Id -> [(Id, Expr)] -> (Id, [Expr])
@@ -35,7 +35,7 @@ inparamsid x (h:t) = if x == (fst h) then
 substitute :: Expr -> [(Id, Expr)] -> Expr
 substitute exp params =
   case exp of
-    Var x -> if newname == Placeholder then Var x else newname
+    Var x -> if newname == Skip then Var x else newname
              where newname = inparams x params
     Val (Proc p) -> Val (Proc ([substitute e params | e <- p]))
     Val v -> Val v

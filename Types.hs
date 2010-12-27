@@ -36,7 +36,7 @@ data Value = NumInt Integer
            | Null
            | HFunc Id
            | Proc [Expr]
-           | UndefinedValue String
+           | Undefined String
            | File String
            deriving Eq
 instance Show (Value) where
@@ -50,28 +50,12 @@ instance Show (Value) where
     show (HFunc f) = "func " ++ show f
     show (Proc p) = "proc " ++ show p
     show (Null) = "null"
-    show (UndefinedValue s) = show s
+    show (Undefined s) = show s
     show (File f) = "<<" ++ show f ++ ">>"
-
--- a calculation, which may cause an exception if one of its members contains an exception
-data Calculation = Exception String
-                 | Result (Value) 
-                 | Incomplete (Expr) 
-                 | PrintOutput String
-                 | FileOutput String String
-                 | FileOutputA String String
-                   deriving Eq
-instance Show (Calculation) where
-    show (Result r) = show r
-    show (Exception s) = "Exception: " ++ s
-    show (Incomplete e) = show e
-    show (PrintOutput p) = show p
-    show (FileOutput f x) = show f ++ " " ++ show x
-    show (FileOutputA f x) = show f ++ " " ++ show x
 
 -- represents an arithmetic expression
 data Expr = 
-            Undefined String                -- undefined
+            Exception String                -- undefined
           | Skip                            -- returns Null
           | Val (Value)                     -- value
           | ListExpr [Expr]                 -- list expression
@@ -102,7 +86,6 @@ data Expr =
           | For Id (Expr) (Expr)            -- iteration
           | Range (Expr) (Expr) (Expr)      -- range
           | Output Expr                     -- output
-          | Placeholder                     -- the next statement should go here
           | Import [String]                 -- import module
           | FileObj Expr                    -- file object
           | FileRead Expr                   -- read file
@@ -115,8 +98,8 @@ se' (h:t) = " " ++ show h ++ (se' t)
 se :: (Show a) => String -> [a] -> String
 se sym (h:t) = "(" ++ sym ++ " " ++ (show h) ++ (se' t) ++ ")"
 instance Show(Expr) where
-    show (Undefined s) = s
-    show Skip = "Skip"
+    show (Exception s) = "Exception: " ++ s
+    show Skip = "*nothing*"
     show (Val v) = show v
     show (ListExpr l) = show l
     show (ToInt i) = "int(" ++ show i ++ ")"
@@ -144,7 +127,6 @@ instance Show(Expr) where
     show (For x y z) = "(for " ++ (show x) ++ " in " ++ (show y) ++ " " ++ (show z) ++ ")"
     show (Range x y z) = "range(" ++ (show x) ++ "," ++ (show y) ++ "," ++ (show z) ++ ")"
     show (Output x) = "print " ++ show x
-    show (Placeholder) = "**nothing**"
     show (Import s) = "import " ++ (show s)
     show (FileObj f) = "<<" ++ show f ++ ">>"
     show (FileRead f) = "read " ++ show f
