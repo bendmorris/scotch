@@ -48,14 +48,18 @@ main = do args <- getArgs
                                          return []
                         (True, b) -> do return $ unscope b
           if verbose then putStrLn "-v Verbose mode on" else return ()
-          if (length args) > 0 && isSuffixOf ".sco" (args !! 0) 
+          if (length args) > 0 && not (isPrefixOf "-" (args !! 0))
             -- if a .sco filename is given as the first argument, interpret that file
-            then do newbindings <- execute verbose (args !! 0) unscoped
+            then do let filename = case isSuffixOf ".sco" (args !! 0) of
+                                    True -> args !! 0
+                                    False -> (args !! 0) ++ ".sco"
+                    newbindings <- execute verbose filename unscoped
                     -- if the -i flag is set, start the interpreter
                     if interpret then loop verbose (unscope newbindings) state
                                  else return ()
             -- otherwise, start the interpreter
-            else do putStrLn ("Scotch interpreter, version " ++ version)
+            else do putStrLn $ "Scotch interpreter, version " ++ version
+                    putStrLn $ "For more information, type \"copyright\" or \"license\"."
                     loop verbose unscoped state
 
 -- the interpreter's main REPL loop
