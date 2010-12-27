@@ -143,19 +143,13 @@ eval exp vars = case exp of
                                  Val v -> ListExpr (forloop id [Val v] y)
                                  otherwise -> Exception (show x)) vars
   Range from to step -> case (eval from vars) of
-                          Val v -> case v of
-                                     NumInt i -> case (eval to vars) of
-                                                   Val w -> case w of
-                                                              NumInt j -> case (eval step vars) of
-                                                                            Val u -> case u of
-                                                                                       NumInt k -> Val $ List [NumInt x | x <- [i, i+k .. j]]
-                                                                                       otherwise -> Exception "Non-integer argument in range"
-                                                                            Exception e -> Exception e
-                                                                            otherwise -> Exception "Non-integer argument in range"
-                                                              otherwise -> Exception "Non-integer argument in range"
-                                                   Exception e -> Exception e
-                                                   otherwise -> Exception "Non-integer argument in range"
-                                     otherwise -> Exception "Non-integer argument in range"
+                          Val (NumInt i) -> case (eval to vars) of
+                                              Val (NumInt j) -> case (eval step vars) of
+                                                                  Val (NumInt k) -> Val $ List [NumInt x | x <- [i, i+k .. j]]
+                                                                  Exception e -> Exception e
+                                                                  otherwise -> Exception "Non-integer argument in range"
+                                              Exception e -> Exception e
+                                              otherwise -> Exception "Non-integer argument in range"
                           Exception e -> Exception e
                           otherwise -> Exception "Non-integer argument in range"
   FileObj f ->          case eval f vars of
