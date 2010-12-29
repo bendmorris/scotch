@@ -109,12 +109,12 @@ eval exp vars = case exp of
                           Val (HFunc (h)) -> if length params > 0 
                                              then case expr of
                                                     Func f' args' -> if fp == f' 
-                                                                     then Result $ tailcall fp args args'
-                                                                     else Result newcall
-                                                    otherwise -> Result newcall
+                                                                     then tailcall fp args args'
+                                                                     else newcall
+                                                    otherwise -> newcall
                                              else case snd $ var_binding fp vars of
                                                     Func f' args' -> eval (Func f' (args' ++ args)) vars
-                                                    otherwise -> Exception $ show otherwise
+                                                    otherwise -> Exception $ show expr
                           Func f' args' -> eval (Func f' (args' ++ args)) vars
                           otherwise -> Exception $ "Variable " ++ (show f) ++ " isn't a function"
                         where fp = case vardef of
@@ -126,10 +126,7 @@ eval exp vars = case exp of
                               expr = snd definition
                               newcall = eval (substitute expr (funcall (zip params args))) vars
                               tailcall f args args' = if definition' == definition 
-                                                      then tailcall f [case eval (substitute (args' !! n) (funcall (zip params args))) vars of
-                                                                        Val r -> Val r
-                                                                        Result r -> r
-                                                                        otherwise -> Exception $ show otherwise
+                                                      then tailcall f [eval (substitute (args' !! n) (funcall (zip params args))) vars
                                                                        | n <- [0 .. (length args') - 1]] args'
                                                       else eval (substitute (snd definition') (funcall (zip (fst definition') args))) vars
                                                       where definition' = func_binding f args vars
@@ -246,7 +243,6 @@ ieval expr vars =
        Output p -> return result
        FileWrite f p -> return result
        FileAppend f p -> return result
-       Result r -> ieval r vars
        otherwise -> ieval result vars
 
 -- subfile: substitutes values for delayed I/O operations
@@ -331,6 +327,4 @@ subfile exp vars =
                        otherwise -> do return $ Exception "Invalid file"
     Func f args -> do args' <- iolist [ieval arg vars | arg <- args]
                       return $ Func f args'
-    Result r -> do r' <- subfile r vars
-                   return r'
     otherwise -> do return otherwise

@@ -82,7 +82,6 @@ data Expr =
           | Defproc Id [Id] [Expr] Expr     -- procedure definition
           | Var Id                          -- identifier
           | Func Id [Expr]                  -- function call
-          | Result Expr                     -- function result that needs subfile
           | If Expr Expr Expr               -- conditional
           | For Id (Expr) (Expr)            -- iteration
           | Range (Expr) (Expr) (Expr)      -- range
@@ -124,7 +123,6 @@ instance Show(Expr) where
     show (Defproc a b c d) = "(defproc " ++ (show a) ++ " " ++ (show b) ++ "{" ++ (show c) ++ "}" ++ (show d) ++ ")"
     show (Var v) = "var " ++ show v
     show (Func f p) = "(func " ++ (show f) ++ " " ++ (show p) ++ ")"
-    show (Result r) = show r
     show (If cond x y) = se "if" [cond, x, y]
     show (For x y z) = "(for " ++ (show x) ++ " in " ++ (show y) ++ " " ++ (show z) ++ ")"
     show (Range x y z) = "range(" ++ (show x) ++ "," ++ (show y) ++ "," ++ (show z) ++ ")"
