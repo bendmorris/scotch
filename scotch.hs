@@ -89,7 +89,7 @@ loop verbose bindings state =
                                   (True, b) -> do -- successful module import
                                                   return b
                          -- evaluate parsed input
-                         let result = eval parsed bindings
+                         result <- ieval parsed bindings
                          if verbose then putStrLn (show parsed)
                                     else return ()
                          -- determine whether any definitions were made

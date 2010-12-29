@@ -109,12 +109,12 @@ eval exp vars = case exp of
                           Val (HFunc (h)) -> if length params > 0 
                                              then case expr of
                                                     Func f' args' -> if fp == f' 
-                                                                     then tailcall fp args args'
-                                                                     else newcall
-                                                    otherwise -> newcall
+                                                                     then Result $ tailcall fp args args'
+                                                                     else Result newcall
+                                                    otherwise -> Result newcall
                                              else case snd $ var_binding fp vars of
                                                     Func f' args' -> eval (Func f' (args' ++ args)) vars
-                                                    otherwise -> Exception $ show expr
+                                                    otherwise -> Exception $ show otherwise
                           Func f' args' -> eval (Func f' (args' ++ args)) vars
                           otherwise -> Exception $ "Variable " ++ (show f) ++ " isn't a function"
                         where fp = case vardef of
@@ -128,6 +128,7 @@ eval exp vars = case exp of
                               tailcall f args args' = if definition' == definition 
                                                       then tailcall f [case eval (substitute (args' !! n) (funcall (zip params args))) vars of
                                                                         Val r -> Val r
+                                                                        Result r -> r
                                                                         otherwise -> Exception $ show otherwise
                                                                        | n <- [0 .. (length args') - 1]] args'
                                                       else eval (substitute (snd definition') (funcall (zip (fst definition') args))) vars
@@ -179,7 +180,7 @@ eval exp vars = case exp of
                              else var_binding x t
                              
        func_binding :: Id -> [Expr] -> [Binding] -> Call
-       func_binding x args [] = ([], Exception ("Function " ++ (show x) ++ " doesn't match any existing pattern."))
+       func_binding x args [] = ([], Exception ("Function " ++ (show x) ++ " doesn't match any existing pattern." ++ show args))
        func_binding x args (h:t) = if (show id) == (show x) &&
                                       length args == length params &&
                                       pattern_match params args
@@ -232,7 +233,23 @@ iolist [] = do return []
 iolist (h:t) = do item <- h
                   rest <- iolist t
                   return (item:rest)
+                  
+-- ieval: evaluates an expression completely, replacing I/O operations as necessary
+ieval :: Expr -> [Binding] -> IO Expr
+ieval expr vars =
+  do subbed <- subfile expr vars
+     result <- subfile (eval subbed vars) vars
+     case result of
+       Val v -> return result
+       Exception e -> return result
+       Skip -> return result
+       Output p -> return result
+       FileWrite f p -> return result
+       FileAppend f p -> return result
+       Result r -> ieval r vars
+       otherwise -> ieval result vars
 
+-- subfile: substitutes values for delayed I/O operations
 subfile :: Expr -> [Binding] -> IO Expr
 subfile exp vars =
   case exp of
@@ -288,13 +305,11 @@ subfile exp vars =
                           y' <- subfile y vars'
                           return $ EagerDef id x' y'
                           where vars' = ((id, ([], eval x vars)) : vars)
-    Def id x y -> do x' <- subfile x vars'
-                     y' <- subfile y vars'
-                     return $ Def id x' y'
+    Def id x y -> do y' <- subfile y vars'
+                     return $ Def id x y'
                      where vars' = ((id, ([], x)) : vars)
-    Defun id p x y -> do x' <- subfile x vars'
-                         y' <- subfile y vars'
-                         return $ Defun id p x' y'
+    Defun id p x y -> do y' <- subfile y vars
+                         return $ Defun id p x y'
                          where vars' = ((id, (p, x)) : 
                                         (id, ([], Val (HFunc id))) : 
                                         vars)
@@ -314,4 +329,8 @@ subfile exp vars =
                                                        return $ Val $ Str contents
                                             False -> return $ Exception "File does not exist"
                        otherwise -> do return $ Exception "Invalid file"
+    Func f args -> do args' <- iolist [ieval arg vars | arg <- args]
+                      return $ Func f args'
+    Result r -> do r' <- subfile r vars
+                   return r'
     otherwise -> do return otherwise

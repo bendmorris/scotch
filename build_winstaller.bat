@@ -13,9 +13,7 @@ cd scotch.lib
 rmdir .svn /s /q
 cd std
 rmdir .svn /s /q
-cd ..
-cd ..
-cd ..
+cd ../../..
 
 makensisw winstaller.nsi
 

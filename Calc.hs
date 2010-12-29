@@ -20,13 +20,15 @@ import Types
 
 type_mismatch f a b = Exception $ "Type mismatch: " ++ 
                                   show a ++ " " ++ f ++ " " ++ show b
-
+                                  
 -- calc: calls a function on the value of two Calculations, resulting in an exception if
 --       either Calculation previously resulted in an exception
 calc :: Expr -> Expr -> (Value -> Value -> Expr) -> Expr
 calc _ (Exception s) _ = Exception s
 calc (Exception s) _ _ = Exception s
 calc (Val a) (Val b) f = f a b
+calc (Result a) b f = calc a b f
+calc a (Result b) f = calc a b f
 
 -- the following functions provide basic operations between Values, returning an Expr
 -- addition

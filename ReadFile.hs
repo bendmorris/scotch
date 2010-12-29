@@ -32,7 +32,7 @@ wexecute _ [] bindings = do return bindings
 wexecute verbose (h:t) bindings = 
   do parsed <- subfile (snd h) unscoped
      -- evaluate the parsed code
-     let result = eval parsed unscoped
+     result <- ieval parsed unscoped
      if verbose then putStrLn (show parsed)
                 else return ()        
      let newBindings = case parsed of

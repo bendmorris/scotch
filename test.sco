@@ -45,7 +45,7 @@ tests += test(sort([5,4,3,2,1]), [1,2,3,4,5])
 
 file_name = "test.sco"
 file = <<file_name>>
-tests += test(split(read(file), "\n") @ 0, "# Tests")
+tests += test(split(read(file), "\n"), "# Tests")
 
 print tests
 print (if all([for test in tests, if test == "yes" then true else false])
