@@ -85,7 +85,8 @@ value = try listValue <|>
         try strValue <|> 
         try floatValue <|> 
         try intValue
-valueStmt = try listStmt <|>
+valueStmt = try procStmt <|>
+            try listStmt <|>
             try strStmt <|>
             try floatStmt <|>
             try intStmt
@@ -375,6 +376,14 @@ floatStmt :: Parser Expr
 floatStmt =
   do value <- floatValue
      return $ Val value
+
+procStmt :: Parser Expr
+procStmt =
+  do reserved "do"
+     exprs <- many $ try (do expr <- whiteSpace >> expression
+                             reservedOp ";"
+                             return expr)
+     return $ Val $ Proc exprs
 
 listValue :: Parser Value
 listValue =
