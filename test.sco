@@ -47,6 +47,10 @@ file_name = "test.sco"
 file = <<file_name>>
 tests += test(split(read(file) + "abcdefg", "\n") @ 0, "# Tests")
 
+f(n) = n
+tests += test([for i in [1..2], f(i)], [1, 2])
+tests += test([for i in [1..10], fib(i)], [1,1,2,3,5,8,13,21,34,55])
+
 print tests
 print (if all([for test in tests, if test == "yes" then true else false])
         then "All tests passed."

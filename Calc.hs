@@ -87,7 +87,7 @@ veq (NumFloat a) (NumInt b) = Val (Bit (a == (realToFrac b)))
 veq (List a) (List b) = Val (Bit (a == b))
 veq (Str a) (Str b) = Val (Bit (a == b))
 veq (Bit a) (Bit b) = Val (Bit (a == b))
-veq a b = type_mismatch "=" a b
+veq a b = Val (Bit False)
 -- greater than
 vgt (NumInt a) (NumInt b) = Val (Bit (a > b))
 vgt (NumFloat a) (NumFloat b) = Val (Bit (a > b))

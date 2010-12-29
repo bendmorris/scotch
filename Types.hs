@@ -134,4 +134,5 @@ instance Show(Expr) where
     show (FileRead f) = "read " ++ show f
     show (FileWrite f x) = "write " ++ show f ++ " " ++ show x
     show (FileAppend f x) = "append " ++ show f ++ " " ++ show x
+    show (Thread th) = "(thread " ++ show th ++ ")"
 type PosExpr = (Maybe SourcePos, Expr)

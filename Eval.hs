@@ -244,7 +244,11 @@ ieval expr vars =
        FileWrite f p -> return result
        FileAppend f p -> return result
        Thread th -> return result
-       otherwise -> ieval result vars
+       otherwise -> do let vars' = case expr of
+                                     Def id x y -> (id, ([], x)) : vars
+                                     EagerDef id x y -> (id, ([], x)) : vars
+                                     otherwise -> vars
+                       ieval result vars'
 
 -- subfile: substitutes values for delayed I/O operations
 subfile :: Expr -> [Binding] -> IO Expr
@@ -329,6 +333,6 @@ subfile exp vars =
                                                        return $ Val $ Str contents
                                             False -> return $ Exception "File does not exist"
                        otherwise -> do return $ Exception "Invalid file"
-    Func f args -> do args' <- iolist [ieval arg vars | arg <- args]
+    Func f args -> do args' <- iolist [subfile arg vars | arg <- args]
                       return $ Func f args'
     otherwise -> do return otherwise
