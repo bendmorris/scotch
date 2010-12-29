@@ -243,6 +243,7 @@ ieval expr vars =
        Output p -> return result
        FileWrite f p -> return result
        FileAppend f p -> return result
+       Thread th -> return result
        otherwise -> ieval result vars
 
 -- subfile: substitutes values for delayed I/O operations

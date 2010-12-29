@@ -92,6 +92,7 @@ data Expr =
           | FileRead Expr                   -- read file
           | FileWrite Expr Expr             -- write to file
           | FileAppend Expr Expr            -- append to file
+          | Thread Expr                     -- evaluates an expression in a separate thread
           deriving Eq
 se' :: (Show a) => [a] -> String
 se' [] = []

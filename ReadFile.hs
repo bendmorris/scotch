@@ -19,6 +19,7 @@ module ReadFile where
 import Data.List
 import System.Directory
 import System.Environment.Executable
+import Control.Concurrent
 import Text.ParserCombinators.Parsec
 import Read
 import Types
@@ -61,6 +62,9 @@ wexecute verbose (h:t) bindings =
                                                     wexecute verbose t bindings'
        FileAppend (Val (File f)) (Val (Str x)) -> do appendFile f x
                                                      wexecute verbose t bindings'
+       Thread th -> do forkIO (do wexecute verbose [(Nothing, th)] bindings'
+                                  return ())
+                       wexecute verbose t bindings'
        otherwise -> do new <- newBindings
                        wexecute verbose t (addBindings new bindings')
      where -- scope is determined by amount of leading whitespace
@@ -103,7 +107,7 @@ importFile verbose scope s =
               | otherwise = ""
      let dir = currDir_dir || exeDir_dir
      stdlib <- if s == ["std", "lib"] then do return (False, []) 
-                                      else importFile verbose 1 ["std", "lib"]
+                                      else importFile False 1 ["std", "lib"]
      let builtin = case stdlib of
                     (True, b) -> unscope b
                     (False, _) -> []

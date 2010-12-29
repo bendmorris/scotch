@@ -38,7 +38,8 @@ languageDef =
                                       "where", "case", "otherwise",
                                       "do",
                                       "int", "float", "str",
-                                      "read", "write", "append"
+                                      "read", "write", "append", "input",
+                                      "thread"
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
                                       "<", ">", "and", "or", "not", ":", "->",
@@ -103,6 +104,7 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try readStmt <|>
          try printStmt <|>
          try inputStmt <|>
+         try threadStmt <|>
          try rangeStmt <|>
          try forStmt <|>
          try notStmt <|>
@@ -247,6 +249,12 @@ inputStmt :: Parser Expr
 inputStmt =
   do reserved "input"
      return $ Input
+     
+threadStmt :: Parser Expr
+threadStmt =
+  do reserved "thread"
+     expr <- expression
+     return $ Thread expr
      
 rangeStmt :: Parser Expr
 rangeStmt =
