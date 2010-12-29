@@ -250,8 +250,6 @@ ieval expr vars =
 subfile :: Expr -> [Binding] -> IO Expr
 subfile exp vars =
   case exp of
-    Val (Proc p) -> do list <- iolist [subfile e vars | e <- p]
-                       return $ Val (Proc list)
     ToInt x -> do x' <- subfile x vars
                   return $ ToInt x'
     ToFloat x -> do x' <- subfile x vars
