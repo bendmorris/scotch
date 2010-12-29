@@ -318,7 +318,12 @@ subfile exp vars =
                      return $ For id x' y'
     Output x -> do x' <- subfile x vars
                    return $ Output x'
-    FileRead f -> do case eval f vars of
+    Input -> do line <- getLine
+                return $ Val (Str line)
+    FileObj f -> do f' <- subfile f vars
+                    return $ FileObj f'
+    FileRead f -> do sub <- subfile f vars
+                     case eval sub vars of
                        Val (File f) -> do exists <- doesFileExist f
                                           case exists of 
                                             True -> do contents <- readFile f

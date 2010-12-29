@@ -102,6 +102,7 @@ syntax = try (reserved "true" >> return (Val (Bit True))) <|>
          try appendStmt <|>
          try readStmt <|>
          try printStmt <|>
+         try inputStmt <|>
          try rangeStmt <|>
          try forStmt <|>
          try notStmt <|>
@@ -241,6 +242,11 @@ printStmt =
   do reserved "print"
      expr <- expression
      return $ Output (expr)
+     
+inputStmt :: Parser Expr
+inputStmt =
+  do reserved "input"
+     return $ Input
      
 rangeStmt :: Parser Expr
 rangeStmt =

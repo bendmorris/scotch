@@ -86,6 +86,7 @@ data Expr =
           | For Id (Expr) (Expr)            -- iteration
           | Range (Expr) (Expr) (Expr)      -- range
           | Output Expr                     -- output
+          | Input                           -- get a line of input from the user
           | Import [String]                 -- import module
           | FileObj Expr                    -- file object
           | FileRead Expr                   -- read file
