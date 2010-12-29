@@ -243,7 +243,6 @@ ieval expr vars =
        Output p -> return result
        FileWrite f p -> return result
        FileAppend f p -> return result
-       Thread th -> return result
        otherwise -> do let vars' = case expr of
                                      Def id x y -> (id, ([], x)) : vars
                                      EagerDef id x y -> (id, ([], x)) : vars

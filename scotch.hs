@@ -112,9 +112,9 @@ loop verbose bindings state =
                                          otherwise -> putStrLn (show p)
                            FileWrite (Val (File f)) (Val (Str x)) -> writeFile f x
                            FileAppend (Val (File f)) (Val (Str x)) -> appendFile f x
-                           Thread th -> do forkIO (do wexecute verbose [(Nothing, th)] (rescope bindings)
-                                                      return ())
-                                           return ()
+                           Val (Thread th) -> do forkIO (do wexecute verbose [(Nothing, th)] (rescope bindings)
+                                                            return ())
+                                                 return ()
                            Val (Proc p) -> return ()
                            Val v -> putStrLn (show result)
                            Exception e -> putStrLn $ show $ Exception e 

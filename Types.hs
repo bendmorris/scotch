@@ -36,6 +36,7 @@ data Value = NumInt Integer
            | Null
            | HFunc Id
            | Proc [Expr]
+           | Thread Expr
            | Undefined String
            | File String
            deriving Eq
@@ -49,6 +50,7 @@ instance Show (Value) where
     show (List l) = show l
     show (HFunc f) = "func " ++ show f
     show (Proc p) = "proc " ++ show p
+    show (Thread th) = "thread " ++ show th
     show (Null) = "null"
     show (Undefined s) = show s
     show (File f) = "<<" ++ show f ++ ">>"
@@ -92,7 +94,6 @@ data Expr =
           | FileRead Expr                   -- read file
           | FileWrite Expr Expr             -- write to file
           | FileAppend Expr Expr            -- append to file
-          | Thread Expr                     -- evaluates an expression in a separate thread
           deriving Eq
 se' :: (Show a) => [a] -> String
 se' [] = []
@@ -134,5 +135,4 @@ instance Show(Expr) where
     show (FileRead f) = "read " ++ show f
     show (FileWrite f x) = "write " ++ show f ++ " " ++ show x
     show (FileAppend f x) = "append " ++ show f ++ " " ++ show x
-    show (Thread th) = "(thread " ++ show th ++ ")"
 type PosExpr = (Maybe SourcePos, Expr)

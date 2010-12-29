@@ -127,3 +127,6 @@ insert(x, h:t, a) = if x > h then h + insert(x, t) else ([x] + [h] + t)
 insert(x, [], a) = a + x
 insort(h:t) = insert(h, (insort(t)))
 insort([]) = []
+
+execute(h:t) = do h; execute(t);
+execute([]) = []

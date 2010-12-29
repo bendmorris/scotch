@@ -255,7 +255,7 @@ threadStmt :: Parser Expr
 threadStmt =
   do reserved "thread"
      expr <- expression
-     return $ Thread expr
+     return $ Val $ Thread expr
      
 rangeStmt :: Parser Expr
 rangeStmt =

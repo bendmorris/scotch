@@ -62,9 +62,9 @@ wexecute verbose (h:t) bindings =
                                                     wexecute verbose t bindings'
        FileAppend (Val (File f)) (Val (Str x)) -> do appendFile f x
                                                      wexecute verbose t bindings'
-       Thread th -> do forkIO (do wexecute verbose [(Nothing, th)] bindings'
-                                  return ())
-                       wexecute verbose t bindings'
+       Val (Thread th) -> do forkIO (do wexecute verbose [(Nothing, th)] bindings'
+                                        return ())
+                             wexecute verbose t bindings'
        otherwise -> do new <- newBindings
                        wexecute verbose t (addBindings new bindings')
      where -- scope is determined by amount of leading whitespace
