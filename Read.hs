@@ -73,9 +73,9 @@ statement = whiteSpace >> do pos <- getPosition
 -- expression parsers
 
 expression :: Parser Expr
-expression = try operation <|> term
+expression = operation <|> term
            
-operation = buildExpressionParser operators (try term <|> parens term)
+operation = buildExpressionParser operators (term <|> parens term)
 
 term :: Parser Expr
 term = try syntax <|>
