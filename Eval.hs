@@ -114,7 +114,9 @@ eval exp vars = case exp of
                                                     otherwise -> newcall
                                              else case snd $ var_binding fp vars of
                                                     Func f' args' -> eval (Func f' (args' ++ args)) vars
-                                                    otherwise -> Exception $ show expr
+                                                    otherwise -> Exception $ (case expr of
+                                                                                Exception e -> e
+                                                                                otherwise -> show expr)
                           Func f' args' -> eval (Func f' (args' ++ args)) vars
                           otherwise -> Exception $ "Variable " ++ (show f) ++ " isn't a function"
                         where fp = case vardef of
@@ -177,7 +179,7 @@ eval exp vars = case exp of
                              else var_binding x t
                              
        func_binding :: Id -> [Expr] -> [Binding] -> Call
-       func_binding x args [] = ([], Exception ("Function " ++ (show x) ++ " doesn't match any existing pattern." ++ show args))
+       func_binding x args [] = ([], Exception ("Function " ++ (show x) ++ " doesn't match any existing pattern."))
        func_binding x args (h:t) = if (show id) == (show x) &&
                                       length args == length params &&
                                       pattern_match params args
