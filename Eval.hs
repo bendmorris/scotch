@@ -203,8 +203,10 @@ eval exp vars = case exp of
                           Val (Str l) -> pattern_match b d
                           otherwise -> False
            AtomMatch x y -> case eval c vars of
-                              Val (Atom x' y') -> if x' == x 
-                                                  then pattern_match (y ++ b) ([Val i | i <- y'] ++ d) 
+                              Val (Atom x' y') -> if length y == length y' 
+                                                  then if x' == x 
+                                                       then pattern_match (y ++ b) ([Val i | i <- y'] ++ d) 
+                                                       else False
                                                   else False
                               otherwise -> False
            Pattern v -> if result == Val v 
