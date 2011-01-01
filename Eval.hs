@@ -203,6 +203,11 @@ eval exp vars = case exp of
                           Val (List l) -> pattern_match b d
                           Val (Str l) -> pattern_match b d
                           otherwise -> False
+           AtomMatch x y -> case eval c vars of
+                              Val (Atom x' y') -> if x' == x 
+                                                  then pattern_match (y : b) ((Val y') : d) 
+                                                  else False
+                              otherwise -> False
            Pattern v -> if result == Val v 
                         then pattern_match b d
                         else case (result, v) of 
@@ -226,6 +231,8 @@ eval exp vars = case exp of
                                                                (Name y, Val (Str (tail l))) :
                                                                funcall t
                                                           else [(Name x, Exception "Can't split empty string")]
+            AtomMatch x y -> case eval arg vars of 
+                               Val (Atom x' y') -> funcall ((y, Val y') : t)
             Pattern _ -> funcall t
             where param = fst h
                   arg = snd h

@@ -20,11 +20,16 @@ import Data.Decimal
 import Text.ParserCombinators.Parsec
 
 -- a bindable identifier
-data Id = Name String | Pattern Value | Split String String deriving Eq
+data Id = Name String 
+        | Pattern Value 
+        | Split String String 
+        | AtomMatch String Id
+        deriving Eq
 instance Show(Id) where
     show (Name s) = s
     show (Pattern v) = show v
     show (Split a b) = "(" ++ show a ++ " : " ++ show b ++ ")"
+    show (AtomMatch a b) = show a ++ " " ++ show b
 
 -- a value with its corresponding type
 data Value = NumInt Integer

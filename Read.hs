@@ -329,7 +329,12 @@ exprList :: Parser [Expr]
 exprList = sepBy (whiteSpace >> expression) (oneOf ",")
 
 identifierOrValue :: Parser Id
-identifierOrValue = try idSplit <|> try idName <|> try idPattern
+identifierOrValue = try idAtom <|> try idSplit <|> try idName <|> try idPattern
+idAtom =
+  do initial <- oneOf upperCase
+     chars <- many $ oneOf $ upperCase ++ lowerCase
+     id <- whiteSpace >> identifierOrValue
+     return $ AtomMatch (initial : chars) id
 idSplit = 
   do id1 <- identifier
      reservedOp ":"
