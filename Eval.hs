@@ -169,6 +169,7 @@ eval exp vars = case exp of
   AtomExpr s v ->       case result of
                           Exception e -> Exception e
                           Val r -> Val $ Atom s r
+                          Skip -> Val $ Atom s Null
                           otherwise -> Exception $ show otherwise
                         where result = eval v vars
   otherwise ->          otherwise

@@ -384,11 +384,17 @@ floatStmt =
   do value <- floatValue
      return $ Val value
 
+atomValue :: Parser Value
+atomValue =
+  do initial <- oneOf upperCase
+     chars <- many $ oneOf $ upperCase ++ lowerCase
+     val <- try (whiteSpace >> value) <|> do return Null
+     return $ Atom (initial : chars) val
 atomStmt :: Parser Expr
 atomStmt =
   do initial <- oneOf upperCase
      chars <- many $ oneOf $ upperCase ++ lowerCase
-     expr <- expression
+     expr <- try (whiteSpace >> expression) <|> do return Skip
      return $ AtomExpr (initial : chars) expr
 
 procStmt :: Parser Expr
@@ -398,13 +404,6 @@ procStmt =
                              reservedOp ";"
                              return expr)
      return $ Val $ Proc exprs
-
-atomValue :: Parser Value
-atomValue =
-  do initial <- oneOf upperCase
-     chars <- many $ oneOf $ upperCase ++ lowerCase
-     val <- value
-     return $ Atom (initial : chars) val
 
 listValue :: Parser Value
 listValue =
