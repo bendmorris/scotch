@@ -333,7 +333,7 @@ identifierOrValue = try idAtom <|> try idSplit <|> try idName <|> try idPattern
 idAtom =
   do initial <- oneOf upperCase
      chars <- many $ oneOf $ upperCase ++ lowerCase
-     id <- whiteSpace >> identifierOrValue
+     id <- many (whiteSpace >> identifierOrValue)
      return $ AtomMatch (initial : chars) id
 idSplit = 
   do id1 <- identifier
@@ -393,13 +393,13 @@ atomValue :: Parser Value
 atomValue =
   do initial <- oneOf upperCase
      chars <- many $ oneOf $ upperCase ++ lowerCase
-     val <- try (whiteSpace >> value) <|> do return Null
+     val <- many (whiteSpace >> value)
      return $ Atom (initial : chars) val
 atomStmt :: Parser Expr
 atomStmt =
   do initial <- oneOf upperCase
      chars <- many $ oneOf $ upperCase ++ lowerCase
-     expr <- try (whiteSpace >> expression) <|> do return Skip
+     expr <- many (whiteSpace >> expression)
      return $ AtomExpr (initial : chars) expr
 
 procStmt :: Parser Expr

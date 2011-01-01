@@ -166,12 +166,11 @@ eval exp vars = case exp of
                                             Val (Str s) -> FileAppend (Val (File f)) (Val (Str s))
                                             otherwise -> Exception $ "Write non-string " ++ show otherwise
                           otherwise -> Exception $ "Write to non-file " ++ show otherwise
-  AtomExpr s v ->       case result of
-                          Exception e -> Exception e
-                          Val r -> Val $ Atom s r
-                          Skip -> Val $ Atom s Null
-                          otherwise -> Exception $ show otherwise
-                        where result = eval v vars
+  AtomExpr s v ->       Val $ Atom s [case result of
+                                        Exception e -> Undefined e
+                                        Val r -> r
+                                        otherwise -> Undefined $ show otherwise
+                                      | result <- [eval v' vars | v' <- v] ]
   otherwise ->          otherwise
  where var_binding :: Id -> [Binding] -> Call
        var_binding x [] = ([], Exception ("Undefined variable " ++ show x))
@@ -205,7 +204,7 @@ eval exp vars = case exp of
                           otherwise -> False
            AtomMatch x y -> case eval c vars of
                               Val (Atom x' y') -> if x' == x 
-                                                  then pattern_match (y : b) ((Val y') : d) 
+                                                  then pattern_match (y ++ b) ([Val i | i <- y'] ++ d) 
                                                   else False
                               otherwise -> False
            Pattern v -> if result == Val v 
@@ -232,7 +231,7 @@ eval exp vars = case exp of
                                                                funcall t
                                                           else [(Name x, Exception "Can't split empty string")]
             AtomMatch x y -> case eval arg vars of 
-                               Val (Atom x' y') -> funcall ((y, Val y') : t)
+                               Val (Atom x' y') -> funcall ((zip y [Val i | i <- y']) ++ t)
             Pattern _ -> funcall t
             where param = fst h
                   arg = snd h

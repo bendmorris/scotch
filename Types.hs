@@ -23,7 +23,7 @@ import Text.ParserCombinators.Parsec
 data Id = Name String 
         | Pattern Value 
         | Split String String 
-        | AtomMatch String Id
+        | AtomMatch String [Id]
         deriving Eq
 instance Show(Id) where
     show (Name s) = s
@@ -44,7 +44,7 @@ data Value = NumInt Integer
            | Thread Expr
            | Undefined String
            | File String
-           | Atom String Value
+           | Atom String [Value]
            deriving Eq
 instance Show (Value) where
     show (Str s) = "\"" ++ s ++ "\""
@@ -63,8 +63,7 @@ instance Show (Value) where
     show (Atom s v) = s ++ " " ++ show v
 
 -- represents an arithmetic expression
-data Expr = 
-            Exception String                -- undefined
+data Expr = Exception String                -- undefined
           | Skip                            -- returns Null
           | Val (Value)                     -- value
           | ListExpr [Expr]                 -- list expression
@@ -101,7 +100,7 @@ data Expr =
           | FileRead Expr                   -- read file
           | FileWrite Expr Expr             -- write to file
           | FileAppend Expr Expr            -- append to file
-          | AtomExpr String Expr            -- evaluates to an atom value
+          | AtomExpr String [Expr]          -- evaluates to an atom value
           deriving Eq
 se' :: (Show a) => [a] -> String
 se' [] = []
