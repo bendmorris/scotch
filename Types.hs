@@ -39,6 +39,7 @@ data Value = NumInt Integer
            | Thread Expr
            | Undefined String
            | File String
+           | Atom String Value
            deriving Eq
 instance Show (Value) where
     show (Str s) = "\"" ++ s ++ "\""
@@ -54,6 +55,7 @@ instance Show (Value) where
     show (Null) = "null"
     show (Undefined s) = show s
     show (File f) = "<<" ++ show f ++ ">>"
+    show (Atom s v) = s ++ " " ++ show v
 
 -- represents an arithmetic expression
 data Expr = 
@@ -94,6 +96,7 @@ data Expr =
           | FileRead Expr                   -- read file
           | FileWrite Expr Expr             -- write to file
           | FileAppend Expr Expr            -- append to file
+          | AtomExpr String Expr            -- evaluates to an atom value
           deriving Eq
 se' :: (Show a) => [a] -> String
 se' [] = []
@@ -127,7 +130,7 @@ instance Show(Expr) where
     show (Var v) = "var " ++ show v
     show (Func f p) = "(func " ++ (show f) ++ " " ++ (show p) ++ ")"
     show (If cond x y) = se "if" [cond, x, y]
-    show (For x y z) = "(for " ++ (show x) ++ " in " ++ (show y) ++ " " ++ (show z) ++ ")"
+    show (For x y z) = "[for " ++ (show x) ++ " in " ++ (show y) ++ " " ++ (show z) ++ "]"
     show (Range x y z) = "range(" ++ (show x) ++ "," ++ (show y) ++ "," ++ (show z) ++ ")"
     show (Output x) = "print " ++ show x
     show (Import s) = "import " ++ (show s)
@@ -135,4 +138,5 @@ instance Show(Expr) where
     show (FileRead f) = "read " ++ show f
     show (FileWrite f x) = "write " ++ show f ++ " " ++ show x
     show (FileAppend f x) = "append " ++ show f ++ " " ++ show x
+    show (AtomExpr s x) = "(" ++ s ++ " " ++ show x ++ ")"
 type PosExpr = (Maybe SourcePos, Expr)

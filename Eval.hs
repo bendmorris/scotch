@@ -166,6 +166,11 @@ eval exp vars = case exp of
                                             Val (Str s) -> FileAppend (Val (File f)) (Val (Str s))
                                             otherwise -> Exception $ "Write non-string " ++ show otherwise
                           otherwise -> Exception $ "Write to non-file " ++ show otherwise
+  AtomExpr s v ->       case result of
+                          Exception e -> Exception e
+                          Val r -> Val $ Atom s r
+                          otherwise -> Exception $ show otherwise
+                        where result = eval v vars
   otherwise ->          otherwise
  where var_binding :: Id -> [Binding] -> Call
        var_binding x [] = ([], Exception ("Undefined variable " ++ show x))

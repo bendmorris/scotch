@@ -24,12 +24,17 @@ import Text.ParserCombinators.Parsec.Language
 import qualified Text.ParserCombinators.Parsec.Token as Token
 import Types
 
+upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+lowerCase = "abcdefghijklmnopqrstuvwxyz"
+numeric = "0123456789"
+idSymbol = "_!'"
+
 languageDef =
   emptyDef { Token.commentStart    = "{-",
              Token.commentEnd      = "-}",
              Token.commentLine     = "#",
-             Token.identStart      = letter,
-             Token.identLetter     = alphaNum <|> oneOf "_!'",
+             Token.identStart      = oneOf lowerCase,
+             Token.identLetter     = oneOf (lowerCase ++ upperCase ++ numeric ++ idSymbol),
              Token.reservedNames   = ["if", "then", "else",
                                       "for", "in",
                                       "print", "skip",
@@ -81,11 +86,13 @@ term :: Parser Expr
 term = try syntax <|>
        parens expression
      
-value = try listValue <|> 
+value = try atomValue <|>
+        try listValue <|> 
         try strValue <|> 
         try floatValue <|> 
         try intValue
-valueStmt = try procStmt <|>
+valueStmt = try atomStmt <|>
+            try procStmt <|>
             try listStmt <|>
             try strStmt <|>
             try floatStmt <|>
@@ -377,6 +384,13 @@ floatStmt =
   do value <- floatValue
      return $ Val value
 
+atomStmt :: Parser Expr
+atomStmt =
+  do initial <- oneOf upperCase
+     chars <- many $ oneOf $ upperCase ++ lowerCase
+     expr <- expression
+     return $ AtomExpr (initial : chars) expr
+
 procStmt :: Parser Expr
 procStmt =
   do reserved "do"
@@ -384,6 +398,13 @@ procStmt =
                              reservedOp ";"
                              return expr)
      return $ Val $ Proc exprs
+
+atomValue :: Parser Value
+atomValue =
+  do initial <- oneOf upperCase
+     chars <- many $ oneOf $ upperCase ++ lowerCase
+     val <- value
+     return $ Atom (initial : chars) val
 
 listValue :: Parser Value
 listValue =
