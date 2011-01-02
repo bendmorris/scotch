@@ -245,7 +245,7 @@ eval exp vars = case exp of
        forloop id (h:t) y = [Def id h y] ++ (forloop id t y)
        
        caseExpr :: Expr -> [(Id, Expr)] -> Expr
-       caseExpr _ [] = Exception "No match for case expression"
+       caseExpr check [] = Exception $ "No match for case expression " ++ show check
        caseExpr check (h:t) = if pattern_match [param] [check]
                               then eval (substitute expr (funcall (zip [param] [check]))) vars
                               else caseExpr check t
