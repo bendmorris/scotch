@@ -21,7 +21,7 @@ import System.Directory
 import System.Environment.Executable
 import Control.Concurrent
 import Text.ParserCombinators.Parsec
-import Read
+import Parse
 import Types
 import Bindings
 import Eval
@@ -124,7 +124,7 @@ importFile verbose scope s =
 -- interpret the contents of a file
 execute :: Bool -> String -> [Binding] -> IO [ScopedBinding]
 execute verbose file bindings = do input <- readFile file
-                                   let parsed = Read.read file input
+                                   let parsed = Parse.read file input
                                    wexecute verbose 
                                             parsed 
                                             ([(1, binding) | binding <- bindings])

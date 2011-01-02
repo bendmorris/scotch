@@ -14,7 +14,7 @@
     along with Scotch.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
-module Read where
+module Parse where
 
 import System.IO
 import Control.Monad

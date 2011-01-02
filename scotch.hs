@@ -26,7 +26,7 @@ import System.Console.Haskeline.IO
 import ReadFile
 import Types
 import Bindings
-import Read
+import Parse
 import Eval
 import Substitute
 
@@ -75,7 +75,7 @@ loop verbose bindings state =
                                    [show binding ++ "\n" | binding <- bindings])
                           loop verbose bindings state
         Just input -> do -- parse input
-                         let readinput = Read.read "Interpreter" input
+                         let readinput = Parse.read "Interpreter" input
                          parsed <- case length readinput of
                                      0 -> do return (Skip)
                                      1 -> subfile (snd $ head readinput) bindings
