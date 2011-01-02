@@ -1,7 +1,7 @@
 # Tests
 test(a, b) = if a == b then "yes" else a
 
-tests := [if 1 + 1 == 2 then "yes" else "no"]
+tests := [test(1 + 1, 2)]
 tests += test("abc" + "def", "abcdef")
 tests += test(head("abcdef"), "a")
 tests += test(tail("abcdef"), "bcdef")
@@ -51,11 +51,11 @@ f(n) = n
 tests += test([for i in [1..2], f(i)], [1, 2])
 tests += test([for i in [1..10], fib(i)], [1,1,2,3,5,8,13,21,34,55])
 
-f(Apple Banana "abc") = "apple"
-a = (Apple Banana "abc")
-f(Apple Banana a b c) = [a,b,c]
+f(Apple(Banana("abc"))) = "apple"
+a = (Apple(Banana("abc")))
+f(Apple(Banana(a,b,c))) = [a,b,c]
 tests += test(f(a), "apple")
-tests += test(f(Apple Banana 1 2 3), [1,2,3])
+tests += test(f(Apple(Banana(1,2,3))), [1,2,3])
 
 print tests
 print (if all([for test in tests, if test == "yes" then true else false])
