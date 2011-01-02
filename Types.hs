@@ -94,6 +94,7 @@ data Expr = Exception String                -- undefined
           | Var Id                          -- identifier
           | Func Id [Expr]                  -- function call
           | If Expr Expr Expr               -- conditional
+          | Case Expr [(Id, Expr)]          -- case expression
           | For Id (Expr) (Expr)            -- iteration
           | Range (Expr) (Expr) (Expr)      -- range
           | Output Expr                     -- output
@@ -137,6 +138,7 @@ instance Show(Expr) where
     show (Var v) = "var " ++ show v
     show (Func f p) = "(func " ++ (show f) ++ " " ++ (show p) ++ ")"
     show (If cond x y) = se "if" [cond, x, y]
+    show (Case c o) = "(case " ++ show c ++ " " ++ show o ++ ")"
     show (For x y z) = "[for " ++ (show x) ++ " in " ++ (show y) ++ " " ++ (show z) ++ "]"
     show (Range x y z) = "range(" ++ (show x) ++ "," ++ (show y) ++ "," ++ (show z) ++ ")"
     show (Output x) = "print " ++ show x

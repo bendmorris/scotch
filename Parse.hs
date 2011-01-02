@@ -40,7 +40,7 @@ languageDef =
                                       "print", "skip",
                                       "true", "false",
                                       "and", "or", "not",
-                                      "where", "case", "otherwise",
+                                      "where", "case", "of",
                                       "do",
                                       "int", "float", "str",
                                       "read", "write", "append", "input",
@@ -200,25 +200,17 @@ ifStmt =
      expr2 <- expression
      return $ If cond expr1 expr2
      
-nestedCase [] = Exception "No match found for case expression"
-nestedCase (h:t) = case h of
-                     If (Eq (b) (Skip)) c _ -> c
-                     If a b _ -> If a b (nestedCase t)
-     
 caseStmt :: Parser Expr
 caseStmt =
   do reserved "case"
      check <- whiteSpace >> expression
      reserved "of"
-     cases <- sepBy (do cond <- whiteSpace >> (try (do reserved "otherwise"
-                                                       return Skip
-                                                       ) <|> 
-                                               try expression)
+     cases <- sepBy (do cond <- whiteSpace >> identifierOrValue
                         reservedOp "->"
                         expr <- expression
-                        return $ If (Eq (check) (cond)) (expr) (Skip)
+                        return $ (cond, expr)
                         ) (oneOf ",")
-     return $ nestedCase cases
+     return $ Case check cases
      
 skipStmt :: Parser Expr
 skipStmt = reserved "skip" >> return Skip
@@ -396,7 +388,7 @@ atomValue :: Parser Value
 atomValue =
   do initial <- oneOf upperCase
      chars <- many $ oneOf $ upperCase ++ lowerCase
-     val <- try (whiteSpace >> parens (sepBy value (oneOf ","))) <|> 
+     val <- try (whiteSpace >> parens (sepBy (whiteSpace >> value) (oneOf ","))) <|> 
             try (do val' <- value
                     return [val']) <|>
             do return []
@@ -405,7 +397,7 @@ atomStmt :: Parser Expr
 atomStmt =
   do initial <- oneOf upperCase
      chars <- many $ oneOf $ upperCase ++ lowerCase
-     expr <- try (whiteSpace >> parens (sepBy expression (oneOf ","))) <|> 
+     expr <- try (whiteSpace >> parens (sepBy (whiteSpace >> expression) (oneOf ","))) <|> 
              try (do expr <- expression
                      return [expr]) <|>
              do return []

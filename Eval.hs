@@ -138,6 +138,7 @@ eval exp vars = case exp of
                           Val (Bit False) -> eval y vars
                           Exception e -> Exception e
                           otherwise -> Exception $ "Non-boolean condition " ++ show cond
+  Case check (h:t) ->   caseExpr (eval check vars) (h:t)
   For id x y ->         eval (case (eval x vars) of
                                  Val (List l) -> ListExpr (forloop id [Val item | item <- l] y)
                                  Val v -> ListExpr (forloop id [Val v] y)
@@ -194,6 +195,7 @@ eval exp vars = case exp of
                                            (fst h, fst binding, snd binding)
                                          binding = snd h
                                          
+       pattern_match :: [Id] -> [Expr] -> Bool
        pattern_match [] [] = True
        pattern_match (a:b) (c:d) = 
          case a of
@@ -240,6 +242,14 @@ eval exp vars = case exp of
        forloop :: Id -> [Expr] -> Expr -> [Expr]
        forloop id [] y = []
        forloop id (h:t) y = [Def id h y] ++ (forloop id t y)
+       
+       caseExpr :: Expr -> [(Id, Expr)] -> Expr
+       caseExpr _ [] = Exception "No match for case expression"
+       caseExpr check (h:t) = if pattern_match [param] [check]
+                              then eval (substitute expr (funcall (zip [param] [check]))) vars
+                              else caseExpr check t
+                              where param = fst h
+                                    expr = snd h
 
 iolist :: [IO Expr] -> IO [Expr]
 iolist [] = do return []
