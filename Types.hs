@@ -142,6 +142,7 @@ instance Show(Expr) where
     show (For x y z) = "[for " ++ (show x) ++ " in " ++ (show y) ++ " " ++ (show z) ++ "]"
     show (Range x y z) = "range(" ++ (show x) ++ "," ++ (show y) ++ "," ++ (show z) ++ ")"
     show (Output x) = "print " ++ show x
+    show Input = "input"
     show (Import s) = "import " ++ (show s)
     show (FileObj f) = "<<" ++ show f ++ ">>"
     show (FileRead f) = "read " ++ show f

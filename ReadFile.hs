@@ -118,7 +118,13 @@ importFile verbose scope s =
               let success = case path of
                               "" -> False
                               otherwise -> True
-              let newval = [(scope, snd binding) | binding <- val]
+              let newval = [newbinding | newbinding <- 
+                            [(scope, ((case fst (snd binding) of
+                                        Name n -> Name ((foldl (++) [] [i ++ "." | i <- s, i /= "main" ]) ++ n)), 
+                                       snd (snd binding))) | binding <- val], 
+                                       s == ["std", "lib"] ||
+                                       not (isInfixOf "std.lib." (case fst (snd newbinding) of 
+                                                                    Name n -> n))]
               return (success, newval)
 
 -- interpret the contents of a file

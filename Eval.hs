@@ -16,6 +16,7 @@
 
 module Eval where
 
+import Data.List
 import System.Directory
 import Types
 import Bindings
@@ -175,7 +176,7 @@ eval exp vars = case exp of
   otherwise ->          otherwise
  where var_binding :: Id -> [Binding] -> Call
        var_binding x [] = ([], Exception ("Undefined variable " ++ show x))
-       var_binding x (h:t) = if (fst h) == x && 
+       var_binding x (h:t) = if ((fst h) == x || isSuffixOf ("." ++ nameSplit x) ("." ++ nameSplit (fst h))) && 
                                 length (fst (snd h)) == 0 && 
                                 snd (snd h) /= Var (fst h)
                              then case snd (snd h) of
@@ -183,10 +184,10 @@ eval exp vars = case exp of
                                                        else var_binding v vars
                                     otherwise -> snd h
                              else var_binding x t
-                             
+       nameSplit (Name n) = n
        func_binding :: Id -> [Expr] -> [Binding] -> Call
        func_binding x args [] = ([], Exception ("Function " ++ (show x) ++ " doesn't match any existing pattern."))
-       func_binding x args (h:t) = if (show id) == (show x) &&
+       func_binding x args (h:t) = if (id == x || isSuffixOf ("." ++ nameSplit x) ("." ++ nameSplit id)) &&
                                       length args == length params &&
                                       pattern_match params args
                                    then binding

@@ -27,7 +27,7 @@ import Types
 upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 lowerCase = "abcdefghijklmnopqrstuvwxyz"
 numeric = "0123456789"
-idSymbol = "_!'"
+idSymbol = "_!'."
 
 languageDef =
   emptyDef { Token.commentStart    = "{-",
@@ -134,7 +134,7 @@ syntax = try importStmt <|>
 
 moduleName :: Parser [String]
 moduleName =
-  do sepBy identifier (oneOf ".")
+  do sepBy (many (oneOf (upperCase ++ lowerCase))) (oneOf ".")
 
 importStmt :: Parser Expr
 importStmt =
