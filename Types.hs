@@ -60,7 +60,10 @@ instance Show (Value) where
     show (Null) = "null"
     show (Undefined s) = show s
     show (File f) = "<<" ++ show f ++ ">>"
-    show (Atom s v) = s ++ " " ++ show v
+    show (Atom s v) = s ++ (case length v of
+                              0 -> ""
+                              1 -> " " ++ show (v !! 0)
+                              otherwise -> " " ++ show v)
 
 -- represents an arithmetic expression
 data Expr = Exception String                -- undefined
