@@ -334,7 +334,7 @@ idAtom =
   do initial <- oneOf upperCase
      chars <- many $ oneOf $ upperCase ++ lowerCase
      id <- try (whiteSpace >> parens (sepBy identifierOrValue (oneOf ","))) <|> 
-           try (do id <- identifierOrValue
+           try (do id <- whiteSpace >> identifierOrValue
                    return [id]) <|>
            do return []
      return $ AtomMatch (initial : chars) id
