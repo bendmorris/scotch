@@ -85,13 +85,22 @@ operation = buildExpressionParser operators (term <|> parens term)
 term :: Parser Expr
 term = try syntax <|>
        parens expression
-     
-value = try atomValue <|>
+
+reservedWord = try (reserved "true" >> return (Bit True)) <|>
+               try (reserved "false" >> return (Bit False)) <|>
+               try (reserved "null" >> return (Null))
+reservedExpr =
+  do word <- reservedWord
+     return $ Val word
+
+value = try reservedWord <|>
+        try atomValue <|>
         try listValue <|> 
         try strValue <|> 
         try floatValue <|> 
         try intValue
-valueStmt = try atomStmt <|>
+valueStmt = try reservedExpr <|>
+            try atomStmt <|>
             try procStmt <|>
             try listStmt <|>
             try strStmt <|>
@@ -99,10 +108,7 @@ valueStmt = try atomStmt <|>
             try intStmt
      
 syntax :: Parser Expr
-syntax = try (reserved "true" >> return (Val (Bit True))) <|>
-         try (reserved "false" >> return (Val (Bit False))) <|>
-         try (reserved "null" >> return (Val Null)) <|>
-         try importStmt <|>
+syntax = try importStmt <|>
          try assignment <|>
          try ifStmt <|>
          try caseStmt <|>
@@ -207,7 +213,7 @@ caseStmt =
      reserved "of"
      cases <- sepBy (do cond <- whiteSpace >> identifierOrValue
                         reservedOp "->"
-                        expr <- expression
+                        expr <- whiteSpace >> expression
                         return $ (cond, expr)
                         ) (oneOf ",")
      return $ Case check cases
