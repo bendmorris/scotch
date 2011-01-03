@@ -106,6 +106,8 @@ valueStmt =
   try atomStmt <|>
   try procStmt <|>
   try listStmt <|>
+  try fileStmt <|>
+  try lambdaStmt <|>
   try strStmt <|>
   try floatStmt <|>
   try intStmt
@@ -120,13 +122,10 @@ valueExpr =
   try forStmt <|>
   try notStmt <|>
   try conversionStmt <|>
-  try fileStmt <|>
-  try lambdaStmt <|>
   try valueStmt <|>
   try funcallStmt <|>
   try splitExpr <|>
-  try varcallStmt <|>         
-  try valueStmt
+  try varcallStmt
      
 syntax :: Parser Expr
 syntax = 
