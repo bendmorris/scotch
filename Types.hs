@@ -106,11 +106,6 @@ data Expr = Exception String                -- undefined
           | FileAppend Expr Expr            -- append to file
           | AtomExpr String [Expr]          -- evaluates to an atom value
           deriving Eq
-se' :: (Show a) => [a] -> String
-se' [] = []
-se' (h:t) = " " ++ show h ++ (se' t)
-se :: (Show a) => String -> [a] -> String
-se sym (h:t) = "(" ++ sym ++ " " ++ (show h) ++ (se' t) ++ ")"
 instance Show(Expr) where
     show (Exception s) = "Exception: " ++ s
     show Skip = "*nothing*"
@@ -120,24 +115,24 @@ instance Show(Expr) where
     show (ToFloat f) = "float(" ++ show f ++ ")"
     show (ToStr s) = "str(" ++ show s ++ ")"
     show (Subs n s) = show s ++ "[" ++ show n ++ "]"
-    show (Add x y) = se "+" [x, y]
-    show (Sub x y) = se "-" [x, y]
-    show (Prod x y) = se "*" [x, y]
-    show (Div x y) = se "/" [x, y]
-    show (Exp x y) = se "^" [x, y]
-    show (Eq x y) = se "==" [x, y]
-    show (Gt x y) = se ">" [x, y]
-    show (Lt x y) = se "<" [x, y]
-    show (And x y) = se "&" [x, y]
-    show (Or x y) = se "|" [x, y]
-    show (Not x) = se "!" [x]
-    show (Def a b c) = "(def " ++ (show a) ++ se' [b, c] ++ ")"
-    show (EagerDef a b c) = "(eager def " ++ (show a) ++ se' [b, c] ++ ")"
-    show (Defun a b c d) = "(defun " ++ (show a) ++ " " ++ (show b) ++ se' [c, d] ++ ")"
-    show (Defproc a b c d) = "(defproc " ++ (show a) ++ " " ++ (show b) ++ "{" ++ (show c) ++ "}" ++ (show d) ++ ")"
+    show (Add x y) = show x ++ " + " ++ show y
+    show (Sub x y) = show x ++ " - " ++ show y
+    show (Prod x y) = show x ++ " * " ++ show y
+    show (Div x y) = show x ++ " / " ++ show y
+    show (Exp x y) = show x ++ " ^ " ++ show y
+    show (Eq x y) = show x ++ " == " ++ show y
+    show (Gt x y) = show x ++ " > " ++ show y
+    show (Lt x y) = show x ++ " < " ++ show y
+    show (And x y) = show x ++ " & " ++ show y
+    show (Or x y) = show x ++ " | " ++ show y
+    show (Not x) = "not " ++ show x
+    show (Def a b c) = "(def " ++ show a ++ " as " ++ show b ++ ", " ++ show c ++ ")"
+    show (EagerDef a b c) = "(eager def " ++ show a ++ " as " ++ show b ++ ", " ++ show c ++ ")"
+    show (Defun a b c d) = "(defun " ++ (show a) ++ " " ++ (show b) ++ " as " ++ show c ++ ", " ++ show d ++ ")"
+    show (Defproc a b c d) = "(defproc " ++ (show a) ++ " " ++ (show b) ++ " as {" ++ (show c) ++ "}, " ++ (show d) ++ ")"
     show (Var v) = "var " ++ show v
     show (Func f p) = "(func " ++ (show f) ++ " " ++ (show p) ++ ")"
-    show (If cond x y) = se "if" [cond, x, y]
+    show (If cond x y) = "(if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y ++ ")"
     show (Case c o) = "(case " ++ show c ++ " " ++ show o ++ ")"
     show (For x y z) = "[for " ++ (show x) ++ " in " ++ (show y) ++ " " ++ (show z) ++ "]"
     show (Range x y z) = "range(" ++ (show x) ++ "," ++ (show y) ++ "," ++ (show z) ++ ")"
