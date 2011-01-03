@@ -2,24 +2,9 @@
 
 version = "0.1"
 
-copyright = print "Copyright (c) 2010 Ben Morris. All rights reserved."
+copyright = do import std.copyright;
 
-license = do copyright; print "\nScotch is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nScotch is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nSee <http://www.gnu.org/licenses/> for more information about the\nGNU General Public License.";
-
-{-+ "
-
-Scotch is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Scotch is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-See <http://www.gnu.org/licenses/> for more information about the
-GNU General Public License."-}
+license = do import std.license;
 
 # Returns the length of a string or list.
 len'(h:t, a) = len'(t, a+1)
