@@ -16,7 +16,6 @@
 
 module Types where
 
-import Data.Decimal
 import Text.ParserCombinators.Parsec
 
 -- a bindable identifier
@@ -34,7 +33,6 @@ instance Show(Id) where
 -- a value with its corresponding type
 data Value = NumInt Integer
            | NumFloat Double
-           | NumDec Decimal
            | Str String
            | Bit Bool
            | List [Value]
@@ -51,7 +49,6 @@ instance Show (Value) where
     show (Str s) = "\"" ++ s ++ "\""
     show (NumInt n) = show n
     show (NumFloat n) = show n
-    show (NumDec n) = show n
     show (Bit True) = "true"
     show (Bit False) = "false"
     show (List l) = show l
