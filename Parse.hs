@@ -49,7 +49,7 @@ languageDef =
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
                                       "<", ">", "and", "or", "not", ":", "->",
-                                      "<=", ">=", "+=", "<<", ">>", ".."
+                                      "<=", ">=", "+=", "<<", ">>", "..", "::"
                                      ]
            }
            
@@ -220,7 +220,7 @@ caseStmt =
      check <- whiteSpace >> expression
      reserved "of"
      cases <- sepBy (do cond <- whiteSpace >> identifierOrValue
-                        reservedOp "->"
+                        reservedOp "::"
                         expr <- whiteSpace >> expression
                         return $ (cond, expr)
                         ) (oneOf ",")
@@ -364,7 +364,7 @@ idList = do id <- sepBy (whiteSpace >> identifierOrValue) (oneOf ",")
 lambdaStmt :: Parser Expr
 lambdaStmt =
   do ids <- idList
-     reservedOp ":-"
+     reservedOp "->"
      expr <- expression     
      return $ Val $ Lambda ids expr
 

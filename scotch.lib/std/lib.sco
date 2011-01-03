@@ -84,8 +84,8 @@ foldr(f, z, h:t) = f(h, foldr(f, z, t))
 foldr(f, z, []) = z
 
 filter(f, h:t) = case f(h) of 
-                   true -> h + filter(f, t),
-                   otherwise -> filter(f, t)
+                   true :: h + filter(f, t),
+                   otherwise :: filter(f, t)
 filter(f, []) = []
 
 add(x, y) = x + y
@@ -103,8 +103,8 @@ prod(h:t) = foldl(multiply, 0, h:t)
 
 sort(h:t) = qsort(h:t)
 qsort(h:t, n) = (case (len(h:t) < n) of
-                   true -> h:t, 
-                   false -> (qsort(less) + h + qsort(more)))
+                   true :: h:t, 
+                   false :: (qsort(less) + h + qsort(more)))
                 where less = filter(gt(h), t), more = filter(lte(h), t)
 qsort([], n) = []
 qsort(l) = qsort(l, 1)
