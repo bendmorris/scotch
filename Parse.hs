@@ -418,8 +418,8 @@ atomStmt :: Parser Expr
 atomStmt =
   do initial <- oneOf upperCase
      chars <- many $ oneOf $ upperCase ++ lowerCase
-     expr <- try (whiteSpace >> parens (sepBy (whiteSpace >> expression) (oneOf ","))) <|> 
-             try (do expr <- expression
+     expr <- try (whiteSpace >> parens (sepBy (whiteSpace >> valueExpr) (oneOf ","))) <|> 
+             try (do expr <- whiteSpace >> valueExpr
                      return [expr]) <|>
              do return []
      return $ AtomExpr (initial : chars) expr
