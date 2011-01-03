@@ -40,6 +40,7 @@ data Value = NumInt Integer
            | List [Value]
            | Null
            | HFunc Id
+           | Lambda [Id] Expr
            | Proc [Expr]
            | Thread Expr
            | Undefined String
@@ -55,6 +56,7 @@ instance Show (Value) where
     show (Bit False) = "false"
     show (List l) = show l
     show (HFunc f) = "func " ++ show f
+    show (Lambda ids expr) = "lambda " ++ show ids ++ " " ++ show expr
     show (Proc p) = "proc " ++ show p
     show (Thread th) = "thread " ++ show th
     show (Null) = "null"
@@ -93,6 +95,7 @@ data Expr = Exception String                -- undefined
           | Defproc Id [Id] [Expr] Expr     -- procedure definition
           | Var Id                          -- identifier
           | Func Id [Expr]                  -- function call
+          | LambdaCall Value [Expr]         -- lambda function call
           | If Expr Expr Expr               -- conditional
           | Case Expr [(Id, Expr)]          -- case expression
           | For Id (Expr) (Expr)            -- iteration

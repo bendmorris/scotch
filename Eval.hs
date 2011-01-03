@@ -118,6 +118,7 @@ eval exp vars = case exp of
                                                     otherwise -> Exception $ (case expr of
                                                                                 Exception e -> e
                                                                                 otherwise -> show expr)
+                          Val (Lambda ids func) -> eval (substitute func (funcall (zip ids args))) vars
                           Func f' args' -> eval (Func f' (args' ++ args)) vars
                           otherwise -> Exception $ "Variable " ++ (show f) ++ " isn't a function"
                         where fp = case vardef of
@@ -133,7 +134,6 @@ eval exp vars = case exp of
                                                                        | n <- [0 .. (length args') - 1]] args'
                                                       else eval (substitute (snd definition') (funcall (zip (fst definition') args))) vars
                                                       where definition' = func_binding f args vars
-                                                 
   If cond x y ->        case (eval cond vars) of
                           Val (Bit True) -> eval x vars
                           Val (Bit False) -> eval y vars

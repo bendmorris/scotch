@@ -44,7 +44,8 @@ languageDef =
                                       "do",
                                       "int", "float", "str",
                                       "read", "write", "append", "input",
-                                      "thread"
+                                      "thread",
+                                      "lambda"
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
                                       "<", ">", "and", "or", "not", ":", "->",
@@ -124,6 +125,7 @@ syntax = try importStmt <|>
          try notStmt <|>
          try conversionStmt <|>
          try fileStmt <|>
+         try lambdaStmt <|>
          try valueStmt <|>
          try funcallStmt <|>
          try splitExpr <|>
@@ -352,6 +354,13 @@ idPattern =
 idList :: Parser [Id]
 idList = do id <- sepBy (whiteSpace >> identifierOrValue) (oneOf ",")
             return $ id
+
+lambdaStmt :: Parser Expr
+lambdaStmt =
+  do ids <- idList
+     reservedOp ":-"
+     expr <- expression     
+     return $ Val $ Lambda ids expr
 
 fileStmt :: Parser Expr
 fileStmt =

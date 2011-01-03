@@ -57,6 +57,8 @@ f(Apple(Banana(a,b,c))) = [a,b,c]
 tests += test(f(a), "apple")
 tests += test(f(Apple(Banana(1,2,3))), [1,2,3])
 
+tests += test(apply(a :- a * 10, 10), 100)
+
 print tests
 print (if all([for test in tests, if test == "yes" then true else false])
         then "All tests passed."

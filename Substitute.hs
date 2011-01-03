@@ -22,15 +22,16 @@ inparams :: Id -> [(Id, Expr)] -> Expr
 inparams x [] = Skip
 inparams x (h:t) = if x == (fst h) then snd h else inparams x t
 
-inparamsid :: Id -> [(Id, Expr)] -> (Id, [Expr])
-inparamsid x [] = (x, [])
-inparamsid x (h:t) = if x == (fst h) then
-                       case snd h of
-                         Var v -> (v, [])
-                         Val (HFunc h) -> (h, [])
-                         Func f args -> (f, args)
-                         otherwise -> inparamsid x t
-                      else inparamsid x t
+inparamsid :: Id -> [(Id, Expr)] -> (Value, (Id, [Expr]))
+inparamsid x [] = (Null, (x, []))
+inparamsid x (h:t) = if x == (fst h) 
+                     then case snd h of
+                            Var v -> (Null, (v, []))
+                            Val (HFunc h) -> (Null, (h, []))
+                            Val (Lambda ids expr) -> (Lambda ids expr, (fst h, []))
+                            Func f args -> (Null, (f, args))
+                            otherwise -> inparamsid x t
+                     else inparamsid x t
 
 substitute :: Expr -> [(Id, Expr)] -> Expr
 substitute exp params =
@@ -64,8 +65,15 @@ substitute exp params =
     For id x y -> For id (substitute x params) (substitute y params)
     Range start stop step -> Range (substitute start params) (substitute stop params) (substitute step params)
     Func f args -> case inparamsid f params of
-                     (f', []) -> Func f' [substitute arg params | arg <- args]
-                     (f', otherargs) -> Func f' [substitute arg params | arg <- otherargs ++ args]
+                     (Null, (f', [])) -> Func f' [substitute arg params | arg <- args]
+                     (Null, (f', otherargs)) -> Func f' [substitute arg params | arg <- otherargs ++ args]
+                     (Lambda ids expr, _) -> substitute (LambdaCall (Lambda ids expr) args) params
+    LambdaCall (Lambda ids expr) args -> substitute (Defun (Name "lambda") ids expr (
+                                                      Def (Name "lambda") (Val (HFunc (Name "lambda"))) (
+                                                       Func (Name "lambda") args
+                                                       )
+                                                      )
+                                                     ) params
     Output x -> Output (substitute x params)
     FileObj x -> FileObj (substitute x params)
     FileRead x -> FileRead (substitute x params)

@@ -117,7 +117,7 @@ sum(l) = sum(l, 0)
 prod(h:t) = foldl(multiply, 0, h:t)
 
 sort(h:t) = qsort(h:t)
-qsort(h:t, n) = (case len(h:t) < n of
+qsort(h:t, n) = (case (len(h:t) < n) of
                    true -> h:t, 
                    false -> (qsort(less) + h + qsort(more)))
                 where less = filter(gt(h), t), more = filter(lte(h), t)
