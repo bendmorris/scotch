@@ -94,43 +94,50 @@ reservedExpr =
   do word <- reservedWord
      return $ Val word
 
-value = try reservedWord <|>
-        try atomValue <|>
-        try listValue <|> 
-        try strValue <|> 
-        try floatValue <|> 
-        try intValue
-valueStmt = try reservedExpr <|>
-            try atomStmt <|>
-            try procStmt <|>
-            try listStmt <|>
-            try strStmt <|>
-            try floatStmt <|>
-            try intStmt
+value = 
+  try reservedWord <|>
+  try atomValue <|>
+  try listValue <|> 
+  try strValue <|> 
+  try floatValue <|> 
+  try intValue
+valueStmt =
+  try reservedExpr <|>
+  try atomStmt <|>
+  try procStmt <|>
+  try listStmt <|>
+  try strStmt <|>
+  try floatStmt <|>
+  try intStmt
+valueExpr = 
+  try ifStmt <|>
+  try caseStmt <|>
+  try skipStmt <|>
+  try readStmt <|>
+  try inputStmt <|>
+  try threadStmt <|>
+  try rangeStmt <|>
+  try forStmt <|>
+  try notStmt <|>
+  try conversionStmt <|>
+  try fileStmt <|>
+  try lambdaStmt <|>
+  try valueStmt <|>
+  try funcallStmt <|>
+  try splitExpr <|>
+  try varcallStmt <|>         
+  try valueStmt
      
 syntax :: Parser Expr
-syntax = try importStmt <|>
-         try assignment <|>
-         try ifStmt <|>
-         try caseStmt <|>
-         try skipStmt <|>
-         try writeStmt <|>
-         try appendStmt <|>
-         try readStmt <|>
-         try printStmt <|>
-         try inputStmt <|>
-         try threadStmt <|>
-         try rangeStmt <|>
-         try forStmt <|>
-         try notStmt <|>
-         try conversionStmt <|>
-         try fileStmt <|>
-         try lambdaStmt <|>
-         try valueStmt <|>
-         try funcallStmt <|>
-         try splitExpr <|>
-         try varcallStmt <|>
-         whereStmt
+syntax = 
+  try printStmt <|>
+  try importStmt <|>
+  try assignment <|>
+  try writeStmt <|>
+  try appendStmt <|>
+  try whereStmt <|>
+  try valueExpr
+ 
 
 -- syntax parsers
 
