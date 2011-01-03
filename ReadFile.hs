@@ -120,11 +120,16 @@ importFile verbose scope s =
                               otherwise -> True
               let newval = [newbinding | newbinding <- 
                             [(scope, ((case fst (snd binding) of
-                                        Name n -> Name ((foldl (++) [] [i ++ "." | i <- s, i /= "main" ]) ++ n)), 
-                                       snd (snd binding))) | binding <- val], 
+                                         Name n -> Name (qualifier ++ n)), 
+                                       case snd (snd binding) of
+                                         ([], Val (HFunc (Name n))) -> if fst (snd binding) == Name n 
+                                                                       then ([], Val (HFunc (Name (qualifier ++ n))))
+                                                                       else snd (snd binding)
+                                         otherwise -> otherwise)) | binding <- val], 
                                        s == ["std", "lib"] ||
                                        not (isInfixOf "std.lib." (case fst (snd newbinding) of 
                                                                     Name n -> n))]
+                           where qualifier = (foldl (++) [] [i ++ "." | i <- s, i /= "main" ])
               return (success, newval)
 
 -- interpret the contents of a file
