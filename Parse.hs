@@ -124,7 +124,6 @@ valueExpr =
   try conversionStmt <|>
   try valueStmt <|>
   try funcallStmt <|>
-  try splitExpr <|>
   try varcallStmt
      
 syntax :: Parser Expr
@@ -220,7 +219,7 @@ caseStmt =
      check <- whiteSpace >> expression
      reserved "of"
      cases <- sepBy (do cond <- whiteSpace >> identifierOrValue
-                        reservedOp "::"
+                        reservedOp ":"
                         expr <- whiteSpace >> expression
                         return $ (cond, expr)
                         ) (oneOf ",")
@@ -346,7 +345,7 @@ idAtom =
      return $ AtomMatch (initial : chars) id
 idSplit = 
   do id1 <- identifier
-     reservedOp ":"
+     reservedOp "+"
      id2 <- identifier
      return $ Split id1 id2
 idName =
@@ -447,12 +446,6 @@ funcallStmt =
   do var <- identifier
      params <- parens exprList
      return $ Func (Name var) params
-     
-splitExpr =
-  do id1 <- identifier
-     reservedOp ":"
-     id2 <- identifier
-     return $ Add (Var (Name id1)) (Var (Name id2))
      
 varcallStmt :: Parser Expr
 varcallStmt =
