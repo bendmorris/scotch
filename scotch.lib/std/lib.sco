@@ -103,8 +103,8 @@ prod(h+t) = foldl(multiply, 0, h+t)
 
 sort(h+t) = qsort(h+t)
 qsort(h+t, n) = (case (len(h+t) < n) of
-                   true : h+t, 
-                   false : (qsort(less) + h + qsort(more)))
+                   true: h+t, 
+                   false: (qsort(less) + h + qsort(more)))
                 where less = filter(gt(h), t), more = filter(lte(h), t)
 qsort([], n) = []
 qsort(l) = qsort(l, 1)
@@ -115,3 +115,6 @@ insort([]) = []
 
 execute(h+t) = do h; execute(t);
 execute([]) = []
+
+repeat(f, r, n) = repeat(f, f(r), n-1)
+repeat(f, r, 0) = r
