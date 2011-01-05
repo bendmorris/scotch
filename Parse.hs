@@ -396,8 +396,13 @@ intStmt =
      
 floatValue :: Parser Value
 floatValue =
+  do reservedOp "-"
+     value <- float
+     whiteSpace
+     return $ NumFloat (value * (-1.0))
+  <|>
   do value <- float
-     whitespace <- whiteSpace
+     whiteSpace
      return $ NumFloat value
 floatStmt :: Parser Expr
 floatStmt =
