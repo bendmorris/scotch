@@ -37,11 +37,14 @@ vFlag [] = False
 vFlag (h:t) = if h == "-v" then True else vFlag t
 iFlag [] = False
 iFlag (h:t) = if h == "-i" then True else iFlag t
+eFlag [] = False
+eFlag (h:t) = if h == "-e" then True else eFlag t
 
 main = do args <- getArgs
           state <- initializeInput defaultSettings
           let verbose = vFlag args
           let interpret = iFlag args
+          let evaluate = eFlag args
           -- import std.lib
           bindings <- importFile verbose 0 ["std", "lib"]
           unscoped <- case bindings of
@@ -51,13 +54,17 @@ main = do args <- getArgs
           if verbose then putStrLn "-v Verbose mode on" else return ()
           if (length args) > 0 && not (isPrefixOf "-" (args !! 0))
             -- if a .sco filename is given as the first argument, interpret that file
-            then do let filename = case isSuffixOf ".sco" (args !! 0) of
-                                    True -> args !! 0
-                                    False -> (args !! 0) ++ ".sco"
-                    newbindings <- execute verbose filename unscoped
-                    -- if the -i flag is set, start the interpreter
-                    if interpret then loop verbose (unscope newbindings) state
-                                 else return ()
+            then if evaluate
+                 then do statement <- wexecute verbose (Parse.read "" (args !! 0)) (snd bindings)
+                         if interpret then loop verbose (unscope statement) state
+                                      else return ()
+                 else do let filename = case isSuffixOf ".sco" (args !! 0) of
+                                         True -> args !! 0
+                                         False -> (args !! 0) ++ ".sco"
+                         newbindings <- execute verbose filename unscoped
+                         -- if the -i flag is set, start the interpreter
+                         if interpret then loop verbose (unscope newbindings) state
+                                      else return ()
             -- otherwise, start the interpreter
             else do putStrLn $ "Scotch interpreter, version " ++ version
                     putStrLn $ "For more information, type \"copyright\" or \"license\"."
