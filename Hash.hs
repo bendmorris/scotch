@@ -36,9 +36,9 @@ hashMember s h = bucketMember s (h !! (hashLoc s))
 makeHash' :: [(String, Value)] -> [[(String, Value)]] -> [[(String, Value)]]
 makeHash' [] r = r
 makeHash' (h:t) r = makeHash' t 
-                    [if hashLoc (fst h) == i
-                     then [h]
-                     else []
+                    [(if hashLoc (fst h) == i
+                      then [h]
+                      else [])
                      ++ (r !! i)
                      | i <- [0..(hashSize-1)]]
 makeHash :: [(String, Value)] -> [[(String, Value)]]
