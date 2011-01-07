@@ -376,10 +376,26 @@ fileStmt =
 
 strValue :: Parser Value
 strValue = 
-  try (do chars <- stringLit
-          return $ Str chars) <|>
-  try (do char <- charLit
-          return $ Str [char])
+  do quote <- oneOf "\"'"
+     chars <- many (do char <- noneOf [quote]
+                       get <- case char of
+                                '\\' -> do char' <- noneOf ""
+                                           return $ case char' of                                                      
+                                                      'n' -> '\n'
+                                                      'r' -> '\r'
+                                                      't' -> '\t'
+                                                      'a' -> '\a'
+                                                      'b' -> '\b'
+                                                      'f' -> '\f'
+                                                      'v' -> '\v'
+                                                      '\\' -> '\\'
+                                                      otherwise -> otherwise
+                                        <|> do return '\\'
+                                otherwise -> do return otherwise
+                       return get)
+     oneOf [quote]
+     whiteSpace
+     return $ Str chars
 strStmt :: Parser Expr
 strStmt =
   do str <- strValue
