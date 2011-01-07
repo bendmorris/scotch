@@ -49,7 +49,7 @@ languageDef =
                                       "lambda"
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
-                                      "<", ">", "and", "or", "not", ":", "->",
+                                      "!=", "<", ">", "and", "or", "not", ":", "->",
                                       "<=", ">=", "+=", "<<", ">>", "..", "::"
                                      ]
            }
@@ -540,6 +540,7 @@ operators = [[Infix  (reservedOp "@"   >> return (subs            )) AssocLeft],
               Infix  (reservedOp "<="  >> return (ltEq            )) AssocLeft,
               Infix  (reservedOp ">="  >> return (gtEq            )) AssocLeft,
               Infix  (reservedOp "not" >> return (InEq            )) AssocLeft,
+              Infix  (reservedOp "!="  >> return (InEq            )) AssocLeft,
               Infix  (reservedOp ">"   >> return (Gt              )) AssocLeft,
               Infix  (reservedOp "<"   >> return (Lt              )) AssocLeft],
              [Infix  (reservedOp "and" >> return (And             )) AssocLeft,
