@@ -59,14 +59,13 @@ identifier = Token.identifier       lexer -- parses an identifier
 symbol     = Token.symbol           lexer -- parses a symbol
 reserved   = Token.reserved         lexer -- parses a reserved name
 reservedOp = Token.reservedOp       lexer -- parses an operator
-parens     = Token.parens           lexer -- parses surrounding parentheses
-brackets   = Token.brackets         lexer -- parses square brackets
-angles     = Token.angles           lexer -- parses angled brackets
+parens     = Token.parens           lexer -- parses [ ]
+brackets   = Token.brackets         lexer -- parses [ ]
+braces     = Token.braces           lexer -- parses { }
+angles     = Token.angles           lexer -- parses < >
 integer    = Token.integer          lexer -- parses an integer
 float      = Token.float            lexer -- parses a float
 whiteSpace = Token.whiteSpace       lexer -- parses whitespace
-stringLit  = Token.stringLiteral    lexer -- parses a string
-charLit    = Token.charLiteral      lexer -- parses a character literal
 
 parser :: Parser [PosExpr]
 parser = many statement
@@ -97,6 +96,7 @@ reservedExpr =
 value = 
   try reservedWord <|>
   try atomValue <|>
+  try hashValue <|>
   try listValue <|> 
   try strValue <|> 
   try floatValue <|> 
@@ -105,6 +105,7 @@ valueStmt =
   try reservedExpr <|>
   try atomStmt <|>
   try procStmt <|>
+  try hashStmt <|>
   try listStmt <|>
   try fileStmt <|>
   try lambdaStmt <|>
@@ -461,6 +462,23 @@ listStmt =
   do exprs <- brackets exprList
      return $ ListExpr exprs
      
+keyValue :: Parser (String, Expr)
+keyValue =
+  do key <- do quote <- oneOf "\"'"
+               chars <- many (noneOf [quote])
+               oneOf [quote]
+               return chars
+     whiteSpace >> symbol ":"
+     value <- whiteSpace >> expression
+     return (key, value)
+hashValue :: Parser Value
+hashValue =
+  do keysValues <- braces (sepBy (whiteSpace >> keyValue) (oneOf ","))
+     return $ Hash keysValues
+hashStmt :: Parser Expr
+hashStmt =
+  do hash <- hashValue
+     return $ Val hash
      
 funcallStmt :: Parser Expr
 funcallStmt =

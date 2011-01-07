@@ -77,6 +77,10 @@ eval exp vars = case exp of
                                                               then Val (Str ([s !! (fromIntegral n)]))
                                                               else Exception ("Member " ++ show n ++ " not in list")
                                             otherwise ->      Exception ("Non-numerical subscript " ++ show otherwise)
+                          Val (Hash l) -> case (eval (ToStr n) vars) of
+                                            Val (Str s) ->    hashMember s l
+                                            Exception e ->    Exception e
+                                            otherwise ->      Exception (show otherwise)
                           otherwise ->    Exception "Subscript of non-list"
   Add x y ->            calc (eval x vars) (eval y vars) (vadd)
   Sub x y ->            calc (eval x vars) (eval y vars) (vsub)
@@ -251,6 +255,10 @@ eval exp vars = case exp of
                               else caseExpr check t
                               where param = fst h
                                     expr = snd h
+       
+       hashMember :: String -> [(String, Expr)] -> Expr
+       hashMember s [] = Exception $ "Member " ++ (show s) ++ " not found in hash"
+       hashMember s (h:t) = if fst h == s then snd h else hashMember s t
 
 iolist :: [IO Expr] -> IO [Expr]
 iolist [] = do return []
