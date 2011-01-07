@@ -242,7 +242,7 @@ eval exp vars = case exp of
                   arg = snd h
        forloop :: Id -> [Expr] -> Expr -> [Expr]
        forloop id [] y = []
-       forloop id (h:t) y = [Def id h y] ++ (forloop id t y)
+       forloop id (h:t) y = [eval (substitute y [(id,h)]) vars] ++ (forloop id t y)
        
        caseExpr :: Expr -> [(Id, Expr)] -> Expr
        caseExpr check [] = Exception $ "No match for case expression " ++ show check
