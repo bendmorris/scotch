@@ -462,23 +462,33 @@ listStmt =
   do exprs <- brackets exprList
      return $ ListExpr exprs
      
-keyValue :: Parser (String, Expr)
+keyValue :: Parser (String, Value)
 keyValue =
   do key <- do quote <- oneOf "\"'"
                chars <- many (noneOf [quote])
                oneOf [quote]
                return chars
      whiteSpace >> symbol ":"
-     value <- whiteSpace >> expression
+     value <- whiteSpace >> value
      return (key, value)
+     keyValue :: Parser (String, Value)
+keyExpr =
+  do key <- do quote <- oneOf "\"'"
+               chars <- many (noneOf [quote])
+               oneOf [quote]
+               return chars
+     whiteSpace >> symbol ":"
+     expr <- whiteSpace >> expression
+     return (key, expr)
 hashValue :: Parser Value
 hashValue =
   do keysValues <- braces (sepBy (whiteSpace >> keyValue) (oneOf ","))
      return $ Hash keysValues
 hashStmt :: Parser Expr
 hashStmt =
-  do hash <- hashValue
-     return $ Val hash
+  do keysValues <- braces (sepBy (whiteSpace >> keyExpr) (oneOf ","))
+     return $ HashExpr keysValues
+
      
 funcallStmt :: Parser Expr
 funcallStmt =

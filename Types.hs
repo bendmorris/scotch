@@ -36,7 +36,7 @@ data Value = NumInt Integer
            | Str String
            | Bit Bool
            | List [Value]
-           | Hash [(String, Expr)]
+           | Hash [(String, Value)]
            | Null
            | HFunc Id
            | Lambda [Id] Expr
@@ -73,6 +73,7 @@ data Expr = Exception String                -- undefined
           | Skip                            -- returns Null
           | Val (Value)                     -- value
           | ListExpr [Expr]                 -- list expression
+          | HashExpr [(String, Expr)]       -- hash expression
           | ToInt (Expr)                    -- conversion to integer
           | ToFloat (Expr)                  -- conversion to float
           | ToStr (Expr)                    -- conversion to string
@@ -115,6 +116,9 @@ instance Show(Expr) where
     show Skip = "*nothing*"
     show (Val v) = show v
     show (ListExpr l) = show l
+    show (HashExpr h) = "{" ++ (if length h > 0
+                                then tail (foldl (++) "" ["," ++ fst i ++ ":" ++ show (snd i) | i <- h])
+                                else "") ++ "}"
     show (ToInt i) = "int(" ++ show i ++ ")"
     show (ToFloat f) = "float(" ++ show f ++ ")"
     show (ToStr s) = "str(" ++ show s ++ ")"

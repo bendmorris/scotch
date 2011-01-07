@@ -44,10 +44,16 @@ eval exp vars = case exp of
                                                  otherwise -> Undefined (show otherwise)
                                                | item <- l]
                           Exception e -> Exception e
-                        where r = [(case (eval item vars) of
-                                      Val r -> Val r
-                                      Exception e -> Exception e
-                                    ) | item <- l]
+  HashExpr l ->         case (evalList [snd e | e <- l]) of
+                          Val _ -> case evalList [Val item | item <- l'] of
+                                     Exception e -> Exception e
+                                     otherwise -> Val $ Hash (zip [fst i | i <- l] l')
+                                   where l' = [case eval (snd item) vars of
+                                                 Val r -> r
+                                                 Exception e -> Undefined e
+                                                 otherwise -> Undefined (show otherwise)
+                                               | item <- l]
+                          Exception e -> Exception e
   Val x ->              case x of
                           Undefined s -> Exception s
                           otherwise -> Val x
@@ -78,7 +84,7 @@ eval exp vars = case exp of
                                                               else Exception ("Member " ++ show n ++ " not in list")
                                             otherwise ->      Exception ("Non-numerical subscript " ++ show otherwise)
                           Val (Hash l) -> case (eval (ToStr n) vars) of
-                                            Val (Str s) ->    hashMember s l
+                                            Val (Str s) ->    Val $ hashMember s l
                                             Exception e ->    Exception e
                                             otherwise ->      Exception (show otherwise)
                           otherwise ->    Exception "Subscript of non-list"
@@ -256,8 +262,8 @@ eval exp vars = case exp of
                               where param = fst h
                                     expr = snd h
        
-       hashMember :: String -> [(String, Expr)] -> Expr
-       hashMember s [] = Exception $ "Member " ++ (show s) ++ " not found in hash"
+       hashMember :: String -> [(String, Value)] -> Value
+       hashMember s [] = Undefined $ "Member " ++ (show s) ++ " not found in hash"
        hashMember s (h:t) = if fst h == s then snd h else hashMember s t
 
 iolist :: [IO Expr] -> IO [Expr]
@@ -296,6 +302,8 @@ subfile exp vars =
                   return $ ToStr x'
     ListExpr l -> do list <- iolist [subfile e vars | e <- l]
                      return $ ListExpr list
+    HashExpr l -> do list <- iolist [subfile (snd e) vars | e <- l]
+                     return $ HashExpr (zip [fst e | e <- l] list)
     Subs x y -> do x' <- subfile x vars
                    y' <- subfile y vars
                    return $ Subs x' y'
