@@ -36,7 +36,7 @@ data Value = NumInt Integer
            | Str String
            | Bit Bool
            | List [Value]
-           | Hash [(String, Value)]
+           | Hash [[(String, Value)]]
            | Null
            | HFunc Id
            | Lambda [Id] Expr
@@ -54,7 +54,7 @@ instance Show (Value) where
     show (Bit False) = "false"
     show (List l) = show l
     show (Hash h) = "{" ++ (if length h > 0
-                            then tail (foldl (++) "" ["," ++ fst i ++ ":" ++ show (snd i) | i <- h])
+                            then tail (foldl (++) "" ["," ++ fst i ++ ":" ++ show (snd i) | j <- h, i <- j])
                             else "") ++ "}"
     show (HFunc f) = "func " ++ show f
     show (Lambda ids expr) = "lambda " ++ show ids ++ " " ++ show expr

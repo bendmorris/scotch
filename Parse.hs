@@ -23,6 +23,7 @@ import Text.ParserCombinators.Parsec.Expr
 import Text.ParserCombinators.Parsec.Language
 import qualified Text.ParserCombinators.Parsec.Token as Token
 import Types
+import Hash
 
 upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 lowerCase = "abcdefghijklmnopqrstuvwxyz"
@@ -483,7 +484,7 @@ keyExpr =
 hashValue :: Parser Value
 hashValue =
   do keysValues <- braces (sepBy (whiteSpace >> keyValue) (oneOf ","))
-     return $ Hash keysValues
+     return $ Hash (makeHash keysValues)
 hashStmt :: Parser Expr
 hashStmt =
   do keysValues <- braces (sepBy (whiteSpace >> keyExpr) (oneOf ","))

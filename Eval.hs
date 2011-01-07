@@ -22,6 +22,7 @@ import Types
 import Bindings
 import Calc
 import Substitute
+import Hash
 
 -- evalList: checks a list for exceptions
 evalList [] = Val (Bit True)
@@ -47,7 +48,7 @@ eval exp vars = case exp of
   HashExpr l ->         case (evalList [snd e | e <- l]) of
                           Val _ -> case evalList [Val item | item <- l'] of
                                      Exception e -> Exception e
-                                     otherwise -> Val $ Hash (zip [fst i | i <- l] l')
+                                     otherwise -> Val $ Hash (makeHash (zip [fst i | i <- l] l'))
                                    where l' = [case eval (snd item) vars of
                                                  Val r -> r
                                                  Exception e -> Undefined e
@@ -262,9 +263,6 @@ eval exp vars = case exp of
                               where param = fst h
                                     expr = snd h
        
-       hashMember :: String -> [(String, Value)] -> Value
-       hashMember s [] = Undefined $ "Member " ++ (show s) ++ " not found in hash"
-       hashMember s (h:t) = if fst h == s then snd h else hashMember s t
 
 iolist :: [IO Expr] -> IO [Expr]
 iolist [] = do return []
