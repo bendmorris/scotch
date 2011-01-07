@@ -34,7 +34,7 @@ languageDef =
   emptyDef { Token.commentStart    = "{-",
              Token.commentEnd      = "-}",
              Token.commentLine     = "#",
-             Token.identStart      = oneOf lowerCase,
+             Token.identStart      = oneOf ("_" ++ lowerCase),
              Token.identLetter     = oneOf (lowerCase ++ upperCase ++ numeric ++ idSymbol),
              Token.reservedNames   = ["if", "then", "else",
                                       "for", "in",
