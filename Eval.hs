@@ -153,6 +153,7 @@ eval exp vars = case exp of
   Case check (h:t) ->   caseExpr (eval check vars) (h:t)
   For id x y ->         eval (case (eval x vars) of
                                  Val (List l) -> ListExpr (forloop id [Val item | item <- l] y)
+                                 Val (Str s) -> ListExpr (forloop id [Val (Str [c]) | c <- s] y)
                                  Val v -> ListExpr (forloop id [Val v] y)
                                  otherwise -> Exception (show x)) vars
   Range from to step -> case (eval from vars) of
