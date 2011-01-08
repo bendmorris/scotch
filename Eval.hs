@@ -72,14 +72,17 @@ eval exp vars = case exp of
                           Val (NumInt i) -> Val $ NumInt i
                           Val (NumFloat f) -> Val $ NumInt (truncate f)
                           Val (Str s) -> Val $ NumInt (read s)
+                          Exception e -> Exception e
                           otherwise -> Exception ("Can't convert " ++ show otherwise ++ " to integer.")
   ToFloat x ->          case (eval x vars) of
                           Val (NumInt i) -> Val $ NumFloat (fromIntegral i)
                           Val (NumFloat f) -> Val $ NumFloat f
                           Val (Str s) -> Val $ NumFloat (read s :: Double)
+                          Exception e -> Exception e
                           otherwise -> Exception ("Can't convert " ++ show otherwise ++ " to float.")
   ToStr x ->            case (eval x vars) of                       
                           Val (Str s) -> Val $ Str s
+                          Exception e -> Exception e
                           otherwise -> Val $ Str (show otherwise)
   Subs n x ->           case (eval x vars) of
                           Val (List l) -> case (eval n vars) of
@@ -97,10 +100,10 @@ eval exp vars = case exp of
                           Val (Hash l) -> case eval n vars of
                                             Exception e -> Exception e
                                             otherwise -> case (eval (ToStr otherwise) vars) of
-                                                           Val (Str s) ->    Val $ hashMember s l
+                                                           Val (Str s) ->    eval (Val $ hashMember s l) vars
                                                            Exception e ->    Exception e
-                                                           otherwise ->      Exception (show otherwise)
-                          otherwise ->    Exception "Subscript of non-list"
+                                                           otherwise ->      Exception $ show otherwise
+                          otherwise ->    Exception $ show otherwise ++ " has no members"
   Add x y ->            calc (eval x vars) (eval y vars) (vadd)
   Sub x y ->            calc (eval x vars) (eval y vars) (vsub)
   Prod x y ->           calc (eval x vars) (eval y vars) (vprod)
