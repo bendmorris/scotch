@@ -48,11 +48,18 @@ eval exp vars = case exp of
   HashExpr l ->         case (evalList [snd e | e <- l]) of
                           Val _ -> case evalList [Val item | item <- l'] of
                                      Exception e -> Exception e
-                                     otherwise -> Val $ Hash (makeHash (zip [case eval (fst i) vars of
-                                                                               Val (Str s) -> s
-                                                                               otherwise -> show otherwise
-                                                                             | i <- l] l'))
+                                     otherwise -> case evalList [Val item | item <- m'] of
+                                                    Val _ -> Val $ Hash (makeHash (zip [case eval (fst i) vars of
+                                                                                          Val (Str s) -> s
+                                                                                          otherwise -> show otherwise
+                                                                                        | i <- l] l'))
+                                                    Exception e -> Exception e
                                    where l' = [case eval (snd item) vars of
+                                                 Val r -> r
+                                                 Exception e -> Undefined e
+                                                 otherwise -> Undefined (show otherwise)
+                                               | item <- l]
+                                         m' = [case eval (fst item) vars of
                                                  Val r -> r
                                                  Exception e -> Undefined e
                                                  otherwise -> Undefined (show otherwise)
@@ -87,10 +94,12 @@ eval exp vars = case exp of
                                                               then Val (Str ([s !! (fromIntegral n)]))
                                                               else Exception ("Member " ++ show n ++ " not in list")
                                             otherwise ->      Exception ("Non-numerical subscript " ++ show otherwise)
-                          Val (Hash l) -> case (eval (ToStr n) vars) of
-                                            Val (Str s) ->    Val $ hashMember s l
-                                            Exception e ->    Exception e
-                                            otherwise ->      Exception (show otherwise)
+                          Val (Hash l) -> case eval n vars of
+                                            Exception e -> Exception e
+                                            otherwise -> case (eval (ToStr otherwise) vars) of
+                                                           Val (Str s) ->    Val $ hashMember s l
+                                                           Exception e ->    Exception e
+                                                           otherwise ->      Exception (show otherwise)
                           otherwise ->    Exception "Subscript of non-list"
   Add x y ->            calc (eval x vars) (eval y vars) (vadd)
   Sub x y ->            calc (eval x vars) (eval y vars) (vsub)
