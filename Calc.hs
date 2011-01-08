@@ -17,6 +17,7 @@
 module Calc where
 
 import Types
+import Hash
 
 type_mismatch f a b = Exception $ "Type mismatch: " ++ 
                                   show a ++ " " ++ f ++ " " ++ show b
@@ -45,6 +46,7 @@ vadd (Str a) (List []) = Val (Str a)
 vadd (List []) (Str b) = Val (Str b)
 vadd (List a) (v) = Val (List (a ++ [v]))
 vadd (v) (List b) = Val (List ([v] ++ b))
+vadd (Hash a) (Hash b) = Val (Hash [(b !! n) ++ (a !! n) | n <- [0..(hashSize - 1)]])
 vadd a b = type_mismatch "+" a b
 -- subtraction
 vsub (NumInt a) (NumInt b) = Val (NumInt (a - b))
