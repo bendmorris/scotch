@@ -48,7 +48,7 @@ eval exp vars = case exp of
   HashExpr l ->         case (evalList [snd e | e <- l]) of
                           Val _ -> case evalList [Val item | item <- l'] of
                                      Exception e -> Exception e
-                                     otherwise -> Val $ Hash (makeHash (zip [case fst i of
+                                     otherwise -> Val $ Hash (makeHash (zip [case eval (fst i) vars of
                                                                                Val (Str s) -> s
                                                                                otherwise -> show otherwise
                                                                              | i <- l] l'))
