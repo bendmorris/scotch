@@ -53,9 +53,10 @@ instance Show (Value) where
     show (Bit True) = "true"
     show (Bit False) = "false"
     show (List l) = show l
-    show (Hash h) = "{" ++ (if length h > 0
-                            then tail (foldl (++) "" ["," ++ fst i ++ ":" ++ show (snd i) | j <- h, i <- j])
+    show (Hash h) = "{" ++ (if length items > 0
+                            then tail (foldl (++) "" items)
                             else "") ++ "}"
+                           where items = ["," ++ fst i ++ ":" ++ show (snd i) | j <- h, i <- j]
     show (HFunc f) = "func " ++ show f
     show (Lambda ids expr) = "lambda " ++ show ids ++ " " ++ show expr
     show (Proc p) = "proc " ++ show p
@@ -116,9 +117,10 @@ instance Show(Expr) where
     show Skip = "*nothing*"
     show (Val v) = show v
     show (ListExpr l) = show l
-    show (HashExpr h) = "{" ++ (if length h > 0
-                                then tail (foldl (++) "" ["," ++ show (fst i) ++ ":" ++ show (snd i) | i <- h])
+    show (HashExpr h) = "{" ++ (if length items > 0
+                                then tail (foldl (++) "" items)
                                 else "") ++ "}"
+                               where items = ["," ++ show (fst i) ++ ":" ++ show (snd i) | i <- h]
     show (ToInt i) = "int(" ++ show i ++ ")"
     show (ToFloat f) = "float(" ++ show f ++ ")"
     show (ToStr s) = "str(" ++ show s ++ ")"
