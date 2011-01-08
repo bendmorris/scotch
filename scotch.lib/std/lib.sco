@@ -1,6 +1,6 @@
 # these functions will be imported by the Scotch interpreter automatically
 
-version = "0.1"
+version = do import std.version;
 
 copyright = do import std.copyright;
 
