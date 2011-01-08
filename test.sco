@@ -66,6 +66,10 @@ tests += test([for i in ['a', 'b', 'c'], dict @ i], [1,2,5])
 tests += test({} + {'a':1}, {'a':1})
 tests += test(std.math.pi, pi)
 
+apple(n) = Apple n
+tests += test(apple([1,2,3]), Apple [1,2,3])
+tests += test(apple("abc"), Apple "abc")
+
 print tests
 print (if all([for test in tests, if test == "yes" then true else false])
         then "All tests passed."
