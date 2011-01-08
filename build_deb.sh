@@ -1,5 +1,6 @@
 sudo rm deb -rf
 
+VER=`scotch "version" -e`
 mkdir deb
 cd deb
 mkdir DEBIAN
@@ -13,5 +14,5 @@ cp scotch.lib deb/usr/bin -r
 rm deb/usr/bin/scotch.lib/.svn -rf
 rm deb/usr/bin/scotch.lib/std/.svn -rf
 cp control deb/DEBIAN
-dpkg -b deb scotch-lang_0.1_all.deb
+dpkg -b deb scotch-lang_${VER}_all.deb
 rm deb -rf
