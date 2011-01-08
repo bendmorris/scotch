@@ -50,7 +50,8 @@ wexecute verbose (h:t) bindings =
                                         return b
                                         
                          otherwise -> case result of
-                                        --Val (Proc p) -> wexecute verbose [(position, e) | e <- p] bindings, i <- j]
+                                        Val (Proc p) -> do e <- wexecute verbose [(position, e) | e <- p] bindings
+                                                           return [i | j <- e, i <- j]
                                         otherwise -> do return []
      case result of
        Exception e -> do putStrLn ("\nException in " ++ (showPosition) ++ "\n" ++ e ++ "\n")
