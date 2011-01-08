@@ -32,7 +32,8 @@ evalList (h:t) = case h of
                    otherwise -> evalList t
 
 -- eval: computes the value of an expression as far as possible
-eval :: Expr -> [Binding] -> Expr
+eval :: Expr -> VarDict -> Expr
+eval exp [] = eval exp emptyHash
 eval exp vars = case exp of
   Import s ->           Skip
   ListExpr l ->         case (evalList l) of
@@ -123,15 +124,15 @@ eval exp vars = case exp of
                           Val r -> case r of
                                      Bit b -> Val (Bit (not b))
                                      otherwise -> Exception "Expected boolean"
-  Def f x y ->          eval y ((f, ([], x)) : vars)
-  EagerDef f x y ->     eval y ((f, ([], eval x vars)) : vars)
-  Defun f p x y ->      eval y ((f, (p, x)) : 
-                                 (f, ([], Val (HFunc f))) : 
-                                 vars)
-  Defproc f p x y ->    eval y ((f, (p, Val (Proc x))) : 
-                                 (f, ([], Val (HFunc f))) : 
-                                 vars)
-  Var x ->              eval (snd (var_binding x vars)) vars
+  Def f x y ->          eval y (addBinding (f, ([], x)) vars)
+  EagerDef f x y ->     eval y (addBinding (f, ([], eval x vars)) vars)
+  Defun f p x y ->      eval y (addBinding (f, (p, x)) 
+                                (addBinding(f, ([], Val (HFunc f)))  
+                                 vars))
+  Defproc f p x y ->    eval y (addBinding (f, (p, Val (Proc x)))
+                                (addBinding (f, ([], Val (HFunc f)))
+                                 vars))
+  Var x ->              eval (snd (var_binding x (vars !! varHash x))) vars
   Func f args ->        case vardef of
                           Val (HFunc (h)) -> if length params > 0 
                                              then case expr of
@@ -139,7 +140,7 @@ eval exp vars = case exp of
                                                                      then tailcall fp args args'
                                                                      else newcall
                                                     otherwise -> newcall
-                                             else case snd $ var_binding fp vars of
+                                             else case snd $ var_binding fp (vars !! varHash fp) of
                                                     Func f' args' -> eval (Func f' (args' ++ args)) vars
                                                     otherwise -> Exception $ (case expr of
                                                                                 Exception e -> e
@@ -150,8 +151,8 @@ eval exp vars = case exp of
                         where fp = case vardef of
                                      Val (HFunc (f')) -> f'
                                      otherwise -> f
-                              vardef = snd $ var_binding f vars
-                              definition = func_binding fp args vars
+                              vardef = snd $ var_binding f (vars !! varHash f)
+                              definition = func_binding fp args (vars !! varHash fp)
                               params = fst definition
                               expr = snd definition
                               newcall = eval (substitute expr (funcall (zip params args))) vars
@@ -159,7 +160,7 @@ eval exp vars = case exp of
                                                       then tailcall f [eval (substitute (args' !! n) (funcall (zip params args))) vars
                                                                        | n <- [0 .. (length args') - 1]] args'
                                                       else eval (substitute (snd definition') (funcall (zip (fst definition') args))) vars
-                                                      where definition' = func_binding f args vars
+                                                      where definition' = func_binding f args (vars !! varHash f)
   If cond x y ->        case (eval cond vars) of
                           Val (Bit True) -> eval x vars
                           Val (Bit False) -> eval y vars
@@ -208,7 +209,7 @@ eval exp vars = case exp of
                                 snd (snd h) /= Var (fst h)
                              then case snd (snd h) of
                                     Var v -> if v == x then var_binding x t
-                                                       else var_binding v vars
+                                                       else var_binding v (vars !! varHash v)
                                     otherwise -> snd h
                              else var_binding x t
        nameSplit (Name n) = n
@@ -287,7 +288,7 @@ iolist (h:t) = do item <- h
                   return (item:rest)
                   
 -- ieval: evaluates an expression completely, replacing I/O operations as necessary
-ieval :: Expr -> [Binding] -> IO Expr
+ieval :: Expr -> VarDict -> IO Expr
 ieval expr vars =
   do subbed <- subfile expr vars
      result <- subfile (eval subbed vars) vars
@@ -299,13 +300,13 @@ ieval expr vars =
        FileWrite f p -> return result
        FileAppend f p -> return result
        otherwise -> do let vars' = case expr of
-                                     Def id x y -> (id, ([], x)) : vars
-                                     EagerDef id x y -> (id, ([], x)) : vars
+                                     Def id x y -> addBinding (id, ([], x)) vars
+                                     EagerDef id x y -> addBinding (id, ([], x)) vars
                                      otherwise -> vars
                        ieval result vars'
 
 -- subfile: substitutes values for delayed I/O operations
-subfile :: Expr -> [Binding] -> IO Expr
+subfile :: Expr -> VarDict -> IO Expr
 subfile exp vars =
   case exp of
     ToInt x -> do x' <- subfile x vars
@@ -360,14 +361,14 @@ subfile exp vars =
     EagerDef id x y -> do x' <- subfile x vars'
                           y' <- subfile y vars'
                           return $ EagerDef id x' y'
-                          where vars' = ((id, ([], eval x vars)) : vars)
+                          where vars' = addBinding (id, ([], eval x vars)) vars
     Def id x y -> do y' <- subfile y vars'
                      return $ Def id x y'
-                     where vars' = ((id, ([], x)) : vars)
+                     where vars' = addBinding (id, ([], x)) vars
     Defun id p x y -> do y' <- subfile y vars
                          return $ Defun id p x y'
-                         where vars' = ((id, (p, x)) : 
-                                        (id, ([], Val (HFunc id))) : 
+                         where vars' = addBinding (id, (p, x))  
+                                       (addBinding (id, ([], Val (HFunc id))) 
                                         vars)
     If x y z -> do x' <- subfile x vars
                    y' <- subfile y vars

@@ -19,12 +19,14 @@ module Hash where
 import Data.Char
 import Types
 
-hashSize = 1000
+hashSize = 500
 
 hashKey [] = 0
 hashKey (h:t) = (ord h) + hashKey t
 
 hashLoc s = mod (hashKey s) hashSize
+
+emptyHash = [[] | n <- [1..hashSize]]
 
 bucketMember :: String -> [(String, Value)] -> Value
 bucketMember s [] = Undefined $ "Member " ++ s ++ " not found in hash"
@@ -42,4 +44,4 @@ makeHash' (h:t) r = makeHash' t
                      ++ (r !! i)
                      | i <- [0..(hashSize-1)]]
 makeHash :: [(String, Value)] -> [[(String, Value)]]
-makeHash s = makeHash' s [[] | i <- [1..hashSize]]
+makeHash s = makeHash' s emptyHash

@@ -29,6 +29,7 @@ import Bindings
 import Parse
 import Eval
 import Substitute
+import Hash
 
 
 version = "0.1"
@@ -46,32 +47,33 @@ main = do args <- getArgs
           let interpret = iFlag args
           let evaluate = eFlag args
           -- import std.lib
-          bindings <- importFile verbose 0 ["std", "lib"]
-          unscoped <- case bindings of
-                        (False, _) -> do putStrLn "Failed to import std.lib."
-                                         return []
-                        (True, b) -> do return $ unscope b
+          bindings <- importFile verbose ["std", "lib"]
+          bindings' <- case bindings of
+                         (False, _) -> do putStrLn "Failed to import std.lib."
+                                          return emptyHash
+                         (True, b) -> do return $ b
           if verbose then putStrLn "-v Verbose mode on" else return ()
           if (length args) > 0 && not (isPrefixOf "-" (args !! 0))
             -- if a .sco filename is given as the first argument, interpret that file
             then if evaluate
                  then do statement <- wexecute verbose (Parse.read "" (args !! 0)) (snd bindings)
-                         if interpret then loop verbose (unscope statement) state
+                         if interpret then loop verbose statement state
                                       else return ()
                  else do let filename = case isSuffixOf ".sco" (args !! 0) of
                                          True -> args !! 0
                                          False -> (args !! 0) ++ ".sco"
-                         newbindings <- execute verbose filename unscoped
+                         newbindings <- execute verbose filename bindings'
                          -- if the -i flag is set, start the interpreter
-                         if interpret then loop verbose (unscope newbindings) state
+                         if interpret then loop verbose newbindings state
                                       else return ()
             -- otherwise, start the interpreter
             else do putStrLn $ "Scotch interpreter, version " ++ version
                     putStrLn $ "For more information, type \"copyright\" or \"license\"."
-                    loop verbose unscoped state
+                    loop verbose bindings' state
 
 -- the interpreter's main REPL loop
-loop :: Bool -> [Binding] -> InputState -> IO ()
+loop :: Bool -> VarDict -> InputState -> IO ()
+loop verbose [] state = loop verbose emptyHash state
 loop verbose bindings state = 
   do line <- queryInput state (getInputLine ">> ")
      case line of
@@ -88,14 +90,14 @@ loop verbose bindings state =
                                      1 -> subfile (snd $ head readinput) bindings
                                      otherwise -> do return (Exception "Parse error - multiple expressions entered in interpreter")
                          imp' <- case parsed of
-                                   Import s -> importFile verbose 1 s
-                                   otherwise -> do return (False, [(1, (Pattern (Bit False), ([], Val $ Bit False)))])
+                                   Import s -> importFile verbose s
+                                   otherwise -> do return (False, [[],[]])
                          imp <- case imp' of
                                   (False, []) -> do -- the imported module failed to open
                                                     putStrLn ("Failed to open " ++ show (parsed))
-                                                    return []
+                                                    return emptyHash
                                   (False, f) -> do -- there was no attempted import
-                                                   return []
+                                                   return emptyHash
                                   (True, b) -> do -- successful module import
                                                   return b
                          -- evaluate parsed input
@@ -109,10 +111,10 @@ loop verbose bindings state =
                                           Defun id params x Skip -> do return [(id, (params, x)), (id, ([], Val (HFunc id)))]
                                           Defproc id params x Skip -> do return [(id, (params, Val (Proc x))), (id, ([], Val (HFunc id)))]
                                           otherwise -> case result of
-                                                         Val (Proc p) -> do new <- (wexecute verbose 
-                                                                                    [(Nothing, e) | e <- p] 
-                                                                                    (rescope bindings))
-                                                                            return $ unscope new
+                                                         Val (Proc p) -> do e <- (wexecute verbose 
+                                                                                  [(Nothing, e) | e <- p] 
+                                                                                  bindings)
+                                                                            return $ [i | j <- e, i <- j]
                                                          otherwise -> do return []
                          -- output, if necessary
                          case result of
@@ -121,7 +123,7 @@ loop verbose bindings state =
                                          otherwise -> putStrLn (show p)
                            FileWrite (Val (File f)) (Val (Str x)) -> writeFile f x
                            FileAppend (Val (File f)) (Val (Str x)) -> appendFile f x
-                           Val (Thread th) -> do forkIO (do wexecute verbose [(Nothing, th)] (rescope bindings)
+                           Val (Thread th) -> do forkIO (do wexecute verbose [(Nothing, th)] bindings
                                                             return ())
                                                  return ()
                            Val (Proc p) -> return ()
@@ -129,4 +131,4 @@ loop verbose bindings state =
                            Exception e -> putStrLn $ show $ Exception e 
                            otherwise -> return ()
                          -- continue loop
-                         loop verbose (unscope (addBindings ((rescope newBindings) ++ imp) (rescope bindings))) state
+                         loop verbose (newBindingHash (newBindings ++ [i | j <- imp, i <- j]) bindings) state

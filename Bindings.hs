@@ -16,34 +16,40 @@
 
 module Bindings where
 
+import Data.List
 import Types
+import Hash
 
 -- a list of identifiers (empty list for variables) and an expression containing them
 type Call = ([Id], Expr)
 -- binds an ID to a Call
 type Binding = (Id, Call)
--- binding with associated scope (amount of whitespace)
-type ScopedBinding = (Int, Binding)
+type VarDict = [[Binding]]
 
+varName' :: String -> Int -> String
+varName' s 0 = s
+varName' s n = if s !! n == '.'
+               then snd $ splitAt (n+1) s
+               else varName' s (n-1)
+varName "" = ""
+varName s = varName' s ((length s) - 1)
 
--- given a scoped binding, returns an unscoped binding
-unscope :: [ScopedBinding] -> [Binding]
-unscope [] = []
-unscope (h:t) = (snd h) : unscope t
+varHash :: Id -> Int
+varHash b = case b of
+              Name n -> hashLoc $ varName n
+              otherwise -> hashLoc $ show $ b
 
-rescope :: [Binding] -> [ScopedBinding]
-rescope [] = []
-rescope l = [(1, i) | i <- l]
-
--- removes all bindings that are no longer relevant at the current scope
-scoped_bindings :: Int -> [ScopedBinding] -> [ScopedBinding]
-scoped_bindings _ [] = []
-scoped_bindings scope (h:t) = if scope < (fst h) then scoped_bindings scope t
-                                                 else h : (scoped_bindings scope t)
-
--- adds a binding to a set of bindings, removing bindings that are now irrelevant
-addBinding :: ScopedBinding -> [ScopedBinding] -> [ScopedBinding]
-addBinding binding vars = binding : (removeBindingFrom binding vars)
+newBindingHash :: [Binding] -> VarDict -> VarDict
+newBindingHash [] hash = hash
+newBindingHash (h:t) hash = addBinding (h) (newBindingHash t hash)
+-- adds a Binding to a VarDict, removing bindings that are now irrelevant
+addBinding :: Binding -> VarDict -> VarDict
+addBinding binding vars = [if n == hash
+                           then binding : (removeBindingFrom binding (vars !! n))
+                           else vars !! n
+                           | n <- [0 .. (hashSize - 1)]]
+                          where hash = varHash (fst binding)
+                    
 samePattern [] [] = True
 samePattern (h:t) (h':t') = case (h, h') of
                               (Name a, Name b) -> samePattern t t'
@@ -52,13 +58,12 @@ samePattern (h:t) (h':t') = case (h, h') of
                                                         then samePattern t t'
                                                         else False
                               otherwise -> False
-removeBindingFrom :: ScopedBinding -> [ScopedBinding] -> [ScopedBinding]
+removeBindingFrom :: Binding -> [Binding] -> [Binding]
 removeBindingFrom _ [] = []
-removeBindingFrom binding (h:t) = if fst h == fst binding && 
-                                     fst (snd h) == fst (snd binding) &&
-                                     length (fst (snd (snd h))) ==
-                                     length (fst (snd (snd binding))) &&
-                                     samePattern (fst (snd (snd h))) (fst (snd (snd binding)))
+removeBindingFrom binding (h:t) = if fst h == fst binding &&
+                                     length (fst (snd h)) ==
+                                     length (fst (snd binding)) &&
+                                     samePattern (fst (snd h)) (fst (snd binding))
                                   then removeBindingFrom binding t
                                   else h: (removeBindingFrom binding t)
 addBindings (h:t) vars = addBinding h (addBindings t vars)
