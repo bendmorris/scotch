@@ -313,8 +313,9 @@ subfile exp vars =
                   return $ ToStr x'
     ListExpr l -> do list <- iolist [subfile e vars | e <- l]
                      return $ ListExpr list
-    HashExpr l -> do list <- iolist [subfile (snd e) vars | e <- l]
-                     return $ HashExpr (zip [fst e | e <- l] list)
+    HashExpr l -> do list1 <- iolist [subfile (fst e) vars | e <- l]
+                     list2 <- iolist [subfile (snd e) vars | e <- l]
+                     return $ HashExpr (zip list1 list2)
     Subs x y -> do x' <- subfile x vars
                    y' <- subfile y vars
                    return $ Subs x' y'
