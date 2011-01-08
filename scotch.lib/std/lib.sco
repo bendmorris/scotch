@@ -118,3 +118,7 @@ execute([]) = []
 
 repeat(f, r, n) = repeat(f, f(r), n-1)
 repeat(f, r, 0) = r
+
+zip(a+b, c+d) = [[a,c]] + zip(b, d)
+zip([], c+d) = []
+zip(a+b, []) = []
