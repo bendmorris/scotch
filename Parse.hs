@@ -473,11 +473,9 @@ keyValue =
      value <- whiteSpace >> value
      return (key, value)
      keyValue :: Parser (String, Value)
+keyExpr :: Parser (Expr, Expr)
 keyExpr =
-  do key <- do quote <- oneOf "\"'"
-               chars <- many (noneOf [quote])
-               oneOf [quote]
-               return chars
+  do key <- whiteSpace >> expression
      whiteSpace >> symbol ":"
      expr <- whiteSpace >> expression
      return (key, expr)

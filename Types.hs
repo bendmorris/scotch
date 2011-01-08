@@ -73,7 +73,7 @@ data Expr = Exception String                -- undefined
           | Skip                            -- returns Null
           | Val (Value)                     -- value
           | ListExpr [Expr]                 -- list expression
-          | HashExpr [(String, Expr)]       -- hash expression
+          | HashExpr [(Expr, Expr)]         -- hash expression
           | ToInt (Expr)                    -- conversion to integer
           | ToFloat (Expr)                  -- conversion to float
           | ToStr (Expr)                    -- conversion to string
@@ -117,7 +117,7 @@ instance Show(Expr) where
     show (Val v) = show v
     show (ListExpr l) = show l
     show (HashExpr h) = "{" ++ (if length h > 0
-                                then tail (foldl (++) "" ["," ++ fst i ++ ":" ++ show (snd i) | i <- h])
+                                then tail (foldl (++) "" ["," ++ show (fst i) ++ ":" ++ show (snd i) | i <- h])
                                 else "") ++ "}"
     show (ToInt i) = "int(" ++ show i ++ ")"
     show (ToFloat f) = "float(" ++ show f ++ ")"
@@ -152,4 +152,5 @@ instance Show(Expr) where
     show (FileWrite f x) = "write " ++ show f ++ " " ++ show x
     show (FileAppend f x) = "append " ++ show f ++ " " ++ show x
     show (AtomExpr s x) = "(" ++ s ++ " " ++ show x ++ ")"
+    show (LambdaCall v e) = "(lambda " ++ show v ++ " " ++ show e ++ ")"
 type PosExpr = (Maybe SourcePos, Expr)
