@@ -142,9 +142,7 @@ eval exp vars = case exp of
                                                     otherwise -> newcall
                                              else case snd $ var_binding fp (vars !! varHash fp) of
                                                     Func f' args' -> eval (Func f' (args' ++ args)) vars
-                                                    otherwise -> Exception $ (case expr of
-                                                                                Exception e -> e
-                                                                                otherwise -> show expr)
+                                                    otherwise -> Func f args
                           Val (Lambda ids func) -> eval (substitute func (funcall (zip ids args))) vars
                           Func f' args' -> eval (Func f' (args' ++ args)) vars
                           otherwise -> Exception $ "Variable " ++ (show f) ++ " isn't a function"
@@ -155,7 +153,7 @@ eval exp vars = case exp of
                               definition = func_binding fp args (vars !! varHash fp)
                               params = fst definition
                               expr = snd definition
-                              newcall = eval (substitute expr (funcall (zip params args))) vars
+                              newcall = eval (substitute expr (funcall (zip params [eval arg vars | arg <- args]))) vars
                               tailcall f args args' = if definition' == definition 
                                                       then tailcall f [eval (substitute (args' !! n) (funcall (zip params args))) vars
                                                                        | n <- [0 .. (length args') - 1]] args'
@@ -214,7 +212,7 @@ eval exp vars = case exp of
                              else var_binding x t
        nameSplit (Name n) = n
        func_binding :: Id -> [Expr] -> [Binding] -> Call
-       func_binding x args [] = ([], Exception ("Function " ++ (show x) ++ " doesn't match any existing pattern."))
+       func_binding x args [] = ([], Exception ("Function " ++ (show x) ++ " " ++ show args ++ " doesn't match any existing pattern."))
        func_binding x args (h:t) = if (id == x || isSuffixOf ("." ++ nameSplit x) ("." ++ nameSplit id)) &&
                                       length args == length params &&
                                       pattern_match params args
@@ -301,6 +299,9 @@ ieval expr vars =
        Output p -> return result
        FileWrite f p -> return result
        FileAppend f p -> return result
+       Func f args -> if (eval result vars) == result
+                      then return result
+                      else ieval result vars
        otherwise -> do let vars' = case expr of
                                      Def id x y -> addBinding (id, ([], x)) vars
                                      EagerDef id x y -> addBinding (id, ([], x)) vars

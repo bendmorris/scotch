@@ -70,6 +70,11 @@ apple(n) = Apple n
 tests += test(apple([1,2,3]), Apple [1,2,3])
 tests += test(apple("abc"), Apple "abc")
 
+dict = {'add': a, b -> a + b, 'multiply': a, b -> a * b}
+apply(f, a, b) = f(a, b)
+tests += test(apply(dict @ 'add', 1, 2), 3)
+tests += test(apply(dict @ 'multiply', 10, 2), 20)
+
 print tests
 print (if all([for test in tests, if test == "yes" then true else false])
         then "All tests passed."
