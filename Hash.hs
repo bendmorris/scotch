@@ -27,7 +27,7 @@ hashKey (h:t) = (ord h) + hashKey t
 hashLoc s = mod (hashKey s) hashSize
 
 bucketMember :: String -> [(String, Value)] -> Value
-bucketMember s [] = Undefined $ "Member " ++ (show s) ++ " not found in hash"
+bucketMember s [] = Undefined $ "Member " ++ s ++ " not found in hash"
 bucketMember s (h:t) = if fst h == s then snd h else bucketMember s t
 
 hashMember :: String -> [[(String, Value)]] -> Value
