@@ -43,8 +43,8 @@ substitute exp params =
     ToInt x -> ToInt (substitute x params)
     ToFloat x -> ToFloat (substitute x params)
     ToStr x -> ToStr (substitute x params)
-    ListExpr l -> ListExpr [substitute e params | e <- l]
-    HashExpr l -> HashExpr [(fst kv, substitute (snd kv) params) | kv <- l]
+    ListExpr l -> ListExpr [substitute e params | e <- l]    
+    HashExpr l -> HashExpr [(substitute (fst kv) params, substitute (snd kv) params) | kv <- l]
     Subs n x -> Subs (substitute n params) (substitute x params)
     Add x y -> Add (substitute x params) (substitute y params)
     Sub x y -> Sub (substitute x params) (substitute y params)
