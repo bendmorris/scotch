@@ -90,6 +90,7 @@ veq (List a) (List b) = Val (Bit (a == b))
 veq (Str a) (Str b) = Val (Bit (a == b))
 veq (Bit a) (Bit b) = Val (Bit (a == b))
 veq (Atom a b) (Atom c d) = Val (Bit (a == c && b == d))
+veq (Hash a) (Hash b) = Val (Bit (a == b))
 veq a b = Val (Bit False)
 -- greater than
 vgt (NumInt a) (NumInt b) = Val (Bit (a > b))
