@@ -69,8 +69,7 @@ wexecute verbose (h:t) bindings =
                              wexecute verbose t bindings
        otherwise -> do new <- newBindings
                        wexecute verbose t (addBindings new bindings)
-     where -- scope is determined by amount of leading whitespace
-           name = case position of
+     where name = case position of
                     Just p -> sourceName p
                     Nothing -> ""
            line = case position of
@@ -79,7 +78,6 @@ wexecute verbose (h:t) bindings =
            column = case position of
                      Just p -> sourceColumn p
                      Nothing -> 1
-           -- parse the code
            showPosition = name ++ ": Line " ++ show line ++ ", column " ++ show column
            position = fst h
 
@@ -126,7 +124,7 @@ importFile verbose s =
                                                                then ([], Val (HFunc (Name (qualifier ++ n))))
                                                                else snd binding
                                  otherwise -> otherwise) | binding <- val],
-                               --(length (name newbinding) > 0 && (name newbinding) !! 0 /= '_') &&
+                               (name newbinding) !! 0 /= '_' &&
                                (s == ["std", "lib"] ||
                                 not (isInfixOf "std.lib." (name newbinding)))]
                            where qualifier = (foldl (++) [] [i ++ "." | i <- s, i /= "main" ])

@@ -219,7 +219,7 @@ iolist (h:t) = do item <- h
 ieval :: Expr -> VarDict -> IO Expr
 ieval expr vars =
   do subbed <- subfile expr vars
-     result <- subfile (eval subbed vars) vars
+     let result = eval subbed vars
      case result of
        Val v -> return result
        Exception e -> return result

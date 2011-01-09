@@ -9,7 +9,7 @@ mkdir usr
 cd usr
 mkdir bin
 cd ../..
-ghc --make scotch
+ghc --make scotch -O2
 cp scotch deb/usr/bin
 cp scotch.lib deb/usr/bin -r
 rm deb/usr/bin/scotch.lib/.svn -rf

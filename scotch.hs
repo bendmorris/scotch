@@ -89,13 +89,13 @@ loop verbose bindings state =
                                      otherwise -> do return (Exception "Parse error - multiple expressions entered in interpreter")
                          imp' <- case parsed of
                                    Import s -> importFile verbose s
-                                   otherwise -> do return (False, [[],[]])
+                                   otherwise -> do return (False, [])
                          imp <- case imp' of
-                                  (False, []) -> do -- the imported module failed to open
+                                  (False, []) -> do -- there was no attempted import
+                                                   return emptyHash
+                                  (False, f) -> do -- the imported module failed to open
                                                     putStrLn ("Failed to open " ++ show (parsed))
                                                     return emptyHash
-                                  (False, f) -> do -- there was no attempted import
-                                                   return emptyHash
                                   (True, b) -> do -- successful module import
                                                   return b
                          -- evaluate parsed input

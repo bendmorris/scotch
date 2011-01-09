@@ -45,10 +45,9 @@ newBindingHash [] hash = hash
 newBindingHash (h:t) hash = addBinding (h) (newBindingHash t hash)
 -- adds a Binding to a VarDict, removing bindings that are now irrelevant
 addBinding :: Binding -> VarDict -> VarDict
-addBinding binding vars = [if n == hash
-                           then binding : (removeBindingFrom binding (vars !! n))
-                           else vars !! n
-                           | n <- [0 .. (hashSize - 1)]]
+addBinding binding vars = [vars !! n | n <- [0 .. (hash - 1)]]
+                          ++ [binding : (removeBindingFrom binding (vars !! hash))] ++
+                          [vars !! n | n <- [(hash + 1) .. (hashSize - 1)]]
                           where hash = varHash (fst binding)
                     
 samePattern [] [] = True
