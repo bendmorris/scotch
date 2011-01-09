@@ -127,7 +127,7 @@ eval exp vars = case exp of
   Defproc f p x y ->    eval y (addBinding (f, (p, Val (Proc x)))
                                 (addBinding (f, ([], Val (HFunc f)))
                                  vars))
-  Var x ->              eval (snd (var_binding x (vars !! varHash x) vars)) vars
+  Var x ->              eval (snd (varBinding x (vars !! varHash x) vars)) vars
   Func f args ->        case vardef of
                           Val (HFunc (h)) -> if length params > 0 
                                              then case expr of
@@ -135,7 +135,7 @@ eval exp vars = case exp of
                                                                      then tailcall fp args args'
                                                                      else newcall
                                                     otherwise -> newcall
-                                             else case snd $ var_binding fp (vars !! varHash fp) vars of
+                                             else case snd $ varBinding fp (vars !! varHash fp) vars of
                                                     Func f' args' -> eval (Func f' (args' ++ args)) vars
                                                     otherwise -> exp
                           Val (Lambda ids func) -> eval (substitute func (funcall (zip ids args))) vars
@@ -144,8 +144,8 @@ eval exp vars = case exp of
                         where fp = case vardef of
                                      Val (HFunc (f')) -> f'
                                      otherwise -> f
-                              vardef = snd $ var_binding f (vars !! varHash f) vars
-                              definition = func_binding fp evalArgs (vars !! varHash fp) vars
+                              vardef = snd $ varBinding f (vars !! varHash f) vars
+                              definition = funcBinding fp evalArgs (vars !! varHash fp) vars
                               params = fst definition
                               expr = snd definition
                               evalArgs = [eval arg vars | arg <- args]
@@ -154,7 +154,7 @@ eval exp vars = case exp of
                                                       then tailcall f [eval (substitute (args' !! n) (funcall (zip params args))) vars
                                                                        | n <- [0 .. (length args') - 1]] args'
                                                       else eval (substitute (snd definition') (funcall (zip (fst definition') args))) vars
-                                                      where definition' = func_binding f args (vars !! varHash f) vars
+                                                      where definition' = funcBinding f args (vars !! varHash f) vars
   If cond x y ->        case (eval cond vars) of
                           Val (Bit True) -> eval x vars
                           Val (Bit False) -> eval y vars
