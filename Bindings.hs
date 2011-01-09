@@ -17,6 +17,7 @@
 module Bindings where
 
 import Data.List
+import Calc
 import Types
 import Hash
 
@@ -68,3 +69,75 @@ removeBindingFrom binding (h:t) = if fst h == fst binding &&
                                   else h: (removeBindingFrom binding t)
 addBindings (h:t) vars = addBinding h (addBindings t vars)
 addBindings [] vars = vars
+
+
+nameSplit (Name n) = n
+
+var_binding :: Id -> [Binding] -> VarDict -> Call
+var_binding x [] vars = ([], Exception ("Undefined variable " ++ show x))
+var_binding x (h:t) vars = if ((fst h) == x || isSuffixOf ("." ++ nameSplit x) ("." ++ nameSplit (fst h))) && 
+                              length (fst (snd h)) == 0 && 
+                              snd (snd h) /= Var (fst h)
+                           then case snd (snd h) of
+                                  Var v -> if v == x 
+                                           then var_binding x t vars
+                                           else var_binding v (vars !! varHash v) vars
+                                  otherwise -> snd h
+                           else var_binding x t vars
+                                                      
+func_binding :: Id -> [Expr] -> [Binding] -> VarDict -> Call
+func_binding x args [] vars = ([], Exception ("Function " ++ (show x) ++ " " ++ show args ++ " doesn't match any existing pattern."))
+func_binding x args (h:t) vars = 
+  if (id == x || isSuffixOf ("." ++ nameSplit x) ("." ++ nameSplit id)) &&
+     length args == length params &&
+     pattern_match params args
+  then case validList args of
+         Val _ -> binding
+         Exception e -> ([], Exception e)
+  else func_binding x args t vars
+  where (id, params, expr) = (fst h, fst binding, snd binding)
+        binding = snd h
+
+pattern_match :: [Id] -> [Expr] -> Bool
+pattern_match [] [] = True
+pattern_match (a:b) (c:d) = 
+  case a of
+    Name n -> pattern_match b d
+    Split x y -> case c of
+                   Val (List l) -> pattern_match b d
+                   Val (Str l) -> pattern_match b d
+                   otherwise -> False
+    AtomMatch x y -> case c of
+                       Val (Atom x' y') -> if length y == length y' 
+                                           then if x' == x 
+                                                then pattern_match (y ++ b) ([Val i | i <- y'] ++ d)
+                                                else False
+                                           else False
+                       otherwise -> False
+    Pattern v -> if c == Val v 
+                 then pattern_match b d
+                 else case (c, v) of 
+                        (Val (List []), Str "") -> pattern_match b d
+                        (Val (Str ""), List []) -> pattern_match b d
+                        otherwise -> False
+                        
+-- funcall: list of (ID parameter, expression argument)
+funcall :: [(Id, Expr)] -> [(Id, Expr)]
+funcall [] = []
+funcall (h:t) = 
+  case param of
+     Name n -> h : funcall t
+     Split x y -> case arg of
+                    Val (List l) -> if length l > 0 then (Name x, Val (head l)) :
+                                                         (Name y, Val (List (tail l))) :
+                                                         funcall t
+                                                    else [(Name x, Exception "Can't split empty list")]
+                    Val (Str l) -> if length l > 0 then (Name x, Val (Str [head l])) :
+                                                        (Name y, Val (Str (tail l))) :
+                                                        funcall t
+                                                   else [(Name x, Exception "Can't split empty string")]
+     AtomMatch x y -> case arg of 
+                        Val (Atom x' y') -> funcall ((zip y [Val i | i <- y']) ++ t)
+     Pattern _ -> funcall t
+     where param = fst h
+           arg = snd h

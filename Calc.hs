@@ -28,6 +28,7 @@ calc :: Expr -> Expr -> (Value -> Value -> Expr) -> Expr
 calc _ (Exception s) _ = Exception s
 calc (Exception s) _ _ = Exception s
 calc (Val a) (Val b) f = f a b
+calc a b f = Exception $ show a ++ " " ++ show b
 
 -- the following functions provide basic operations between Values, returning an Expr
 -- addition
@@ -110,3 +111,11 @@ vand a b = type_mismatch "&" a b
 -- binary or
 vor (Bit a) (Bit b) = Val (Bit (a || b))
 vor a b = type_mismatch "|" a b
+
+
+-- validList: checks a list for exceptions
+validList [] = Val (Bit True)
+validList (h:t) = case h of                   
+                   Exception e -> Exception e
+                   Val (Undefined e) -> Exception e
+                   otherwise -> validList t

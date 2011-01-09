@@ -24,20 +24,14 @@ import Calc
 import Substitute
 import Hash
 
--- evalList: checks a list for exceptions
-evalList [] = Val (Bit True)
-evalList (h:t) = case h of                   
-                   Exception e -> Exception e
-                   Val (Undefined e) -> Exception e
-                   otherwise -> evalList t
 
 -- eval: computes the value of an expression as far as possible
 eval :: Expr -> VarDict -> Expr
 eval exp [] = eval exp emptyHash
 eval exp vars = case exp of
   Import s ->           Skip
-  ListExpr l ->         case (evalList l) of
-                          Val _ -> case evalList [Val item | item <- l'] of
+  ListExpr l ->         case (validList l) of
+                          Val _ -> case validList [Val item | item <- l'] of
                                      Exception e -> Exception e
                                      otherwise -> Val $ List l'
                                    where l' = [case eval item vars of
@@ -46,10 +40,10 @@ eval exp vars = case exp of
                                                  otherwise -> Undefined (show otherwise)
                                                | item <- l]
                           Exception e -> Exception e
-  HashExpr l ->         case (evalList [snd e | e <- l]) of
-                          Val _ -> case evalList [Val item | item <- l'] of
+  HashExpr l ->         case (validList [snd e | e <- l]) of
+                          Val _ -> case validList [Val item | item <- l'] of
                                      Exception e -> Exception e
-                                     otherwise -> case evalList [Val item | item <- m'] of
+                                     otherwise -> case validList [Val item | item <- m'] of
                                                     Val _ -> Val $ Hash (makeHash (zip [case eval (fst i) vars of
                                                                                           Val (Str s) -> s
                                                                                           otherwise -> show otherwise
@@ -104,6 +98,7 @@ eval exp vars = case exp of
                                                            Val (Str s) ->    eval (Val $ hashMember s l) vars
                                                            Exception e ->    Exception e
                                                            otherwise ->      Exception $ show otherwise
+                          Func f args ->  exp
                           otherwise ->    Exception $ show otherwise ++ " has no members"
   Add x y ->            calc (eval x vars) (eval y vars) (vadd)
   Sub x y ->            calc (eval x vars) (eval y vars) (vsub)
@@ -132,7 +127,7 @@ eval exp vars = case exp of
   Defproc f p x y ->    eval y (addBinding (f, (p, Val (Proc x)))
                                 (addBinding (f, ([], Val (HFunc f)))
                                  vars))
-  Var x ->              eval (snd (var_binding x (vars !! varHash x))) vars
+  Var x ->              eval (snd (var_binding x (vars !! varHash x) vars)) vars
   Func f args ->        case vardef of
                           Val (HFunc (h)) -> if length params > 0 
                                              then case expr of
@@ -140,25 +135,26 @@ eval exp vars = case exp of
                                                                      then tailcall fp args args'
                                                                      else newcall
                                                     otherwise -> newcall
-                                             else case snd $ var_binding fp (vars !! varHash fp) of
+                                             else case snd $ var_binding fp (vars !! varHash fp) vars of
                                                     Func f' args' -> eval (Func f' (args' ++ args)) vars
-                                                    otherwise -> Func f args
+                                                    otherwise -> exp
                           Val (Lambda ids func) -> eval (substitute func (funcall (zip ids args))) vars
                           Func f' args' -> eval (Func f' (args' ++ args)) vars
                           otherwise -> Exception $ "Variable " ++ (show f) ++ " isn't a function"
                         where fp = case vardef of
                                      Val (HFunc (f')) -> f'
                                      otherwise -> f
-                              vardef = snd $ var_binding f (vars !! varHash f)
-                              definition = func_binding fp args (vars !! varHash fp)
+                              vardef = snd $ var_binding f (vars !! varHash f) vars
+                              definition = func_binding fp evalArgs (vars !! varHash fp) vars
                               params = fst definition
                               expr = snd definition
-                              newcall = eval (substitute expr (funcall (zip params [eval arg vars | arg <- args]))) vars
+                              evalArgs = [eval arg vars | arg <- args]
+                              newcall = eval (substitute expr (funcall (zip params evalArgs))) vars
                               tailcall f args args' = if definition' == definition 
                                                       then tailcall f [eval (substitute (args' !! n) (funcall (zip params args))) vars
                                                                        | n <- [0 .. (length args') - 1]] args'
                                                       else eval (substitute (snd definition') (funcall (zip (fst definition') args))) vars
-                                                      where definition' = func_binding f args (vars !! varHash f)
+                                                      where definition' = func_binding f args (vars !! varHash f) vars
   If cond x y ->        case (eval cond vars) of
                           Val (Bit True) -> eval x vars
                           Val (Bit False) -> eval y vars
@@ -200,75 +196,7 @@ eval exp vars = case exp of
                                         otherwise -> Undefined $ show otherwise
                                       | result <- [eval v' vars | v' <- v] ]
   otherwise ->          otherwise
- where var_binding :: Id -> [Binding] -> Call
-       var_binding x [] = ([], Exception ("Undefined variable " ++ show x))
-       var_binding x (h:t) = if ((fst h) == x || isSuffixOf ("." ++ nameSplit x) ("." ++ nameSplit (fst h))) && 
-                                length (fst (snd h)) == 0 && 
-                                snd (snd h) /= Var (fst h)
-                             then case snd (snd h) of
-                                    Var v -> if v == x then var_binding x t
-                                                       else var_binding v (vars !! varHash v)
-                                    otherwise -> snd h
-                             else var_binding x t
-       nameSplit (Name n) = n
-       func_binding :: Id -> [Expr] -> [Binding] -> Call
-       func_binding x args [] = ([], Exception ("Function " ++ (show x) ++ " " ++ show args ++ " doesn't match any existing pattern."))
-       func_binding x args (h:t) = if (id == x || isSuffixOf ("." ++ nameSplit x) ("." ++ nameSplit id)) &&
-                                      length args == length params &&
-                                      pattern_match params args
-                                   then case evalList args of
-                                          Val _ -> binding
-                                          Exception e -> ([], Exception e)
-                                   else func_binding x args t
-                                   where (id, params, expr) =
-                                           (fst h, fst binding, snd binding)
-                                         binding = snd h
-                                         
-       pattern_match :: [Id] -> [Expr] -> Bool
-       pattern_match [] [] = True
-       pattern_match (a:b) (c:d) = 
-         case a of
-           Name n -> pattern_match b d
-           Split x y -> case eval c vars of
-                          Val (List l) -> pattern_match b d
-                          Val (Str l) -> pattern_match b d
-                          otherwise -> False
-           AtomMatch x y -> case eval c vars of
-                              Val (Atom x' y') -> if length y == length y' 
-                                                  then if x' == x 
-                                                       then pattern_match (y ++ b) ([Val i | i <- y'] ++ d) 
-                                                       else False
-                                                  else False
-                              otherwise -> False
-           Pattern v -> if result == Val v 
-                        then pattern_match b d
-                        else case (result, v) of 
-                               (Val (List []), Str "") -> pattern_match b d
-                               (Val (Str ""), List []) -> pattern_match b d
-                               otherwise -> False
-                        where result = eval c vars
-                        
-       -- funcall: list of (ID parameter, expression argument)
-       funcall :: [(Id, Expr)] -> [(Id, Expr)]
-       funcall [] = []
-       funcall (h:t) = 
-         case param of
-            Name n -> h : funcall t
-            Split x y -> case eval arg vars of
-                           Val (List l) -> if length l > 0 then (Name x, Val (head l)) :
-                                                                (Name y, Val (List (tail l))) :
-                                                                funcall t
-                                                           else [(Name x, Exception "Can't split empty list")]
-                           Val (Str l) -> if length l > 0 then (Name x, Val (Str [head l])) :
-                                                               (Name y, Val (Str (tail l))) :
-                                                               funcall t
-                                                          else [(Name x, Exception "Can't split empty string")]
-            AtomMatch x y -> case eval arg vars of 
-                               Val (Atom x' y') -> funcall ((zip y [Val i | i <- y']) ++ t)
-            Pattern _ -> funcall t
-            where param = fst h
-                  arg = snd h
-       forloop :: Id -> [Expr] -> Expr -> [Expr]
+ where forloop :: Id -> [Expr] -> Expr -> [Expr]
        forloop id [] y = []
        forloop id (h:t) y = [eval (substitute y [(id,h)]) vars] ++ (forloop id t y)
        
@@ -299,9 +227,10 @@ ieval expr vars =
        Output p -> return result
        FileWrite f p -> return result
        FileAppend f p -> return result
-       Func f args -> if (eval result vars) == result
-                      then return result
-                      else ieval result vars
+       Func f args -> do args' <- iolist [subfile arg vars | arg <- args]
+                         if (eval (Func f args') vars) == result
+                          then return result
+                          else ieval result vars
        otherwise -> do let vars' = case expr of
                                      Def id x y -> addBinding (id, ([], x)) vars
                                      EagerDef id x y -> addBinding (id, ([], x)) vars
