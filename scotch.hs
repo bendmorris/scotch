@@ -32,7 +32,6 @@ import Substitute
 import Hash
 
 
-version = "0.1"
 -- check for -v or -i flags
 vFlag [] = False
 vFlag (h:t) = if h == "-v" then True else vFlag t
@@ -67,8 +66,7 @@ main = do args <- getArgs
                          if interpret then loop verbose newbindings state
                                       else return ()
             -- otherwise, start the interpreter
-            else do putStrLn $ "Scotch interpreter, version " ++ version
-                    putStrLn $ "For more information, type \"copyright\" or \"license\"."
+            else do wexecute False [(Nothing, (Var (Name "startup")))] bindings'
                     loop verbose bindings' state
 
 -- the interpreter's main REPL loop
