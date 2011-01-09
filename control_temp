@@ -1,5 +1,5 @@
 Package: scotch-lang
-Version: 0.1 
+Version: VERSION 
 Architecture: all
 Maintainer: Ben Morris [ben@bendmorris.com]
 Provides: scotch-lang

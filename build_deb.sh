@@ -1,6 +1,7 @@
 sudo rm deb -rf
 
 VER=`scotch "version" -e`
+sed s/VERSION/${VER}/g control_temp > control
 mkdir deb
 cd deb
 mkdir DEBIAN
