@@ -79,7 +79,7 @@ loop verbose bindings state =
         Just "quit" -> closeInput state
         Just "restart" -> main
         Just "vars" -> do putStrLn (foldl (++) "" 
-                                   [show binding ++ "\n" | e <- bindings, binding <- e])
+                                   ["** " ++ show binding ++ "\n" | e <- bindings, binding <- e])
                           loop verbose bindings state
         Just input -> do -- parse input
                          let readinput = Parse.read "Interpreter" input
