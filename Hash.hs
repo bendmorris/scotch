@@ -19,7 +19,7 @@ module Hash where
 import Data.Char
 import Types
 
-hashSize = 100
+hashSize = 50
 
 hashKey [] = 0
 hashKey (h:t) = (ord h) + hashKey t
