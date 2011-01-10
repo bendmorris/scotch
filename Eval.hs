@@ -190,11 +190,14 @@ eval exp vars = case exp of
                                             Val (Str s) -> FileAppend (Val (File f)) (Val (Str s))
                                             otherwise -> Exception $ "Write non-string " ++ show otherwise
                           otherwise -> Exception $ "Write to non-file " ++ show otherwise
-  AtomExpr s v ->       Val $ Atom s [case result of
-                                        Exception e -> Undefined e
-                                        Val r -> r
-                                        otherwise -> Undefined $ show otherwise
-                                      | result <- [eval v' vars | v' <- v] ]
+  AtomExpr s v ->       case validList atomList of
+                          Exception e -> Exception e
+                          otherwise -> Val $ Atom s [case result of
+                                                       Exception e -> Undefined e
+                                                       Val r -> r
+                                                       otherwise -> Undefined $ show otherwise
+                                                     | result <- atomList ]
+                        where atomList = [eval v' vars | v' <- v]
   otherwise ->          otherwise
  where forloop :: Id -> [Expr] -> Expr -> [Expr]
        forloop id [] y = []
