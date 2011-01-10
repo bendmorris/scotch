@@ -340,7 +340,7 @@ identifierOrValue = try idAtom <|> try idSplit <|> try idName <|> try idPattern 
 idAtom =
   do initial <- oneOf upperCase
      chars <- many $ oneOf $ upperCase ++ lowerCase
-     id <- try (whiteSpace >> parens (sepBy identifierOrValue (oneOf ","))) <|> 
+     id <- try (whiteSpace >> parens (sepBy (whiteSpace >> identifierOrValue) (oneOf ","))) <|> 
            try (do id <- whiteSpace >> identifierOrValue
                    return [id]) <|>
            do return []
