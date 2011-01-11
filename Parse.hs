@@ -143,7 +143,8 @@ syntax =
 
 moduleName :: Parser [String]
 moduleName =
-  do sepBy (many (oneOf (upperCase ++ lowerCase))) (oneOf ".")
+  do sepBy (many (oneOf (upperCase ++ lowerCase ++ numeric))) (oneOf ".")
+     
 
 importStmt :: Parser Expr
 importStmt =
