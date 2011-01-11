@@ -552,7 +552,8 @@ operators = [[Infix  (reservedOp "@"   >> return (subs            )) AssocLeft],
              [Infix  (reservedOp "and" >> return (And             )) AssocLeft,
               Infix  (reservedOp "or"  >> return (Or              )) AssocLeft,
               Infix  (reservedOp "&"   >> return (And             )) AssocLeft,
-              Infix  (reservedOp "|"   >> return (Or              )) AssocLeft ]
+              Infix  (reservedOp "|"   >> return (Or              )) AssocLeft ],
+             [Prefix (reservedOp "-"   >> return (Prod (Val (NumInt (-1)))))]
              ]
 
 read name s = case (parse parser name s) of
