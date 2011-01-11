@@ -77,7 +77,8 @@ vdiv (NumInt a) (NumFloat b) = Val (NumFloat ((realToFrac a) / b))
 vdiv (NumFloat a) (NumInt b) = Val (NumFloat (a / (realToFrac b)))
 vdiv a b = type_mismatch "/" a b
 -- exponent
-vexp (NumInt a) (NumInt b) = Val (NumInt (a ^ b))
+vexp (NumInt a) (NumInt b) = if b > 0 then Val (NumInt (a ^ b)) 
+                             else Val (NumFloat ((realToFrac a) ** (realToFrac b)))
 vexp (NumFloat a) (NumFloat b) = Val (NumFloat (a ** b))
 vexp (NumInt a) (NumFloat b) = Val (NumFloat ((realToFrac a) ** b))
 vexp (NumFloat a) (NumInt b) = Val (NumFloat (a ** (realToFrac b)))
