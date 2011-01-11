@@ -42,12 +42,12 @@ wexecute verbose (h:t) bindings =
                          EagerDef id x Skip -> do return [(id, ([], eval x bindings))]
                          Defun id params x Skip -> do return [(id, (params, x)), (id, ([], Val (HFunc id)))]
                          Defproc id params x Skip -> do return [(id, (params, Val (Proc x))), (id, ([], Val (HFunc id)))]
-                         Import s -> do i <- importFile verbose s
-                                        b <- case i of 
-                                               (False, _) -> do putStrLn ("Failed to import module " ++ show s)
-                                                                return []
-                                               (True, i) -> do return [e | j <- i, e <- j]
-                                        return b
+                         Import s t -> do i <- importFile verbose s t
+                                          b <- case i of 
+                                                 (False, _) -> do putStrLn ("Failed to import module " ++ show s)
+                                                                  return []
+                                                 (True, i) -> do return [e | j <- i, e <- j]
+                                          return b
                                         
                          otherwise -> case result of
                                         Val (Proc p) -> do e <- wexecute verbose [(position, e) | e <- p] bindings
@@ -93,8 +93,8 @@ searchPathMatch (h:t) = do exists <- if isSuffixOf ".sco" h
                              True -> return h
                              False -> searchPathMatch t
 -- returns (was the import successful?, VarDict of imported bindings)
-importFile :: Bool -> [String] -> IO (Bool, VarDict)
-importFile verbose s = 
+importFile :: Bool -> [String] -> [String] -> IO (Bool, VarDict)
+importFile verbose s t = 
   do currDir <- getCurrentDirectory
      fullPath <- splitExecutablePath
      let libDir = (fst fullPath) ++ "scotch.lib"
@@ -105,7 +105,7 @@ importFile verbose s =
                        libDir ++ moduleName ++ ".sco"]
      path <- searchPathMatch searchPath
      stdlib <- if s == ["std", "lib"] then do return (False, []) 
-                                      else importFile False ["std", "lib"]
+                                      else importFile False ["std", "lib"] ["std", "lib"]
      let builtin = case stdlib of
                     (True, b) -> b
                     (False, _) -> emptyHash
@@ -127,7 +127,7 @@ importFile verbose s =
                        (name newbinding) !! 0 /= '_' &&
                        (s == ["std", "lib"] ||
                         not (isInfixOf "std.lib." (name newbinding)))]
-                   where qualifier = (foldl (++) [] [i ++ "." | i <- s, i /= "main" ])
+                   where qualifier = (foldl (++) [] [i ++ "." | i <- t])
                          name b = case fst b of 
                                     Name n -> n
      return (success, newBindingHash newval emptyHash)

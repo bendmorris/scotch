@@ -46,7 +46,8 @@ languageDef =
                                       "int", "float", "str",
                                       "read", "write", "append", "input",
                                       "thread",
-                                      "lambda"
+                                      "lambda",
+                                      "import", "as"
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
                                       "!=", "<", ">", "and", "or", "not", ":", "->",
@@ -148,9 +149,15 @@ moduleName =
 
 importStmt :: Parser Expr
 importStmt =
-  do reserved "import"
-     mod <- moduleName
-     return $ Import mod
+  try (do reserved "import"
+          mod <- moduleName
+          whiteSpace >> reserved "as"
+          as <- moduleName
+          return $ Import mod as)
+  <|>
+  try (do reserved "import"
+          mod <- moduleName
+          return $ Import mod mod)
 
 defprocStmt = try defprocFun <|> try defprocVar
 

@@ -77,6 +77,9 @@ apply(f, a, b) = f(a, b)
 tests += test(apply(dict @ 'add', 1, 2), 3)
 tests += test(apply(dict @ 'multiply', 10, 2), 20)
 
+import std.math as m
+tests += test(m.pi, 3.141592654)
+
 print tests
 print (if all([for test in tests, if test == "yes" then true else false])
         then "All tests passed."

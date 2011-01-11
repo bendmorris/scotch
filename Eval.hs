@@ -29,7 +29,7 @@ import Hash
 eval :: Expr -> VarDict -> Expr
 eval exp [] = eval exp emptyHash
 eval exp vars = case exp of
-  Import s ->           Skip
+  Import s t ->         Skip
   ListExpr l ->         case (validList l) of
                           Val _ -> case validList [Val item | item <- l'] of
                                      Exception e -> Exception e

@@ -105,7 +105,7 @@ data Expr = Exception String                -- undefined
           | Range (Expr) (Expr) (Expr)      -- range
           | Output Expr                     -- output
           | Input                           -- get a line of input from the user
-          | Import [String]                 -- import module
+          | Import [String] [String]        -- import module
           | FileObj Expr                    -- file object
           | FileRead Expr                   -- read file
           | FileWrite Expr Expr             -- write to file
@@ -148,7 +148,8 @@ instance Show(Expr) where
     show (Range x y z) = "range(" ++ (show x) ++ "," ++ (show y) ++ "," ++ (show z) ++ ")"
     show (Output x) = "print " ++ show x
     show Input = "input"
-    show (Import s) = "import " ++ (show s)
+    show (Import s t) = "import " ++ (show s) ++ (if s == t then "" 
+                                                  else " as " ++ show t)
     show (FileObj f) = "<<" ++ show f ++ ">>"
     show (FileRead f) = "read " ++ show f
     show (FileWrite f x) = "write " ++ show f ++ " " ++ show x

@@ -46,7 +46,7 @@ main = do args <- getArgs
           let interpret = iFlag args
           let evaluate = eFlag args
           -- import std.lib
-          bindings <- importFile verbose ["std", "lib"]
+          bindings <- importFile verbose ["std", "lib"] ["std", "lib"]
           bindings' <- case bindings of
                          (False, _) -> do putStrLn "Failed to import std.lib."
                                           return emptyHash
@@ -88,7 +88,7 @@ loop verbose bindings state =
                                      1 -> subfile (snd $ head readinput) bindings
                                      otherwise -> do return (Exception "Parse error - multiple expressions entered in interpreter")
                          imp' <- case parsed of
-                                   Import s -> importFile verbose s
+                                   Import s t -> importFile verbose s t
                                    otherwise -> do return (False, [])
                          imp <- case imp' of
                                   (False, []) -> do -- there was no attempted import
