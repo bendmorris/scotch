@@ -82,55 +82,55 @@ wexecute verbose (h:t) bindings =
            position = fst h
 
 -- returns a qualified file name from a list of identifiers provided by an import statement        
-importFileName s = importName s ++ ".sco"
 importName [] = ""
 importName (h:t) = "/" ++ h ++ (importName t)
+searchPathMatch :: [String] -> IO String
+searchPathMatch [] = do return ""
+searchPathMatch (h:t) = do exists <- if isSuffixOf ".sco" h 
+                                     then doesFileExist h 
+                                     else doesDirectoryExist h
+                           case exists of
+                             True -> return h
+                             False -> searchPathMatch t
 -- returns (was the import successful?, VarDict of imported bindings)
 importFile :: Bool -> [String] -> IO (Bool, VarDict)
 importFile verbose s = 
   do currDir <- getCurrentDirectory
-     full_path <- splitExecutablePath
-     let libpath = (fst full_path) ++ "scotch.lib"
-     let ifn = importFileName s
-     let idn = importName s
-     currDir_file <- doesFileExist (currDir ++ ifn)
-     currDir_dir <- doesDirectoryExist (currDir ++ idn)
-     exeDir_file <- doesFileExist (libpath ++ ifn)
-     exeDir_dir <- doesDirectoryExist (libpath ++ idn)
-     let path | currDir_file = currDir ++ ifn
-              | currDir_dir = currDir ++ idn
-              | exeDir_file = libpath ++ ifn
-              | exeDir_dir = libpath ++ idn
-              | otherwise = ""
-     let dir = currDir_dir || exeDir_dir
+     fullPath <- splitExecutablePath
+     let libDir = (fst fullPath) ++ "scotch.lib"
+     let moduleName = importName s
+     let searchPath = [currDir ++ moduleName ++ "/main.sco",
+                       currDir ++ moduleName ++ ".sco",
+                       libDir ++ moduleName ++ "/main.sco",
+                       libDir ++ moduleName ++ ".sco"]
+     path <- searchPathMatch searchPath
      stdlib <- if s == ["std", "lib"] then do return (False, []) 
                                       else importFile False ["std", "lib"]
      let builtin = case stdlib of
                     (True, b) -> b
                     (False, _) -> emptyHash
-     if dir then importFile verbose (s ++ ["main"])
-      else do val <- case path of 
-                       "" -> do return []
-                       otherwise -> do e <- execute verbose path builtin
-                                       return [i | j <- e, i <- j]
-              let success = case path of
-                              "" -> False
-                              otherwise -> True
-              let newval = [newbinding | newbinding <- 
-                            [((case fst binding of
-                                 Name n -> Name (qualifier ++ n)), 
-                               case snd binding of
-                                 ([], Val (HFunc (Name n))) -> if fst binding == Name n 
-                                                               then ([], Val (HFunc (Name (qualifier ++ n))))
-                                                               else snd binding
-                                 otherwise -> otherwise) | binding <- val],
-                               (name newbinding) !! 0 /= '_' &&
-                               (s == ["std", "lib"] ||
-                                not (isInfixOf "std.lib." (name newbinding)))]
-                           where qualifier = (foldl (++) [] [i ++ "." | i <- s, i /= "main" ])
-                                 name b = case fst b of 
-                                            Name n -> n
-              return (success, newBindingHash newval emptyHash)
+     val <- case path of 
+              "" -> do return []
+              otherwise -> do e <- execute verbose path builtin
+                              return [i | j <- e, i <- j]
+     let success = case path of
+                     "" -> False
+                     otherwise -> True
+     let newval = [newbinding | newbinding <- 
+                    [((case fst binding of
+                         Name n -> Name (qualifier ++ n)), 
+                       case snd binding of
+                         ([], Val (HFunc (Name n))) -> if fst binding == Name n 
+                                                       then ([], Val (HFunc (Name (qualifier ++ n))))
+                                                       else snd binding
+                         otherwise -> otherwise) | binding <- val],
+                       (name newbinding) !! 0 /= '_' &&
+                       (s == ["std", "lib"] ||
+                        not (isInfixOf "std.lib." (name newbinding)))]
+                   where qualifier = (foldl (++) [] [i ++ "." | i <- s, i /= "main" ])
+                         name b = case fst b of 
+                                    Name n -> n
+     return (success, newBindingHash newval emptyHash)
 
 -- interpret the contents of a file
 execute :: Bool -> String -> VarDict -> IO VarDict
