@@ -28,4 +28,4 @@ from_tera(Tera n) = n * 1000000000000.0
 to_peta(n) = Peta(n / 1000000000000000.0)
 from_peta(Peta n) = n * 1000000000000000.0
 
-unit_convert(to, from, n) = to(from(n))
+convert_unit(n, from, to) = to(from(n))
