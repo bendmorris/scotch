@@ -1,0 +1,31 @@
+to_femto(n) = Femto(n * 1000000000000000)
+from_femto(Femto n) = n / 1000000000000000.0
+to_pico(n) = Pico(n * 1000000000000)
+from_pico(Pico n) = n / 1000000000000.0
+to_nano(n) = Nano(n * 1000000000)
+from_nano(Nano n) = n / 1000000000.0
+to_micro(n) = Micro(n * 1000000)
+from_micro(Micro n) = n / 1000000.0
+to_milli(n) = Milli(n * 1000)
+from_milli(Milli n) = n / 1000.0
+to_centi(n) = Centi(n * 100)
+from_centi(Centi n) = n / 100.0
+to_deci(n) = Deci(n * 10)
+from_deci(Deci n) = n / 10.0
+
+to_deca(n) = Deca(n / 10.0)
+from_deca(Deca n) = n * 10.0
+to_hecto(n) = Hecto(n / 100.0)
+from_hecto(Hecto n) = n * 100.0
+to_kilo(n) = Kilo(n / 1000.0)
+from_kilo(Kilo n) = n * 1000.0
+to_mega(n) = Mega(n / 1000000.0)
+from_mega(Mega n) = n * 1000000.0
+to_giga(n) = Giga(n / 1000000000.0)
+from_giga(Giga n) = n * 1000000000.0
+to_tera(n) = Tera(n / 1000000000000.0)
+from_tera(Tera n) = n * 1000000000000.0
+to_peta(n) = Peta(n / 1000000000000000.0)
+from_peta(Peta n) = n * 1000000000000000.0
+
+unit_convert(to, from, n) = to(from(n))
