@@ -440,7 +440,7 @@ atomValue =
   do initial <- oneOf upperCase
      chars <- many $ oneOf $ upperCase ++ lowerCase
      val <- try (whiteSpace >> parens (sepBy (whiteSpace >> value) (oneOf ","))) <|> 
-            try (do val' <- value
+            try (do val' <- whiteSpace >> value
                     return [val']) <|>
             do return []
      return $ Atom (initial : chars) val
@@ -448,8 +448,8 @@ atomStmt :: Parser Expr
 atomStmt =
   do initial <- oneOf upperCase
      chars <- many $ oneOf $ upperCase ++ lowerCase
-     expr <- try (whiteSpace >> parens (sepBy (whiteSpace >> valueExpr) (oneOf ","))) <|> 
-             try (do expr <- whiteSpace >> valueExpr
+     expr <- try (whiteSpace >> parens (sepBy (whiteSpace >> expression) (oneOf ","))) <|> 
+             try (do expr <- whiteSpace >> expression
                      return [expr]) <|>
              do return []
      return $ AtomExpr (initial : chars) expr

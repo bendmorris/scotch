@@ -39,6 +39,7 @@ substitute exp params =
     Var x -> if newname == Skip then Var x else newname
              where newname = inparams x params
     Val (Proc p) -> Val (Proc ([substitute e params | e <- p]))
+    Val (Lambda ids expr) -> Val (Lambda ids (substitute expr params))
     Val v -> Val v
     ToInt x -> ToInt (substitute x params)
     ToFloat x -> ToFloat (substitute x params)
@@ -69,8 +70,8 @@ substitute exp params =
     Func f args -> case inparamsid f params of
                      (Null, (f', [])) -> Func f' [substitute arg params | arg <- args]
                      (Null, (f', otherargs)) -> Func f' [substitute arg params | arg <- otherargs ++ args]
-                     (Lambda ids expr, _) -> substitute (LambdaCall (Lambda ids expr) args) params
-    LambdaCall (Lambda ids expr) args -> substitute (Defun (Name "lambda") ids expr (
+                     (Lambda ids expr, _) -> substitute (LambdaCall (Lambda ids (substitute expr params)) args) params
+    LambdaCall (Lambda ids expr) args -> substitute (Defun (Name "lambda") ids (substitute expr params) (
                                                       Def (Name "lambda") (Val (HFunc (Name "lambda"))) (
                                                        Func (Name "lambda") args
                                                        )

@@ -100,20 +100,20 @@ eval exp vars = case exp of
                                                            otherwise ->      Exception $ show otherwise
                           Func f args ->  exp
                           otherwise ->    Exception $ show otherwise ++ " has no members"
-  Add x y ->            calc (eval x vars) (eval y vars) (vadd)
-  Sub x y ->            calc (eval x vars) (eval y vars) (vsub)
-  Prod x y ->           calc (eval x vars) (eval y vars) (vprod)
-  Div x y ->            calc (eval x vars) (eval y vars) (vdiv)
-  Exp x y ->            calc (eval x vars) (eval y vars) (vexp)
-  Eq x y ->             calc (eval x vars) (eval y vars) (veq)
-  InEq x y ->           case calc (eval x vars) (eval y vars) (veq) of
+  Add x y ->            eval (calc (eval x vars) (eval y vars) (vadd)) vars
+  Sub x y ->            eval (calc (eval x vars) (eval y vars) (vsub)) vars
+  Prod x y ->           eval (calc (eval x vars) (eval y vars) (vprod)) vars
+  Div x y ->            eval (calc (eval x vars) (eval y vars) (vdiv)) vars
+  Exp x y ->            eval (calc (eval x vars) (eval y vars) (vexp)) vars
+  Eq x y ->             eval (calc (eval x vars) (eval y vars) (veq)) vars
+  InEq x y ->           case eval (calc (eval x vars) (eval y vars) (veq)) vars of
                           Val (Bit True) -> Val (Bit False)
                           Val (Bit False) -> Val (Bit True)
                           otherwise -> otherwise                    
-  Gt x y ->             calc (eval x vars) (eval y vars) (vgt)
-  Lt x y ->             calc (eval x vars) (eval y vars) (vlt)                    
-  And x y ->            calc (eval x vars) (eval y vars) (vand)
-  Or x y ->             calc (eval x vars) (eval y vars) (vor)
+  Gt x y ->             eval (calc (eval x vars) (eval y vars) (vgt)) vars
+  Lt x y ->             eval (calc (eval x vars) (eval y vars) (vlt)) vars         
+  And x y ->            eval (calc (eval x vars) (eval y vars) (vand)) vars
+  Or x y ->             eval (calc (eval x vars) (eval y vars) (vor)) vars
   Not x ->              case eval x vars of
                           Exception s -> Exception s
                           Val r -> case r of
@@ -128,7 +128,7 @@ eval exp vars = case exp of
                                 (addBinding (f, ([], Val (HFunc f)))
                                  vars))
   Var x ->              eval (snd ((varBinding x (vars !! varHash x) vars) !! 0)) vars
-  Func f args ->        functionCall f args (varBinding f (vars !! varHash f) vars) vars
+  Func f args ->        functionCall f [eval arg vars | arg <- args] (varBinding f (vars !! varHash f) vars) vars
   If cond x y ->        case (eval cond vars) of
                           Val (Bit True) -> eval x vars
                           Val (Bit False) -> eval y vars
@@ -196,20 +196,19 @@ functionCall f args (h:t) vars =
                                                else newcall
                               otherwise -> newcall
                        else case snd $ (varBinding fp (vars !! varHash fp) vars) !! 0 of
-                              Func f' args' -> eval (Func f' (args' ++ args)) vars
+                              Func f' args' -> eval (Func f' [eval arg vars | arg <- (args' ++ args)]) vars
                               otherwise -> functionCall f args t vars
     Val (Lambda ids func) -> eval (substitute func (funcall (zip ids args))) vars
-    Func f' args' -> eval (Func f' (args' ++ args)) vars
+    Func f' args' -> eval (Func f' [eval arg vars | arg <- (args' ++ args)]) vars
     otherwise -> functionCall f args t vars
   where fp = case vardef of
                Val (HFunc (f')) -> f'
                otherwise -> f
         vardef = snd h
-        definition = funcBinding fp evalArgs (vars !! varHash fp) vars
+        definition = funcBinding fp args (vars !! varHash fp) vars
         params = fst definition
         expr = snd definition
-        evalArgs = [eval arg vars | arg <- args]
-        newcall = eval (substitute expr (funcall (zip params evalArgs))) vars
+        newcall = eval (substitute expr (funcall (zip params args))) vars
         tailcall f args args' = if definition' == definition 
                                 then tailcall f [eval (substitute (args' !! n) (funcall (zip params args))) vars
                                                  | n <- [0 .. (length args') - 1]] args'
