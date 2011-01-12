@@ -72,8 +72,8 @@ addBindings [] vars = vars
 
 nameSplit (Name n) = n
 
-varBinding :: Id -> [Binding] -> VarDict -> Call
-varBinding x [] vars = ([], Exception ("Undefined variable " ++ show x))
+varBinding :: Id -> [Binding] -> VarDict -> [Call]
+varBinding x [] vars = [([], Exception ("Undefined variable " ++ show x))]
 varBinding x (h:t) vars = if ((fst h) == x || isSuffixOf ("." ++ nameSplit x) ("." ++ nameSplit (fst h))) && 
                               length (fst (snd h)) == 0 && 
                               snd (snd h) /= Var (fst h)
@@ -81,7 +81,7 @@ varBinding x (h:t) vars = if ((fst h) == x || isSuffixOf ("." ++ nameSplit x) ("
                                   Var v -> if v == x 
                                            then varBinding x t vars
                                            else varBinding v (vars !! varHash v) vars
-                                  otherwise -> snd h
+                                  otherwise -> snd h : varBinding x t vars
                            else varBinding x t vars
                                                       
 funcBinding :: Id -> [Expr] -> [Binding] -> VarDict -> Call
