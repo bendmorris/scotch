@@ -28,4 +28,19 @@ from_tera(Tera n) = n * 1000000000000.0
 to_peta(n) = Peta(n / 1000000000000000.0)
 from_peta(Peta n) = n * 1000000000000000.0
 
-convert_unit(n, from, to) = to(from(n))
+from_func(Femto n) = from_femto(Femto n)
+from_func(Pico n) = from_pico(Pico n)
+from_func(Nano n) = from_nano(Nano n)
+from_func(Micro n) = from_micro(Micro n)
+from_func(Milli n) = from_milli(Milli n)
+from_func(Centi n) = from_centi(Centi n)
+from_func(Deci n) = from_deci(Deci n)
+from_func(Deca n) = from_deca(Deca n)
+from_func(Hecto n) = from_hecto(Hecto n)
+from_func(Kilo n) = from_kilo(Kilo n)
+from_func(Mega n) = from_mega(Mega n)
+from_func(Giga n) = from_giga(Giga n)
+from_func(Tera n) = from_tera(Tera n)
+from_func(Peta n) = from_peta(Peta n)
+
+convert_unit(n, to) = to(from_func(n))
