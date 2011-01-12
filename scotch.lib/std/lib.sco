@@ -121,3 +121,5 @@ repeat(f, r, 0) = r
 zip(a+b, c+d) = [[a,c]] + zip(b, d)
 zip([], c+d) = []
 zip(a+b, []) = []
+
+show(a) = a

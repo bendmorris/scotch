@@ -153,7 +153,7 @@ eval exp vars = case exp of
   FileObj f ->          case eval f vars of
                           Val (Str s) -> Val $ File s
                           otherwise -> Exception "Non-string filename"
-  Output x ->           Output (eval x vars)
+  Output x ->           Output (eval (Func (Name "show") [x]) vars)
   FileWrite f x ->      case (eval f vars) of
                           Val (File f) -> case (eval x vars) of
                                             Val (Str s) -> FileWrite (Val (File f)) (Val (Str s))
