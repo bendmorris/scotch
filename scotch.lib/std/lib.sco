@@ -24,7 +24,7 @@ reverse([]) = []
 join(h+t, s) = h + (if len(t) > 0 then s + join(t, s) else "")
 
 # Returns true only if all of the members in a list are true.
-all(h+t) = if h then all(t) else false
+all(h+t) = case h of true: all(t), otherwise: false
 all([]) = true
 # Returns true if any of the members in a list are true.
 any(h+t) = if h then true else any(t)
@@ -87,24 +87,17 @@ filter(f, h+t) = case f(h) of
                    otherwise: filter(f, t)
 filter(f, []) = []
 
-add(x, y) = x + y
-subtract(x, y) = x - y
-multiply(x, y) = x * y
-divide(x, y) = x / y
-gt(x, y) = x > y
-gte(x, y) = x >= y
-lt(x, y) = x < y
-lte(x, y) = x <= y
-eq(x, y) = x == y
-sum(h+t, s) = foldl(add, s, h+t)
+show(a) = a
+
+sum(h+t, s) = foldl(x, y -> x + y, s, h+t)
 sum(l) = sum(l, 0)
-prod(h+t) = foldl(multiply, 0, h+t)
+prod(h+t) = foldl(x, y -> x * y, 0, h+t)
 
 sort(h+t) = qsort(h+t)
 qsort(h+t, n) = (case (len(h+t) < n) of
                    true: h+t, 
                    false: (qsort(less) + h + qsort(more)))
-                where less = filter(gt(h), t), more = filter(lte(h), t)
+                where less = filter(x -> h > x, t), more = filter(x -> h < x, t)
 qsort([], n) = []
 qsort(l) = qsort(l, 1)
 insert(x, h+t, a) = if x > h then h + insert(x, t) else ([x] + [h] + t)
@@ -121,5 +114,3 @@ repeat(f, r, 0) = r
 zip(a+b, c+d) = [[a,c]] + zip(b, d)
 zip([], c+d) = []
 zip(a+b, []) = []
-
-show(a) = a
