@@ -17,7 +17,7 @@ tests += test(split("a.b.c", "."), ["a","b","c"])
 
 import std.math
 tests += test(filter(even, [1..10]), [2,4,6,8,10])
-tests += test(foldl(add, 0, [1..100]), 5050)
+tests += test(foldl(x, y -> x + y, 0, [1..100]), 5050)
 
 apply(f, x, n) = f(x) + apply(f, x, n-1)
 apply(f, x, 0) = 0
@@ -79,6 +79,9 @@ tests += test(apply(dict @ 'multiply', 10, 2), 20)
 
 import std.math as m
 tests += test(m.pi, 3.141592654)
+
+import std.decimal
+tests += test(decimal("0.1") - decimal("0.05"), decimal("0.05"))
 
 print tests
 print (if all([for test in tests, if test == "yes" then true else false])
