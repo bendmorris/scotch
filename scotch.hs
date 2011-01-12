@@ -99,7 +99,10 @@ loop verbose bindings state =
                                   (True, b) -> do -- successful module import
                                                   return b
                          -- evaluate parsed input
-                         result <- ieval parsed bindings
+                         result <- do r <- ieval parsed bindings
+                                      case r of
+                                        Func f args -> return $ Exception $ "Function " ++ show f ++ " " ++ show args ++ " doesn't match any defined patterns"
+                                        otherwise -> return otherwise
                          if verbose then putStrLn (show parsed)
                                     else return ()
                          -- determine whether any definitions were made

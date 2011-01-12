@@ -48,13 +48,13 @@ vadd (List []) (Str b) = Val (Str b)
 vadd (List a) (v) = Val (List (a ++ [v]))
 vadd (v) (List b) = Val (List ([v] ++ b))
 vadd (Hash a) (Hash b) = Val (Hash [(b !! n) ++ (a !! n) | n <- [0..(hashSize - 1)]])
-vadd a b = type_mismatch "+" a b
+vadd a b = Func (Name "add") [Val a, Val b]
 -- subtraction
 vsub (NumInt a) (NumInt b) = Val (NumInt (a - b))
 vsub (NumFloat a) (NumFloat b) = Val (NumFloat (a - b))
 vsub (NumInt a) (NumFloat b) = Val (NumFloat ((realToFrac a) - b))
 vsub (NumFloat a) (NumInt b) = Val (NumFloat (a - (realToFrac b)))
-vsub a b = type_mismatch "-" a b
+vsub a b = Func (Name "subtract") [Val a, Val b]
 -- multiplication
 vprod (NumInt a) (NumInt b) = Val (NumInt (a * b))
 vprod (NumFloat a) (NumFloat b) = Val (NumFloat (a * b))
@@ -64,7 +64,7 @@ vprod (Str s) (NumInt b) = Val (Str (foldl (++) "" (take (fromIntegral b) (repea
 vprod (NumInt b) (Str s) = Val (Str (foldl (++) "" (take (fromIntegral b) (repeat s))))
 vprod (List l) (NumInt b) = Val (List (foldl (++) [] (take (fromIntegral b) (repeat l))))
 vprod (NumInt b) (List l) = Val (List (foldl (++) [] (take (fromIntegral b) (repeat l))))
-vprod a b = type_mismatch "*" a b
+vprod a b = Func (Name "multiply") [Val a, Val b]
 -- division
 div_by_zero = Exception "Division by zero"
 vdiv (NumInt a) (NumInt 0) = div_by_zero
@@ -75,7 +75,7 @@ vdiv (NumInt a) (NumInt b) = Val (NumInt (a `div` b))
 vdiv (NumFloat a) (NumFloat b) = Val (NumFloat (a / b))
 vdiv (NumInt a) (NumFloat b) = Val (NumFloat ((realToFrac a) / b))
 vdiv (NumFloat a) (NumInt b) = Val (NumFloat (a / (realToFrac b)))
-vdiv a b = type_mismatch "/" a b
+vdiv a b = Func (Name "divide") [Val a, Val b]
 -- exponent
 vexp (NumInt a) (NumInt b) = if b > 0 then Val (NumInt (a ^ b)) 
                              else Val (NumFloat ((realToFrac a) ** (realToFrac b)))

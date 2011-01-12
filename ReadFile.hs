@@ -34,7 +34,10 @@ wexecute _ [] bindings = do return bindings
 wexecute verbose (h:t) bindings = 
   do parsed <- subfile (snd h) bindings
      -- evaluate the parsed code
-     result <- ieval parsed bindings
+     result <- do r <- ieval parsed bindings
+                  case r of
+                    Func f args -> return $ Exception $ "Function " ++ show f ++ " " ++ show args ++ " doesn't match any defined patterns"
+                    otherwise -> return otherwise
      if verbose then putStrLn (show parsed)
                 else return ()        
      let newBindings = case parsed of
