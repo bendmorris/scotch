@@ -10,15 +10,16 @@ show(Decimal(a,b)) = (if a < b
                      where s = str(a), l := len(s)
 
 decimal_to_float(Decimal(a,b)) = (a * (10 ^ (-b)))
-add(Decimal(a,b), Decimal(c,d)) = if b == d
-                                  then Decimal(a + c, b)
-                                  else if b < d
-                                  then add(Decimal(a*10,b+1), Decimal(c,d))
-                                  else add(Decimal(a,b), Decimal(c*10,d+1))
+Decimal(a,b) + Decimal(c,d) = if b == d
+                              then Decimal(a + c, b)
+                              else if b < d
+                              then Decimal(a*10,b+1) + Decimal(c,d)
+                              else Decimal(a,b) + Decimal(c*10,d+1)
 
-subtract(Decimal(a,b), Decimal(c,d)) = if b == d
-                                       then Decimal(a - c, b)
-                                       else if b < d
-                                       then subtract(Decimal(a*10,b+1), Decimal(c,d))
-                                       else subtract(Decimal(a,b), Decimal(c*10,d+1))
-eq(Decimal(a,b), Decimal(c,d)) = decimal_to_float(Decimal(a,b)) == decimal_to_float(Decimal(c,d))
+Decimal(a,b) - Decimal(c,d) = if b == d
+                              then Decimal(a - c, b)
+                              else if b < d
+                              then Decimal(a*10,b+1) - Decimal(c,d)
+                              else Decimal(a,b) - Decimal(c*10,d+1)
+
+Decimal(a,b) == Decimal(c,d) = show(Decimal(a,b)) == show(Decimal(c,d))
