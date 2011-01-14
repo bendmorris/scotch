@@ -86,6 +86,7 @@ filter(f, h+t) = case f(h) of
                    true: h + filter(f, t),
                    otherwise: filter(f, t)
 filter(f, []) = []
+map(f, h+t) = [for i in h+t, f(i)]
 
 show(a) = a
 
