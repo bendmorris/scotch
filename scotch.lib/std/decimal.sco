@@ -1,3 +1,6 @@
+# std.decimal
+# Decimal(a,b) represents a * 10 ^ -b
+
 read_decimal(h+t, a) = case h of
                          ".": Decimal(int(a + t), len(t)),
                          otherwise: read_decimal(t, a + h)
@@ -11,7 +14,7 @@ show(Decimal(a,b)) = ((if l > b then left(s, l - b) else "0") +
                         otherwise: otherwise)
                      where s = str(a), l := len(s)
 
-decimal_to_float(Decimal(a,b)) = (a * (10 ^ (-b)))
+to_float(Decimal(a,b)) = (a * (10 ^ (-b)))
 
 n + Decimal(a,b) = decimal(str(n)) + Decimal(a,b)
 n - Decimal(a,b) = decimal(str(n)) - Decimal(a,b)

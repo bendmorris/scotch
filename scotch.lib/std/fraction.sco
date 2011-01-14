@@ -9,6 +9,8 @@ read_fraction(h+t, a) = case h of
 read_fraction([], a) = Fraction(int(a), 1)
 fraction(s) = read_fraction(s, "0")
 
+to_float(Fraction(a,b)) = float(a) / b
+
 reduce_fraction(Fraction(a,b)) = 
   (case len(divisors) of
      0: Fraction(a,b),
