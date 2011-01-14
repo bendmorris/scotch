@@ -128,7 +128,7 @@ loop verbose bindings state =
                                                             return ())
                                                  return ()
                            Val (Proc p) -> return ()
-                           Val v -> putStrLn (show result)
+                           Val v -> putStrLn (show (eval (Func (Name "show") [result]) bindings))
                            Exception e -> putStrLn $ show $ Exception e 
                            otherwise -> return ()
                          -- continue loop
