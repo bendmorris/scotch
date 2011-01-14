@@ -81,6 +81,7 @@ vexp (Val (NumInt a)) (Val (NumInt b)) = if b > 0 then Val (NumInt (a ^ b))
 vexp (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a ** b))
 vexp (Val (NumInt a)) (Val (NumFloat b)) = Val (NumFloat ((realToFrac a) ** b))
 vexp (Val (NumFloat a)) (Val (NumInt b)) = Val (NumFloat (a ** (realToFrac b)))
+vexp (Val (Bit a)) (Val (Bit b)) = vand (Val (Bit a)) (Val (Bit b))
 vexp a b = Func (Name "exp") [a, b]
 -- equality
 veq (Val (NumInt a)) (Val (NumInt b)) = Val (Bit (a == b))
@@ -91,6 +92,7 @@ veq (Val (Str a)) (Val (Str b)) = Val (Bit (a == b))
 veq (Val (List a)) (Val (List b)) = Val (Bit (a == b))
 veq (Val (Hash a)) (Val (Hash b)) = Val (Bit (a == b))
 veq (Val (HFunc a)) (Val (HFunc b)) = Val (Bit (a == b))
+veq (Val (Bit a)) (Val (Bit b)) = Val (Bit (a == b))
 veq a b = case a == b of
             True -> Val (Bit True)
             False -> Func (Name "eq") [a, b]
