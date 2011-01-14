@@ -29,7 +29,7 @@ upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 lowerCase = "abcdefghijklmnopqrstuvwxyz"
 numeric = "0123456789"
 idSymbol = "_!'."
-operatorSymbol = "!@#$%^&*+-*/=<>?'_|:;`"
+operatorSymbol = "!@#$%^&*+-*/=<>?'_|:`"
 
 languageDef =
   emptyDef { Token.commentStart    = "{-",
@@ -530,12 +530,12 @@ varcallStmt =
      return $ Var (Name var)
 
 assignment :: Parser Expr
-assignment = try defprocStmt <|> 
-             try defOpStmt <|>
+assignment = try defprocStmt <|>              
              try defunStmt <|> 
              try accumulateStmt <|> 
              try eagerStmt <|> 
-             assignStmt
+             try assignStmt <|>
+             try defOpStmt
      
 nestwhere [] wexpr = wexpr
 nestwhere (h:t) wexpr = case h of
