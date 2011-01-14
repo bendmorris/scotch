@@ -47,13 +47,13 @@ vadd (Val (List [])) (Val (Str b)) = Val (Str b)
 vadd (Val (List a)) (Val v) = Val (List (a ++ [v]))
 vadd (Val v) (Val (List b)) = Val (List ([v] ++ b))
 vadd (Val (Hash a)) (Val (Hash b)) = Val (Hash [(b !! n) ++ (a !! n) | n <- [0..(hashSize - 1)]])
-vadd a b = Func (Name "add") [a, b]
+vadd a b = Func (Name "+") [a, b]
 -- subtraction
 vsub (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (a - b))
 vsub (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a - b))
 vsub (Val (NumInt a)) (Val (NumFloat b)) = Val (NumFloat ((realToFrac a) - b))
 vsub (Val (NumFloat a)) (Val (NumInt b)) = Val (NumFloat (a - (realToFrac b)))
-vsub a b = Func (Name "subtract") [a, b]
+vsub a b = Func (Name "-") [a, b]
 -- multiplication
 vprod (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (a * b))
 vprod (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a * b))
@@ -63,7 +63,7 @@ vprod (Val (Str s)) (Val (NumInt b)) = Val (Str (foldl (++) "" (take (fromIntegr
 vprod (Val (NumInt b)) (Val (Str s)) = Val (Str (foldl (++) "" (take (fromIntegral b) (repeat s))))
 vprod (Val (List l)) (Val (NumInt b)) = Val (List (foldl (++) [] (take (fromIntegral b) (repeat l))))
 vprod (Val (NumInt b)) (Val (List l)) = Val (List (foldl (++) [] (take (fromIntegral b) (repeat l))))
-vprod a b = Func (Name "multiply") [a, b]
+vprod a b = Func (Name "*") [a, b]
 -- division
 div_by_zero = Exception "Division by zero"
 vdiv (Val (NumInt a)) (Val (NumInt 0)) = div_by_zero
@@ -74,7 +74,7 @@ vdiv (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (a `div` b))
 vdiv (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a / b))
 vdiv (Val (NumInt a)) (Val (NumFloat b)) = Val (NumFloat ((realToFrac a) / b))
 vdiv (Val (NumFloat a)) (Val (NumInt b)) = Val (NumFloat (a / (realToFrac b)))
-vdiv a b = Func (Name "divide") [a, b]
+vdiv a b = Func (Name "/") [a, b]
 -- exponent
 vexp (Val (NumInt a)) (Val (NumInt b)) = if b > 0 then Val (NumInt (a ^ b)) 
                                          else Val (NumFloat ((realToFrac a) ** (realToFrac b)))
@@ -82,7 +82,7 @@ vexp (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a ** b))
 vexp (Val (NumInt a)) (Val (NumFloat b)) = Val (NumFloat ((realToFrac a) ** b))
 vexp (Val (NumFloat a)) (Val (NumInt b)) = Val (NumFloat (a ** (realToFrac b)))
 vexp (Val (Bit a)) (Val (Bit b)) = And (Val (Bit a)) (Val (Bit b))
-vexp a b = Func (Name "exp") [a, b]
+vexp a b = Func (Name "^") [a, b]
 -- equality
 veq (Val (NumInt a)) (Val (NumInt b)) = Val (Bit (a == b))
 veq (Val (NumFloat a)) (Val (NumFloat b)) = Val (Bit (a == b))
@@ -95,19 +95,19 @@ veq (Val (HFunc a)) (Val (HFunc b)) = Val (Bit (a == b))
 veq (Val (Bit a)) (Val (Bit b)) = Val (Bit (a == b))
 veq a b = case a == b of
             True -> Val (Bit True)
-            False -> Func (Name "eq") [a, b]
+            False -> Func (Name "==") [a, b]
 -- greater than
 vgt (Val (NumInt a)) (Val (NumInt b)) = Val (Bit (a > b))
 vgt (Val (NumFloat a)) (Val (NumFloat b)) = Val (Bit (a > b))
 vgt (Val (NumInt a)) (Val (NumFloat b)) = Val (Bit ((realToFrac a) > b))
 vgt (Val (NumFloat a)) (Val (NumInt b)) = Val (Bit (a > (realToFrac b)))
-vgt a b = Func (Name "gt") [a, b]
+vgt a b = Func (Name ">") [a, b]
 -- less than
 vlt (Val (NumInt a)) (Val (NumInt b)) = Val (Bit (a < b))
 vlt (Val (NumFloat a)) (Val (NumFloat b)) = Val (Bit (a < b))
 vlt (Val (NumInt a)) (Val (NumFloat b)) = Val (Bit ((realToFrac a) < b))
 vlt (Val (NumFloat a)) (Val (NumInt b)) = Val (Bit (a < (realToFrac b)))
-vlt a b = Func (Name "lt") [a, b]
+vlt a b = Func (Name "<") [a, b]
 
 
 -- validList: checks a list for exceptions
