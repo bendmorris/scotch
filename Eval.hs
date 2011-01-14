@@ -7,7 +7,7 @@
 
     Scotch is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOnoR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
@@ -112,8 +112,21 @@ eval exp vars = case exp of
                           otherwise -> otherwise                    
   Gt x y ->             eval (calc (eval x vars) (eval y vars) (vgt)) vars
   Lt x y ->             eval (calc (eval x vars) (eval y vars) (vlt)) vars         
-  And x y ->            eval (calc (eval x vars) (eval y vars) (vand)) vars
-  Or x y ->             eval (calc (eval x vars) (eval y vars) (vor)) vars
+  And x y ->            case eval x vars of
+                          Val (Bit True) -> case eval y vars of
+                                              Val (Bit True) -> Val (Bit True)
+                                              Val (Bit False) -> Val (Bit False)
+                                              otherwise -> err
+                          Val (Bit False) -> Val (Bit False)
+                          otherwise -> err
+                        where err = Exception $ "Type mismatch: " ++ show(eval x vars) ++ " and " ++ show(eval y vars)
+  Or x y ->             case eval x vars of
+                          Val (Bit True) -> Val (Bit True)                                            
+                          Val (Bit False) -> case eval y vars of
+                                               Val (Bit b) -> Val (Bit b)
+                                               otherwise -> err
+                          otherwise -> err
+                        where err = Exception $ "Type mismatch: " ++ show(eval x vars) ++ " and " ++ show(eval y vars)
   Not x ->              case eval x vars of
                           Exception s -> Exception s
                           Val r -> case r of
@@ -129,7 +142,7 @@ eval exp vars = case exp of
                                  vars))
   Var x ->              eval (snd ((varBinding x (vars !! varHash x) vars) !! 0)) vars
   Func f args ->        functionCall f [eval arg vars | arg <- args] (varBinding f (vars !! varHash f) vars) vars
-  If cond x y ->        case (eval cond vars) of
+  If cond x y ->        case eval (eval cond vars) vars of
                           Val (Bit True) -> eval x vars
                           Val (Bit False) -> eval y vars
                           Exception e -> Exception e

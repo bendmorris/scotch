@@ -108,12 +108,6 @@ vlt (Val (NumFloat a)) (Val (NumFloat b)) = Val (Bit (a < b))
 vlt (Val (NumInt a)) (Val (NumFloat b)) = Val (Bit ((realToFrac a) < b))
 vlt (Val (NumFloat a)) (Val (NumInt b)) = Val (Bit (a < (realToFrac b)))
 vlt a b = Func (Name "lt") [a, b]
--- binary and
-vand (Val (Bit a)) (Val (Bit b)) = Val (Bit (a && b))
-vand a b = type_mismatch "&" a b
--- binary or
-vor (Val (Bit a)) (Val (Bit b)) = Val (Bit (a || b))
-vor a b = type_mismatch "|" a b
 
 
 -- validList: checks a list for exceptions
