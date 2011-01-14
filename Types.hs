@@ -58,7 +58,7 @@ instance Show (Value) where
                             else "") ++ "}"
                            where items = ["," ++ fst i ++ ":" ++ show (snd i) | j <- h, i <- j]
     show (HFunc f) = "func " ++ show f
-    show (Lambda ids expr) = "lambda " ++ show ids ++ " " ++ show expr
+    show (Lambda ids expr) = show ids ++ " -> " ++ show expr
     show (Proc p) = "proc " ++ show p
     show (Thread th) = "thread " ++ show th
     show (Null) = "null"
@@ -101,7 +101,7 @@ data Expr = Exception String                -- undefined
           | LambdaCall Value [Expr]         -- lambda function call
           | If Expr Expr Expr               -- conditional
           | Case Expr [(Id, Expr)]          -- case expression
-          | For Id (Expr) (Expr)            -- iteration
+          | For Id (Expr) (Expr) [Expr]     -- iteration
           | Range (Expr) (Expr) (Expr)      -- range
           | Output Expr                     -- output
           | Input                           -- get a line of input from the user
@@ -140,12 +140,12 @@ instance Show(Expr) where
     show (EagerDef a b c) = "(eager def " ++ show a ++ " as " ++ show b ++ ", " ++ show c ++ ")"
     show (Defun a b c d) = "(defun " ++ (show a) ++ " " ++ (show b) ++ " as " ++ show c ++ ", " ++ show d ++ ")"
     show (Defproc a b c d) = "(defproc " ++ (show a) ++ " " ++ (show b) ++ " as {" ++ (show c) ++ "}, " ++ (show d) ++ ")"
-    show (Var v) = "var " ++ show v
+    show (Var v) = show v
     show (Func f p) = "(func " ++ (show f) ++ " " ++ (show p) ++ ")"
     show (If cond x y) = "(if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y ++ ")"
     show (Case c o) = "(case " ++ show c ++ " " ++ show o ++ ")"
-    show (For x y z) = "[for " ++ (show x) ++ " in " ++ (show y) ++ " " ++ (show z) ++ "]"
-    show (Range x y z) = "range(" ++ (show x) ++ "," ++ (show y) ++ "," ++ (show z) ++ ")"
+    show (For x y z w) = "[for " ++ (show x) ++ " in " ++ (show y) ++ " " ++ (show z) ++ "]"
+    show (Range x y z) = "[" ++ (show x) ++ ".." ++ (show y) ++ "," ++ (show z) ++ ")"
     show (Output x) = "print " ++ show x
     show Input = "input"
     show (Import s t) = "import " ++ (show s) ++ (if s == t then "" 

@@ -295,6 +295,10 @@ rangeStmt =
               expr2 <- expression
               reservedOp "]"
               return $ Range expr1 expr2 (Val (NumInt 1)))
+     
+nestedListComp (h:t) expr conds = For (Name (fst h)) (snd h) (nestedListComp t expr conds)
+                                    (if t == [] then conds else [])
+nestedListComp [] expr conds = expr
 
 inStmt :: Parser (String, Expr)
 inStmt = 
@@ -303,16 +307,15 @@ inStmt =
      list <- expression
      reservedOp ","
      return (iterator, list)
-     
-nestedListComp (h:t) expr = For (Name (fst h)) (snd h) (nestedListComp t expr)
-nestedListComp [] expr = expr
-
 listCompStmt :: Parser Expr
 listCompStmt =
   do reserved "for"
      ins <- many (try inStmt)
      expr <- expression
-     return $ nestedListComp ins expr
+     conds <- many (do reservedOp ","
+                       cond <- whiteSpace >> expression
+                       return cond)
+     return $ nestedListComp ins expr conds
      
 forStmt = brackets listCompStmt
      

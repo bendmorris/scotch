@@ -65,7 +65,7 @@ substitute exp params =
     Defun id p x y -> Defun id p (substitute x params) (substitute y params)
     If x y z -> If (substitute x params) (substitute y params) (substitute z params)
     Case c opts -> Case (substitute c params) [(fst opt, substitute (snd opt) params) | opt <- opts]
-    For id x y -> For id (substitute x params) (substitute y params)
+    For id x y z -> For id (substitute x params) (substitute y params) [substitute i params | i <- z]
     Range start stop step -> Range (substitute start params) (substitute stop params) (substitute step params)
     Func f args -> case inparamsid f params of
                      (Null, (f', [])) -> Func f' [substitute arg params | arg <- args]

@@ -148,10 +148,10 @@ eval exp vars = case exp of
                           Exception e -> Exception e
                           otherwise -> Exception $ "Non-boolean condition " ++ show cond
   Case check (h:t) ->   caseExpr (eval check vars) (h:t)
-  For id x y ->         eval (case (eval x vars) of
-                                 Val (List l) -> ListExpr (forloop id [Val item | item <- l] y)
-                                 Val (Str s) -> ListExpr (forloop id [Val (Str [c]) | c <- s] y)
-                                 Val v -> ListExpr (forloop id [Val v] y)
+  For id x y conds ->   eval (case (eval x vars) of
+                                 Val (List l) -> ListExpr (forloop id [Val item | item <- l] y conds)
+                                 Val (Str s) -> ListExpr (forloop id [Val (Str [c]) | c <- s] y conds)
+                                 Val v -> ListExpr (forloop id [Val v] y conds)
                                  otherwise -> Exception (show x)) vars
   Range from to step -> case (eval from vars) of
                           Val (NumInt i) -> case (eval to vars) of
@@ -186,9 +186,14 @@ eval exp vars = case exp of
                                                      | result <- atomList ]
                         where atomList = [eval v' vars | v' <- v]
   otherwise ->          otherwise
- where forloop :: Id -> [Expr] -> Expr -> [Expr]
-       forloop id [] y = []
-       forloop id (h:t) y = [eval (substitute y [(id,h)]) vars] ++ (forloop id t y)
+ where forloop :: Id -> [Expr] -> Expr -> [Expr] -> [Expr]
+       forloop id [] y conds = []
+       forloop id (h:t) y conds = [i | i <- [eval (substitute y [(id,h)]) vars] ++ (forloop id t y conds),
+                                   allTrue [eval (substitute cond [(id,h)]) vars | cond <- conds]]
+       allTrue [] = True
+       allTrue (h:t) = case h of
+                         Val (Bit True) -> allTrue t
+                         otherwise -> False
        
        caseExpr :: Expr -> [(Id, Expr)] -> Expr
        caseExpr check [] = Exception $ "No match for case expression " ++ show check
@@ -327,9 +332,10 @@ subfile exp vars =
                    y' <- subfile y vars
                    z' <- subfile z vars
                    return $ If x' y' z'
-    For id x y -> do x' <- subfile x vars
-                     y' <- subfile y vars
-                     return $ For id x' y'
+    For id x y z -> do x' <- subfile x vars
+                       y' <- subfile y vars
+                       z' <- iolist [subfile i vars | i <- z]
+                       return $ For id x' y' z'
     Output x -> do x' <- subfile x vars
                    return $ Output x'
     Input -> do line <- getLine
