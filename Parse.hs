@@ -29,6 +29,7 @@ upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 lowerCase = "abcdefghijklmnopqrstuvwxyz"
 numeric = "0123456789"
 idSymbol = "_!'."
+operatorSymbol = "!@#$%^&*+-*/<>?'_"
 
 languageDef =
   emptyDef { Token.commentStart    = "{-",
@@ -126,6 +127,7 @@ valueExpr =
   try notStmt <|>
   try conversionStmt <|>
   try valueStmt <|>
+  try (parens opcallStmt) <|>
   try funcallStmt <|>
   try varcallStmt
      
@@ -158,6 +160,14 @@ importStmt =
   try (do reserved "import"
           mod <- moduleName
           return $ Import mod mod)
+
+defOpStmt =
+  do param1 <- whiteSpace >> identifierOrValue
+     operator <- whiteSpace >> many1 (oneOf operatorSymbol)
+     param2 <- whiteSpace >> identifierOrValue
+     reservedOp "="
+     expr <- expression
+     return $ Defun (Name operator) [param1, param2] expr Skip
 
 defprocStmt = try defprocFun <|> try defprocVar
 
@@ -506,6 +516,13 @@ funcallStmt =
      params <- parens exprList
      return $ Func (Name var) params
      
+opcallStmt :: Parser Expr
+opcallStmt =
+  do expr1 <- expression
+     op <- many1 (oneOf operatorSymbol)
+     expr2 <- expression
+     return $ Func (Name op) [expr1, expr2]
+     
 varcallStmt :: Parser Expr
 varcallStmt =
   do var <- identifier
@@ -513,6 +530,7 @@ varcallStmt =
 
 assignment :: Parser Expr
 assignment = try defprocStmt <|> 
+             try defOpStmt <|>
              try defunStmt <|> 
              try accumulateStmt <|> 
              try eagerStmt <|> 
