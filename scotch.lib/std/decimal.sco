@@ -4,8 +4,11 @@ read_decimal(h+t, a) = case h of
 read_decimal([], a) = Decimal(int(a), 0)
 decimal(s) = read_decimal(s, "0")
                                        
-show(Decimal(a,b)) = ((if l > b then left(s, l - b) else "0")
-                      + "." + case ("0" * (b - l)) + right(s, b) of "": "0", otherwise: otherwise)
+show(Decimal(a,b)) = ((if l > b then left(s, l - b) else "0") +
+                      "." + 
+                      case ("0" * (b - l)) + right(s, b) of 
+                        "": "0", 
+                        otherwise: otherwise)
                      where s = str(a), l := len(s)
 
 decimal_to_float(Decimal(a,b)) = (a * (10 ^ (-b)))
