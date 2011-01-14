@@ -84,6 +84,7 @@ data Expr = Exception String                -- undefined
           | Prod Expr Expr                  -- product
           | Neg Expr                        -- negation
           | Div Expr Expr                   -- division
+          | Mod Expr Expr                   -- find remainder
           | Exp Expr Expr                   -- exponent
           | Eq Expr Expr                    -- equality
           | InEq Expr Expr                  -- inequality
@@ -129,6 +130,7 @@ instance Show(Expr) where
     show (Sub x y) = show x ++ " - " ++ show y
     show (Prod x y) = show x ++ " * " ++ show y
     show (Div x y) = show x ++ " / " ++ show y
+    show (Mod x y) = show x ++ " mod " ++ show y
     show (Exp x y) = show x ++ " ^ " ++ show y
     show (Eq x y) = show x ++ " == " ++ show y
     show (Gt x y) = show x ++ " > " ++ show y

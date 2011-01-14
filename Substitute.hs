@@ -52,6 +52,7 @@ substitute exp params =
     Sub x y -> Sub (substitute x params) (substitute y params)
     Prod x y -> Prod (substitute x params) (substitute y params)
     Div x y -> Div (substitute x params) (substitute y params)
+    Mod x y -> Mod (substitute x params) (substitute y params)
     Exp x y -> Exp (substitute x params) (substitute y params)
     Eq x y -> Eq (substitute x params) (substitute y params)
     InEq x y -> InEq (substitute x params) (substitute y params)

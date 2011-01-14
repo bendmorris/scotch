@@ -31,7 +31,7 @@ calc a b f = f a b
 
 -- the following functions provide basic operations between Values, returning an Expr
 -- addition
-vadd, vsub, vprod, vdiv, vexp, veq, vgt, vlt :: Expr -> Expr -> Expr
+vadd, vsub, vprod, vdiv, vmod, vexp, veq, vgt, vlt :: Expr -> Expr -> Expr
 vadd (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (a + b))
 vadd (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a + b))
 vadd (Val (NumInt a)) (Val (NumFloat b)) = Val (NumFloat ((realToFrac a) + b))
@@ -75,6 +75,13 @@ vdiv (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a / b))
 vdiv (Val (NumInt a)) (Val (NumFloat b)) = Val (NumFloat ((realToFrac a) / b))
 vdiv (Val (NumFloat a)) (Val (NumInt b)) = Val (NumFloat (a / (realToFrac b)))
 vdiv a b = Func (Name "/") [a, b]
+-- remainder
+vmod (Val (NumInt a)) (Val (NumInt 0)) = div_by_zero
+vmod (Val (NumInt a)) (Val (NumFloat 0)) = div_by_zero
+vmod (Val (NumFloat a)) (Val (NumInt 0)) = div_by_zero
+vmod (Val (NumFloat a)) (Val (NumFloat 0)) = div_by_zero
+vmod (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (mod a b))
+vmod a b = Func (Name "%") [a, b]
 -- exponent
 vexp (Val (NumInt a)) (Val (NumInt b)) = if b > 0 then Val (NumInt (a ^ b)) 
                                          else Val (NumFloat ((realToFrac a) ** (realToFrac b)))

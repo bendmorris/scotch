@@ -104,6 +104,7 @@ eval exp vars = case exp of
   Sub x y ->            eval (calc (eval x vars) (eval y vars) (vsub)) vars
   Prod x y ->           eval (calc (eval x vars) (eval y vars) (vprod)) vars
   Div x y ->            eval (calc (eval x vars) (eval y vars) (vdiv)) vars
+  Mod x y ->            eval (calc (eval x vars) (eval y vars) (vmod)) vars
   Exp x y ->            eval (calc (eval x vars) (eval y vars) (vexp)) vars
   Eq x y ->             eval (calc (eval x vars) (eval y vars) (veq)) vars
   InEq x y ->           case eval (calc (eval x vars) (eval y vars) (veq)) vars of
@@ -293,6 +294,9 @@ subfile exp vars =
     Div x y -> do x' <- subfile x vars
                   y' <- subfile y vars
                   return $ Div x' y'
+    Mod x y -> do x' <- subfile x vars
+                  y' <- subfile y vars
+                  return $ Mod x' y'
     Exp x y -> do x' <- subfile x vars
                   y' <- subfile y vars
                   return $ Exp x' y'

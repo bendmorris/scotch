@@ -52,7 +52,8 @@ languageDef =
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
                                       "!=", "<", ">", "and", "or", "not", ":", "->",
-                                      "<=", ">=", "+=", "<<", ">>", "..", "::"
+                                      "<=", ">=", "+=", "<<", ">>", "..", "::",
+                                      "@", "mod", "%"
                                      ]
            }
            
@@ -559,6 +560,8 @@ subs x y = Subs y x
 operators :: [[ Operator Char st Expr ]]
 operators = [[Infix  (reservedOp "@"   >> return (subs            )) AssocLeft],
              [Infix  (reservedOp "^"   >> return (Exp             )) AssocLeft],
+             [Infix  (reservedOp "mod" >> return (Mod             )) AssocLeft,
+              Infix  (reservedOp "%"   >> return (Mod             )) AssocLeft],
              [Infix  (reservedOp "*"   >> return (Prod            )) AssocLeft,
               Infix  (reservedOp "/"   >> return (Div             )) AssocLeft],
              [Infix  (reservedOp "+"   >> return (Add             )) AssocLeft,
