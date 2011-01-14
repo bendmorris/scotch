@@ -48,7 +48,8 @@ languageDef =
                                       "read", "write", "append", "input",
                                       "thread",
                                       "lambda",
-                                      "import", "as"
+                                      "import", "as",
+                                      ","
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
                                       "!=", "<", ">", "and", "or", "not", ":", "->",
@@ -293,11 +294,11 @@ threadStmt =
 rangeStmt :: Parser Expr
 rangeStmt =
   try (do reservedOp "["
-          expr1 <- expression
+          expr1 <- whiteSpace >> expression
           reservedOp ".."
-          expr2 <- expression
-          reservedOp ","
-          expr3 <- expression
+          expr2 <- whiteSpace >> expression
+          reserved ","
+          expr3 <- whiteSpace >> expression
           reservedOp "]"
           return $ Range expr1 expr2 expr3)
   <|> try (do reservedOp "["
@@ -316,14 +317,14 @@ inStmt =
   do iterator <- identifier
      reserved "in"
      list <- expression
-     reservedOp ","
+     reserved ","
      return (iterator, list)
 listCompStmt :: Parser Expr
 listCompStmt =
   do reserved "for"
      ins <- many (try inStmt)
      expr <- expression
-     conds <- many (do reservedOp ","
+     conds <- many (do reserved ","
                        cond <- whiteSpace >> expression
                        return cond)
      return $ nestedListComp ins expr conds
