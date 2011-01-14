@@ -83,6 +83,9 @@ tests += test(m.pi, 3.141592654)
 import std.decimal
 tests += test(decimal("0.1") - decimal("0.05"), decimal("0.05"))
 
+import std.fraction
+tests += test(fraction("1/3") + fraction("1/2"), fraction("5/6"))
+
 print tests
 print (if all([for test in tests, if test == "yes" then true else false])
         then "All tests passed."
