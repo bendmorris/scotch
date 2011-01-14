@@ -189,8 +189,9 @@ eval exp vars = case exp of
   otherwise ->          otherwise
  where forloop :: Id -> [Expr] -> Expr -> [Expr] -> [Expr]
        forloop id [] y conds = []
-       forloop id (h:t) y conds = [i | i <- [eval (substitute y [(id,h)]) vars] ++ (forloop id t y conds),
-                                   allTrue [eval (substitute cond [(id,h)]) vars | cond <- conds]]
+       forloop id (h:t) y conds = [i | i <- ([e | e <- [eval (substitute y [(id,h)]) vars],
+                                             allTrue [eval (substitute cond [(id,h)]) vars | cond <- conds]] 
+                                             ++ (forloop id t y conds))]
        allTrue [] = True
        allTrue (h:t) = case h of
                          Val (Bit True) -> allTrue t

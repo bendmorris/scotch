@@ -146,7 +146,7 @@ instance Show(Expr) where
     show (Func f p) = "(func " ++ (show f) ++ " " ++ (show p) ++ ")"
     show (If cond x y) = "(if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y ++ ")"
     show (Case c o) = "(case " ++ show c ++ " " ++ show o ++ ")"
-    show (For x y z w) = "[for " ++ (show x) ++ " in " ++ (show y) ++ " " ++ (show z) ++ "]"
+    show (For x y z w) = "[for " ++ show x ++ " in " ++ show y ++ " " ++ show z ++ " " ++ show w ++ "]"
     show (Range x y z) = "[" ++ (show x) ++ ".." ++ (show y) ++ "," ++ (show z) ++ ")"
     show (Output x) = "print " ++ show x
     show Input = "input"
