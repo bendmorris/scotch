@@ -16,17 +16,14 @@ show(Decimal(a,b)) = ((if l > b then left(s, l - b) else "0") +
 
 to_float(Decimal(a,b)) = (a * (10 ^ (-b)))
 
-n + Decimal(a,b) = decimal(str(n)) + Decimal(a,b)
-n - Decimal(a,b) = decimal(str(n)) - Decimal(a,b)
-n * Decimal(a,b) = decimal(str(n)) * Decimal(a,b)
-n / Decimal(a,b) = decimal(str(n)) / Decimal(a,b)
-n == Decimal(a,b) = decimal(str(n)) == Decimal(a,b)
-
-Decimal(a,b) + n = Decimal(a,b) + decimal(str(n))
+Decimal(a,b) + n <=> Decimal(a,b) + decimal(str(n))
+Decimal(a,b) * n <=> Decimal(a,b) * decimal(str(n))
 Decimal(a,b) - n = Decimal(a,b) - decimal(str(n))
-Decimal(a,b) * n = Decimal(a,b) * decimal(str(n))
 Decimal(a,b) / n = Decimal(a,b) / decimal(str(n))
-Decimal(a,b) == n = Decimal(a,b) == decimal(str(n))
+Decimal(a,b) == n <=> Decimal(a,b) == decimal(str(n))
+
+n - Decimal(a,b) = decimal(str(n)) - Decimal(a,b)
+n / Decimal(a,b) = decimal(str(n)) / Decimal(a,b)
 
 Decimal(a,b) + Decimal(c,d) = if b == d
                               then Decimal(a + c, b)
