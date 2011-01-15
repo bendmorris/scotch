@@ -86,6 +86,9 @@ tests += test(decimal("0.1") - decimal("0.05"), decimal("0.05"))
 import std.fraction
 tests += test(fraction("1/3") + fraction("1/2"), fraction("5/6"))
 
+(Apple a) + (Banana b) <=> a + b
+tests += test((Banana 10) + (Apple 12), 22)
+
 print tests
 print (if all([for test in tests, if test == "yes" then true else false])
         then "All tests passed."

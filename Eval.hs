@@ -30,6 +30,11 @@ eval :: Expr -> VarDict -> Expr
 eval exp [] = eval exp emptyHash
 eval exp vars = case exp of
   Import s t ->         Skip
+  Take n x ->           case (eval n vars) of
+                          Val (NumInt i) -> case x of
+                                              ListExpr l -> eval (ListExpr (take (fromIntegral i) l)) vars
+                                              otherwise -> Exception $ "Take from non-list"
+                          otherwise -> Exception $ "Non-integer in take expression"
   ListExpr l ->         case (validList l) of
                           Val _ -> case validList [Val item | item <- l'] of
                                      Exception e -> Exception e

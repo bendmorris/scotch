@@ -140,3 +140,10 @@ funcall (h:t) =
      Pattern _ -> funcall t
      where param = fst h
            arg = snd h
+
+permanentDefs id p x s a = case s of
+                             Defun id' p' x' s' -> permanentDefs id' p' x' s' (newDef ++ a)
+                             Skip -> newDef ++ a
+                             otherwise -> []
+                           where newDef = [(id, (p, x)), (id, ([], Val (HFunc id)))]
+newDefs (Defun id p x s) = permanentDefs id p x s []

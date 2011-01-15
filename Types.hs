@@ -74,6 +74,7 @@ data Expr = Exception String                -- undefined
           | Skip                            -- returns Null
           | Val (Value)                     -- value
           | ListExpr [Expr]                 -- list expression
+          | Take Expr Expr                  -- take _ from _
           | HashExpr [(Expr, Expr)]         -- hash expression
           | ToInt (Expr)                    -- conversion to integer
           | ToFloat (Expr)                  -- conversion to float
@@ -118,6 +119,7 @@ instance Show(Expr) where
     show Skip = "*nothing*"
     show (Val v) = show v
     show (ListExpr l) = show l
+    show (Take a b) = "take " ++ show a ++ " from " ++ show b
     show (HashExpr h) = "{" ++ (if length items > 0
                                 then tail (foldl (++) "" items)
                                 else "") ++ "}"

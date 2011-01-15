@@ -125,6 +125,7 @@ valueExpr =
   try inputStmt <|>
   try threadStmt <|>
   try rangeStmt <|>
+  try takeStmt <|>
   try forStmt <|>
   try notStmt <|>
   try conversionStmt <|>
@@ -170,6 +171,15 @@ defOpStmt =
      reservedOp "="
      expr <- expression
      return $ Defun (Name operator) [param1, param2] expr Skip
+     
+commutativeDefOpStmt =
+  do param1 <- whiteSpace >> identifierOrValue
+     operator <- whiteSpace >> many1 (oneOf operatorSymbol)
+     param2 <- whiteSpace >> identifierOrValue
+     reservedOp "<=>"
+     expr <- expression
+     return $ Defun (Name operator) [param1, param2] expr 
+             (Defun (Name operator) [param2, param1] expr (Skip))
 
 defprocStmt = try defprocFun <|> try defprocVar
 
@@ -307,6 +317,14 @@ rangeStmt =
               expr2 <- expression
               reservedOp "]"
               return $ Range expr1 expr2 (Val (NumInt 1)))
+
+takeStmt :: Parser Expr
+takeStmt =
+  do reserved "take"
+     expr1 <- expression
+     reserved "from"
+     expr2 <- expression
+     return $ Take expr1 expr2
      
 nestedListComp (h:t) expr conds = For (Name (fst h)) (snd h) (nestedListComp t expr conds)
                                     (if t == [] then conds else [])
@@ -511,7 +529,6 @@ hashStmt =
   do keysValues <- braces (sepBy (whiteSpace >> keyExpr) (oneOf ","))
      return $ HashExpr keysValues
 
-     
 funcallStmt :: Parser Expr
 funcallStmt =
   do var <- identifier
@@ -536,6 +553,7 @@ assignment = try defprocStmt <|>
              try accumulateStmt <|> 
              try eagerStmt <|> 
              try assignStmt <|>
+             try commutativeDefOpStmt <|>
              try defOpStmt
      
 nestwhere [] wexpr = wexpr
