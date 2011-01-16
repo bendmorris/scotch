@@ -178,8 +178,8 @@ commutativeDefOpStmt =
      param2 <- whiteSpace >> identifierOrValue
      reservedOp "<=>"
      expr <- expression
-     return $ Defun (Name operator) [param1, param2] expr 
-             (Defun (Name operator) [param2, param1] expr (Skip))
+     return $ Defun (Name operator) [param2, param1] expr 
+             (Defun (Name operator) [param1, param2] expr (Skip))
 
 defprocStmt = try defprocFun <|> try defprocVar
 
