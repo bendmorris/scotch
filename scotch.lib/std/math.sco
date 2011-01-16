@@ -28,3 +28,7 @@ median([]) = 0
 
 even(n) = int(n) / 2 == n / 2.0
 odd(n) = not even(n)
+
+# prime
+prime(n) = (case len(divisors) of 0: true, otherwise: false) 
+           where divisors = [for i in [2..n-1], n, n mod i == 0]

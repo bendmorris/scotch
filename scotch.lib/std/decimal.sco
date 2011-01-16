@@ -18,10 +18,10 @@ to_float(Decimal(a,b)) = (a * (10 ^ (-b)))
 
 Decimal(a,b) + n <=> Decimal(a,b) + decimal(str(n))
 Decimal(a,b) * n <=> Decimal(a,b) * decimal(str(n))
-Decimal(a,b) - n = Decimal(a,b) - decimal(str(n))
-Decimal(a,b) / n = Decimal(a,b) / decimal(str(n))
 Decimal(a,b) == n <=> Decimal(a,b) == decimal(str(n))
 
+Decimal(a,b) - n = Decimal(a,b) - decimal(str(n))
+Decimal(a,b) / n = Decimal(a,b) / decimal(str(n))
 n - Decimal(a,b) = decimal(str(n)) - Decimal(a,b)
 n / Decimal(a,b) = decimal(str(n)) / Decimal(a,b)
 

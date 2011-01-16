@@ -47,7 +47,8 @@ file_name = "test.sco"
 file = <<file_name>>
 tests += test(split(read(file) + "abcdefg", "\n") @ 0, "# Tests")
 r = read(file)
-#tests += test(split(r, "\n") @ 0, "# Tests")
+# This test doesn't yet pass, due to a known issue with iofile
+# tests += test(split(r, "\n") @ 0, "# Tests")
 
 f(n) = n
 tests += test([for i in [1..2], f(i)], [1, 2])
@@ -88,6 +89,9 @@ tests += test(fraction("1/3") + fraction("1/2"), fraction("5/6"))
 
 (Apple a) + (Banana b) <=> a + b
 tests += test((Banana 10) + (Apple 12), 22)
+
+a ** b = a ^ b
+tests += test(2 ** 2, 4)
 
 print tests
 print (if all([for test in tests, if test == "yes" then true else false])
