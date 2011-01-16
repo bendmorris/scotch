@@ -41,4 +41,8 @@ Decimal(a,b) * Decimal(c,d) = Decimal(a * c, b + d)
 
 Decimal(a,b) / Decimal(c,d) = decimal(str((float(a) / c) * (float(10 ^ d) / 10 ^ b)))
 
-Decimal(a,b) == Decimal(c,d) = show(Decimal(a,b)) == show(Decimal(c,d))
+Decimal(a,b) == Decimal(c,d) = if b == d
+                               then a == c
+                               else if b < d
+                               then Decimal(a*10,b+1) == Decimal(c,d)
+                               else Decimal(a,b) == Decimal(c*10,d+1)
