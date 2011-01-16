@@ -44,7 +44,7 @@ tests += test(mean([5,3,2,4,1]), 3)
 tests += test(sort([5,4,3,2,1]), [1,2,3,4,5])
 
 file_name = "test.sco"
-file = <<file_name>>
+file = (<file_name>)
 tests += test(split(read(file) + "abcdefg", "\n") @ 0, "# Tests")
 r = read(file)
 # This test doesn't yet pass, due to a known issue with iofile
@@ -92,6 +92,9 @@ tests += test((Banana 10) + (Apple 12), 22)
 
 a ** b = a ^ b
 tests += test(2 ** 2, 4)
+
+(Apple a) ** (Apple b) = a ^ b
+tests += test((Apple 3) ** (Apple 2), 9)
 
 print tests
 print (if all([for test in tests, if test == "yes" then true else false])

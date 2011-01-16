@@ -63,7 +63,7 @@ instance Show (Value) where
     show (Thread th) = "thread " ++ show th
     show (Null) = "null"
     show (Undefined s) = show s
-    show (File f) = "<<" ++ show f ++ ">>"
+    show (File f) = "<" ++ show f ++ ">"
     show (Atom s v) = s ++ (case length v of
                               0 -> ""
                               1 -> " " ++ show (v !! 0)

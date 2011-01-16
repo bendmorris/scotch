@@ -41,12 +41,12 @@ valueStmt =
   try procStmt <|>
   try hashStmt <|>
   try listStmt <|>
-  try fileStmt <|>
   try lambdaStmt <|>
   try strStmt <|>
   try floatStmt <|>
   try intStmt
 valueExpr = 
+  try fileStmt <|>
   try ifStmt <|>
   try caseStmt <|>
   try skipStmt <|>
@@ -217,9 +217,9 @@ lambdaStmt =
 
 fileStmt :: Parser Expr
 fileStmt =
-  do reservedOp "<<"
+  do reservedOp "<"
      expr <- expression
-     reservedOp ">>"
+     reservedOp ">"
      return $ FileObj expr
 
 strValue :: Parser Value
@@ -350,6 +350,7 @@ varcallStmt =
 -- statements
 
 stmt = 
+  try fileStmt <|>
   try printStmt <|>
   try importStmt <|>
   try assignment <|>
@@ -501,7 +502,10 @@ ltEq x y = Not (Gt x y)
 gtEq x y = Not (Lt x y)
 subs x y = Subs y x
 
-customOp = many1 (oneOf operatorSymbol)
+customOp = do whiteSpace
+              op <- many1 (oneOf operatorSymbol)
+              whiteSpace
+              return op
 
 opCall op expr1 expr2 = Func (Name op) [expr1, expr2]
 
