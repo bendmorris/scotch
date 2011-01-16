@@ -100,6 +100,9 @@ veq (Val (List a)) (Val (List b)) = Val (Bit (a == b))
 veq (Val (Hash a)) (Val (Hash b)) = Val (Bit (a == b))
 veq (Val (HFunc a)) (Val (HFunc b)) = Val (Bit (a == b))
 veq (Val (Bit a)) (Val (Bit b)) = Val (Bit (a == b))
+veq (Val (Atom a b)) (Val (Atom c d)) = if (a == c) && (b == d)
+                                        then Val (Bit True)
+                                        else Func (Name "==") [Val (Atom a b), Val (Atom c d)]
 veq a b = case a == b of
             True -> Val (Bit True)
             False -> Func (Name "==") [a, b]
