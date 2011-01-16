@@ -128,7 +128,11 @@ loop verbose bindings state =
                                                             return ())
                                                  return ()
                            Val (Proc p) -> return ()
-                           Val v -> putStrLn (show (eval (Func (Name "show") [result]) bindings))
+                           Val v -> case v of
+                                      Atom s l -> putStrLn $ case eval (Func (Name "show") [result]) bindings of
+                                                               Val (Str s) -> s
+                                                               otherwise -> show otherwise
+                                      otherwise -> putStrLn $ show $ result
                            Exception e -> putStrLn $ show $ Exception e 
                            otherwise -> return ()
                          -- continue loop
