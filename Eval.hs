@@ -149,7 +149,10 @@ eval exp vars = case exp of
                                 (addBinding (f, ([], Val (HFunc f)))
                                  vars))
   Var x ->              eval (snd ((varBinding x (vars !! varHash x) vars) !! 0)) vars
-  Func f args ->        functionCall f [eval arg vars | arg <- args] (varBinding f (vars !! varHash f) vars) vars
+  Func f args ->        case validList evalArgs of
+                          Exception e -> Exception e
+                          otherwise -> functionCall f evalArgs (varBinding f (vars !! varHash f) vars) vars
+                        where evalArgs = [eval arg vars | arg <- args]
   If cond x y ->        case eval (eval cond vars) vars of
                           Val (Bit True) -> eval x vars
                           Val (Bit False) -> eval y vars
