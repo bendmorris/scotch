@@ -17,6 +17,7 @@
 module Eval where
 
 import Data.List
+import Numeric
 import System.Directory
 import Types
 import Bindings
@@ -82,6 +83,7 @@ eval exp vars = case exp of
                           otherwise -> Exception ("Can't convert " ++ show otherwise ++ " to float.")
   ToStr x ->            case (eval x vars) of                       
                           Val (Str s) -> Val $ Str s
+                          Val (NumFloat f) -> Val $ Str $ showFFloat Nothing f ""
                           Exception e -> Exception e
                           otherwise -> Val $ Str (show otherwise)
   Subs n x ->           case (eval x vars) of
