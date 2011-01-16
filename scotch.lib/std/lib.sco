@@ -88,7 +88,7 @@ filter(f, h+t) = case f(h) of
 filter(f, []) = []
 map(f, h+t) = [for i in h+t, f(i)]
 
-show(a) = a
+show(a) = str(a)
 
 sum(h+t, s) = foldl(x, y -> x + y, s, h+t)
 sum(l) = sum(l, 0)
