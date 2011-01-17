@@ -46,7 +46,7 @@ vadd (Val (Str a)) (Val (List [])) = Val (Str a)
 vadd (Val (List [])) (Val (Str b)) = Val (Str b)
 vadd (Val (List a)) (Val v) = Val (List (a ++ [v]))
 vadd (Val v) (Val (List b)) = Val (List ([v] ++ b))
-vadd (Val (Hash a)) (Val (Hash b)) = Val (Hash [(b !! n) ++ (a !! n) | n <- [0..(hashSize - 1)]])
+vadd (Val (Hash a)) (Val (Hash b)) = Val $ Hash $ makeHash' [i | c <- b, i <- c] a
 vadd a b = Func (Name "+") [a, b]
 -- subtraction
 vsub (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (a - b))

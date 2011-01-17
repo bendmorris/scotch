@@ -35,13 +35,19 @@ bucketMember s (h:t) = if fst h == s then snd h else bucketMember s t
 hashMember :: String -> [[(String, Value)]] -> Value
 hashMember s h = bucketMember s (h !! (hashLoc s))
 
+removeFromBucket :: (String, Value) -> [(String, Value)] -> [(String, Value)]
+removeFromBucket a [] = []
+removeFromBucket a (h:t) = if (fst h) == (fst a)
+                           then removeFromBucket a t
+                           else h : removeFromBucket a t
+
 makeHash' :: [(String, Value)] -> [[(String, Value)]] -> [[(String, Value)]]
 makeHash' [] r = r
 makeHash' (h:t) r = makeHash' t 
                     [(if hashLoc (fst h) == i
                       then [h]
                       else [])
-                     ++ (r !! i)
+                     ++ (removeFromBucket h (r !! i))
                      | i <- [0..(hashSize-1)]]
 makeHash :: [(String, Value)] -> [[(String, Value)]]
 makeHash s = makeHash' s emptyHash
