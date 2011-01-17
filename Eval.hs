@@ -161,7 +161,9 @@ eval exp vars = case exp of
                           Val (Bit False) -> eval y vars
                           Exception e -> Exception e
                           otherwise -> Exception $ "Non-boolean condition " ++ show cond
-  Case check (h:t) ->   caseExpr (eval check vars) (h:t)
+  Case check (h:t) ->   case (eval check vars) of
+                          Exception e -> Exception e
+                          otherwise -> caseExpr otherwise (h:t)
   For id x y conds ->   eval (case (eval x vars) of
                                  Val (List l) -> ListExpr (forloop id [Val item | item <- l] y conds)
                                  Val (Str s) -> ListExpr (forloop id [Val (Str [c]) | c <- s] y conds)
