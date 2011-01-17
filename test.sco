@@ -93,7 +93,7 @@ tests += test((Banana 10) + (Apple 12), 22)
 a ** b = a ^ b
 tests += test(2 ** 2, 4)
 
-(Apple a) ** (Apple b) = a ^ b
+Apple a ** Apple b = a ^ b
 tests += test((Apple 3) ** (Apple 2), 9)
 
 print tests

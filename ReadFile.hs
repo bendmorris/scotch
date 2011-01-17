@@ -129,7 +129,7 @@ importFile verbose s t =
                          otherwise -> otherwise) | binding <- val],
                        (name newbinding) !! 0 /= '_' &&
                        (s == ["std", "lib"] ||
-                        not (isInfixOf "std.lib." (name newbinding)))]
+                        not (isInfixOf "." (snd $ splitAt (length qualifier) (name newbinding))))]
                    where qualifier = (foldl (++) [] [i ++ "." | i <- t])
                          name b = case fst b of 
                                     Name n -> n
