@@ -92,15 +92,18 @@ eval exp vars = case exp of
                                                                  n < (fromIntegral (length l))
                                                               then Val (l !! (fromIntegral n))
                                                               else Exception ("Member " ++ show n ++ " not in list")
+                                            Val (List l') ->  eval (ListExpr [Subs (Val i) (Val (List l)) | i <- l']) vars
                                             otherwise ->      Exception ("Non-numerical subscript " ++ show otherwise)
                           Val (Str s) ->  case (eval n vars) of
                                             Val (NumInt n) -> if n >= 0 && 
                                                                  n < (fromIntegral (length s))
                                                               then Val (Str ([s !! (fromIntegral n)]))
                                                               else Exception ("Member " ++ show n ++ " not in list")
+                                            Val (List l') ->  eval (ListExpr [Subs (Val i) (Val (Str s)) | i <- l']) vars
                                             otherwise ->      Exception ("Non-numerical subscript " ++ show otherwise)
                           Val (Hash l) -> case eval n vars of
                                             Exception e -> Exception e
+                                            Val (List l') -> eval (ListExpr [Subs (Val i) (Val (Hash l)) | i <- l']) vars
                                             otherwise -> case (eval (ToStr otherwise) vars) of
                                                            Val (Str s) ->    eval (Val $ hashMember s l) vars
                                                            Exception e ->    Exception e
