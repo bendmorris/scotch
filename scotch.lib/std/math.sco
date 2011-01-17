@@ -31,4 +31,4 @@ odd(n) = not even(n)
 
 # prime
 prime(n) = (case len(divisors) of 0: true, otherwise: false) 
-           where divisors = [for i in (2 + [3 .. n-1, 2] + (n-1)), i, n mod i == 0]
+           where divisors = [for i in (2 + [3 .. n-1, 2]), i, n mod i == 0]

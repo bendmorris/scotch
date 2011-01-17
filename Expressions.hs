@@ -370,8 +370,7 @@ stmt =
   try importStmt <|>
   try assignment <|>
   try writeStmt <|>
-  try appendStmt <|>
-  try whereStmt
+  try appendStmt
   
 
 printStmt :: Parser Expr
@@ -476,13 +475,6 @@ assignment = try defprocStmt <|>
              try commutativeDefOpStmt <|>
              try defOpStmt
      
-nestwhere [] wexpr = wexpr
-nestwhere (h:t) wexpr = case h of
-                          Defun a b c Skip -> Defun a b c (nestwhere t wexpr)
-                          EagerDef a b Skip -> EagerDef a b (nestwhere t wexpr)
-                          Def a b Skip -> Def a b (nestwhere t wexpr)
-                          otherwise -> nestwhere t wexpr
-     
 writeStmt :: Parser Expr
 writeStmt =
   do reserved "write"
@@ -502,13 +494,6 @@ appendStmt =
      symbol ")"
      return $ FileAppend file expr
 
-whereStmt :: Parser Expr
-whereStmt =
-  do wexpr <- parens expression
-     reserved "where"
-     assignment <- sepBy (whiteSpace >> assignment) (oneOf ",")
-     return $ nestwhere assignment wexpr
-
 
 
 -- operator table
@@ -516,6 +501,19 @@ whereStmt =
 ltEq x y = Not (Gt x y)
 gtEq x y = Not (Lt x y)
 subs x y = Subs y x
+
+nestwhere [] wexpr = wexpr
+nestwhere (h:t) wexpr = case h of
+                          Defun a b c Skip -> Defun a b c (nestwhere t wexpr)
+                          EagerDef a b Skip -> EagerDef a b (nestwhere t wexpr)
+                          Def a b Skip -> Def a b (nestwhere t wexpr)
+                          otherwise -> nestwhere t wexpr
+
+whereStmt =
+  do whiteSpace
+     reserved "where"
+     assignment <- sepBy1 (whiteSpace >> assignment) (oneOf ",")
+     return $ nestwhere assignment
 
 customOp = do whiteSpace
               op <- many1 (oneOf operatorSymbol)
@@ -526,7 +524,6 @@ customOp = do whiteSpace
 
 opCall op expr1 expr2 = Func (Name op) [expr1, expr2]
 
-operators :: [[ Operator Char st Expr ]]
 operators = [[Infix  (reservedOp "@"   >> return (subs            )) AssocLeft],
              [Infix  (reservedOp "^"   >> return (Exp             )) AssocLeft],
              [Infix  (reservedOp "mod" >> return (Mod             )) AssocLeft,
@@ -545,7 +542,8 @@ operators = [[Infix  (reservedOp "@"   >> return (subs            )) AssocLeft],
              [Infix  (reservedOp "and" >> return (And             )) AssocLeft,
               Infix  (reservedOp "or"  >> return (Or              )) AssocLeft,
               Infix  (reservedOp "&"   >> return (And             )) AssocLeft,
-              Infix  (reservedOp "|"   >> return (Or              )) AssocLeft ],
+              Infix  (reservedOp "|"   >> return (Or              )) AssocLeft],
              [Prefix (reservedOp "-"   >> return (Prod (Val (NumInt (-1)))))],
-             [Infix  (do { op <- customOp;return (opCall op      )}) AssocLeft]
+             [Infix  (do { op <- customOp;return (opCall op      )}) AssocLeft],
+             [Postfix(do { w <- whereStmt;return (w              )})          ]
              ]
