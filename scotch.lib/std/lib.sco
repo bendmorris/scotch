@@ -59,14 +59,15 @@ strip(h+t, s) = rstrip(lstrip(h+t, s), s)
 
 # Splits a string into a list of strings separated by character \s.
 split(h+t, s) = (if h == s 
-                 then "" + rest 
-                 else [h + head(rest)] + tail(rest)) 
-                 where rest := split(t, s)
+                then "" + rest 
+                else [h + head(rest)] + tail(rest))
+                where rest := split(t, s)
 split([], s) = []
 
 # Replaces all instances of \s with \r.
-replace(h+t, s, r) = if prefix(h+t, s) then r + replace(right(h+t, len(h+t) - len(s)), s, r) 
-                                       else h + replace(t, s, r)
+replace(h+t, s, r) = if prefix(h+t, s) 
+                     then r + replace(right(h+t, len(h+t) - len(s)), s, r) 
+                     else h + replace(t, s, r)
 replace([], s, r) = []
 
 only(h+t, s) = (if contains(s, h) then h else "") + only(t, s)
@@ -95,9 +96,9 @@ sum(l) = sum(l, 0)
 prod(h+t) = foldl(x, y -> x * y, 0, h+t)
 
 sort(h+t) = qsort(h+t)
-qsort(h+t, n) = (case (len(h+t) < n) of
-                   true: h+t, 
-                   false: (qsort(less) + h + qsort(more)))
+qsort(h+t, n) = case (len(h+t) < n) of
+                  true: h+t, 
+                  false: (qsort(less) + h + qsort(more))
                 where less = filter(x -> h > x, t), more = filter(x -> h < x, t)
 qsort([], n) = []
 qsort(l) = qsort(l, 1)
