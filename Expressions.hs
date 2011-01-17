@@ -335,11 +335,17 @@ keyValue =
      return (key, value)
      keyValue :: Parser (String, Value)
 keyExpr :: Parser (Expr, Expr)
-keyExpr =
+keyExpr = try (
+  do key <- whiteSpace >> (many (oneOf (upperCase ++ lowerCase)))
+     whiteSpace >> symbol "="
+     expr <- whiteSpace >> expression
+     return (Val (Str key), expr)
+  ) <|> (
   do key <- whiteSpace >> expression
      whiteSpace >> symbol ":"
      expr <- whiteSpace >> expression
      return (key, expr)
+  )
 hashValue :: Parser Value
 hashValue =
   do keysValues <- braces (sepBy (whiteSpace >> keyValue) (oneOf ","))
