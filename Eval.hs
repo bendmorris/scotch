@@ -103,7 +103,6 @@ eval exp vars = case exp of
                                             otherwise ->      Exception ("Non-numerical subscript " ++ show otherwise)
                           Val (Hash l) -> case eval n vars of
                                             Exception e -> Exception e
-                                            Val (List l') -> eval (ListExpr [Subs (Val i) (Val (Hash l)) | i <- l']) vars
                                             otherwise -> case (eval (ToStr otherwise) vars) of
                                                            Val (Str s) ->    eval (Val $ hashMember s l) vars
                                                            Exception e ->    Exception e
