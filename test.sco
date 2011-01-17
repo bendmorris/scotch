@@ -98,7 +98,7 @@ tests += test((Apple 3) ** (Apple 2), 9)
 
 print tests
 print (if all([for test in tests, if test == "yes" then true else false])
-        then "All tests passed."
+        then "All " + len(tests) + " tests passed."
         else "Some tests failed.")
 
 print "Done!"
