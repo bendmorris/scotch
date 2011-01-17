@@ -61,6 +61,9 @@ wexecute verbose (h:t) bindings =
                          return []
        Output x -> do case x of
                         Val (Str s) -> putStrLn s
+                        Val (Atom s l) -> putStrLn $ case eval (Func (Name "show") [x]) bindings of
+                                                       Val (Str s) -> s
+                                                       otherwise -> show otherwise
                         otherwise -> putStrLn (show x)
                       wexecute verbose t bindings
        FileWrite (Val (File f)) (Val (Str x)) -> do writeFile f x
