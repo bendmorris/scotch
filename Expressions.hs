@@ -1,11 +1,11 @@
 module Expressions where
 
+import Data.List
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Expr
 import Types
 import Hash
 import ParseBase
-
 
 -- expression parsers
 
@@ -13,7 +13,6 @@ expression :: Parser Expr
 expression = try stmt <|> try operation <|> try term
            
 operation = buildExpressionParser operators (term <|> parens term)
-customOperation = buildExpressionParser customOperator (expression)
 
 term :: Parser Expr
 term = try valueExpr <|>
@@ -505,7 +504,9 @@ subs x y = Subs y x
 customOp = do whiteSpace
               op <- many1 (oneOf operatorSymbol)
               whiteSpace
-              return op
+              if isInfixOf [op] forbiddenOps
+                 then fail op
+                 else return op
 
 opCall op expr1 expr2 = Func (Name op) [expr1, expr2]
 
@@ -531,7 +532,4 @@ operators = [[Infix  (reservedOp "@"   >> return (subs            )) AssocLeft],
               Infix  (reservedOp "|"   >> return (Or              )) AssocLeft ],
              [Prefix (reservedOp "-"   >> return (Prod (Val (NumInt (-1)))))],
              [Infix  (do { op <- customOp;return (opCall op      )}) AssocLeft]
-             ]
-customOperator = [
-             
              ]

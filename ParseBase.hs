@@ -12,7 +12,8 @@ upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 lowerCase = "abcdefghijklmnopqrstuvwxyz"
 numeric = "0123456789"
 idSymbol = "_!'."
-operatorSymbol = "!@#$%^&*+-*/=<>?|`"
+operatorSymbol = "!@#$%^&*+-*/=<>?|`:"
+forbiddenOps = ["=", ":=", ":"]
 
 languageDef =
   emptyDef { Token.commentStart    = "{-",

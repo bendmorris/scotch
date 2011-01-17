@@ -23,12 +23,18 @@ import Expressions
 import ParseBase
 
 parser :: Parser [PosExpr]
-parser = many statement
+parser = many (whiteSpace >> statement)
+
+summary (h:t) = if h == '\n' then "" else h : summary t
 
 statement :: Parser PosExpr
-statement = whiteSpace >> do pos <- getPosition
-                             expr <- expression
-                             return (Just pos, expr)
+statement = try (do pos <- getPosition
+                    expr <- expression
+                    return (Just pos, expr))
+            <|> (do pos <- getPosition
+                    chars <- many1 (noneOf "")
+                    return (Just pos, Exception $ "Parse error: Unable to parse text starting with: " ++ summary (take 30 chars)))
+                           
 
 read name s = case (parse parser name s) of
                 Right r -> r

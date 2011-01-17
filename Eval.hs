@@ -220,11 +220,7 @@ functionCall f args [] vars = Func f args
 functionCall f args (h:t) vars =
   case vardef of
     Val (HFunc (h)) -> if length params > 0 
-                       then case expr of
-                              Func f' args' -> if fp == f' 
-                                               then tailcall fp args args'
-                                               else newcall
-                              otherwise -> newcall
+                       then checkTailRecursion fp args definition newcall vars
                        else case snd $ (varBinding fp (vars !! varHash fp) vars) !! 0 of
                               Func f' args' -> eval (Func f' [eval arg vars | arg <- (args' ++ args)]) vars
                               otherwise -> functionCall f args t vars
@@ -239,13 +235,24 @@ functionCall f args (h:t) vars =
         params = fst definition
         expr = snd definition
         newcall = eval (substitute expr (funcall (zip params args))) vars
-        tailcall f args args' = if definition' == definition 
-                                then tailcall f [eval (substitute (args' !! n) (funcall (zip params args))) vars
-                                                 | n <- [0 .. (length args') - 1]] args'
-                                else eval (substitute (snd definition') (funcall (zip (fst definition') args))) vars
-                                where definition' = funcBinding f args (vars !! varHash f) vars
 
-       
+tailcall definition f args args' vars = 
+  if definition' == definition 
+  then tailcall definition f [eval (substitute (args' !! n) (funcall (zip params args))) vars
+                              | n <- [0 .. (length args') - 1]] 
+                              args' vars
+  else eval (substitute (snd definition') (funcall (zip (fst definition') args))) vars
+  where definition' = funcBinding f args (vars !! varHash f) vars
+        params = fst definition
+
+checkTailRecursion :: Id -> [Expr] -> Call -> Expr -> VarDict -> Expr
+checkTailRecursion f args definition newcall vars =
+  case snd definition of
+    Func f' args' -> if f == f' 
+                     then tailcall definition f args args' vars
+                     else newcall
+    otherwise -> newcall
+
 
 iolist :: [IO Expr] -> IO [Expr]
 iolist [] = do return []
