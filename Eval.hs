@@ -231,6 +231,10 @@ functionCall f args (h:t) vars =
                               otherwise -> functionCall f args t vars
     Val (Lambda ids func) -> eval (substitute func (funcall (zip ids args))) vars
     Func f' args' -> eval (Func f' [eval arg vars | arg <- (args' ++ args)]) vars
+    Val (Atom s l) -> Val (Atom s (l ++ [case arg of
+                                           Val v -> v
+                                         | arg <- args]))
+    AtomExpr s l -> eval (AtomExpr s (l ++ args)) vars
     otherwise -> functionCall f args t vars
   where fp = case vardef of
                Val (HFunc (f')) -> f'
