@@ -62,7 +62,12 @@ split(h+t, s) = (if h == s
                 then "" + rest 
                 else [h + head(rest)] + tail(rest))
                 where rest := split(t, s)
-split([], s) = []
+split([], s) = ""
+
+join(h+t, s) = (if t == []
+                then h
+                else h + s + join(t, s))
+join([], s) = ""
 
 # Replaces all instances of \s with \r.
 replace(h+t, s, r) = if prefix(h+t, s) 
