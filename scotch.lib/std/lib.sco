@@ -64,9 +64,9 @@ split(h+t, s) = if h == s
                 where rest := split(t, s)
 split([], s) = ""
 
-join(h+t, s) = (if t == []
-                then h
-                else h + s + join(t, s))
+join(h+t, s) = if t == []
+               then h
+               else h + s + join(t, s)
 join([], s) = ""
 
 # Replaces all instances of \s with \r.
@@ -98,7 +98,7 @@ show(a) = str(a)
 
 sum(h+t, s) = foldl(x, y -> x + y, s, h+t)
 sum(l) = sum(l, 0)
-prod(h+t) = foldl(x, y -> x * y, 0, h+t)
+prod(h+t) = foldl(x, y -> x * y, 1, h+t)
 
 sort(h+t) = qsort(h+t)
 qsort(h+t, n) = case (len(h+t) < n) of
