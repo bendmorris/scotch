@@ -58,9 +58,9 @@ strip(h+t) = strip(h+t, " ")
 strip(h+t, s) = rstrip(lstrip(h+t, s), s)
 
 # Splits a string into a list of strings separated by character \s.
-split(h+t, s) = (if h == s 
+split(h+t, s) = if h == s 
                 then "" + rest 
-                else [h + head(rest)] + tail(rest))
+                else [h + head(rest)] + tail(rest)
                 where rest := split(t, s)
 split([], s) = ""
 

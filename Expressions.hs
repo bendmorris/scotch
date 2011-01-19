@@ -94,11 +94,17 @@ ifStmt :: Column -> Parser Expr
 ifStmt col =
   do sws col
      reserved "if"
-     cond  <- expression col
+     pos1 <- getPosition
+     let col1 = sourceColumn pos1
+     cond  <- expression col1
      reserved "then"
-     expr1 <- expression col
+     pos2 <- getPosition
+     let col2 = sourceColumn pos2
+     expr1 <- expression col2
      reserved "else"
-     expr2 <- expression col
+     pos3 <- getPosition
+     let col3 = sourceColumn pos3
+     expr2 <- expression col3
      return $ If cond expr1 expr2
      
 caseStmt :: Column -> Parser Expr
