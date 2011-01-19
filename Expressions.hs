@@ -362,9 +362,9 @@ procStmt :: Column -> Parser Expr
 procStmt col =
   do sws col
      reserved "do"
-     exprs <- many $ try (do expr <- whiteSpace >> expression col
-                             reservedOp ";"
-                             return expr)
+     pos <- getPosition
+     let col' = sourceColumn pos
+     exprs <- many $ expression col'
      return $ Val $ Proc exprs
 
 listValue :: Column -> Parser Value
@@ -495,9 +495,9 @@ defprocVar col =
      var <- identifier
      reservedOp "="
      reserved "do"
-     exprs <- many $ try (do expr <- whiteSpace >> expression col
-                             reservedOp ";"
-                             return expr)
+     pos <- getPosition
+     let col' = sourceColumn pos
+     exprs <- many $ expression col'
      return $ Defproc (Name var) [] exprs Skip
 
 defprocFun :: Column -> Parser Expr
@@ -507,9 +507,9 @@ defprocFun col =
      params <- parens (idList col)
      reservedOp "="
      reserved "do"
-     exprs <- many $ try (do expr <- whiteSpace >> expression col
-                             reservedOp ";"
-                             return expr)
+     pos <- getPosition
+     let col' = sourceColumn pos
+     exprs <- many $ expression col'
      return $ Defproc (Name var) params exprs Skip
 
 defunStmt :: Column -> Parser Expr

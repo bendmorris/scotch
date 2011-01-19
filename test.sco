@@ -32,8 +32,8 @@ tests += test(len("abcdefg"), 7)
 tests += test(left("abcdefg", 3), "abc")
 tests += test(int("1234567"), 1234567)
 
-a = do b = 123;
-       c = 456;
+a = do b = 123
+       c = 456
 a
 
 tests += test(b, 123)
