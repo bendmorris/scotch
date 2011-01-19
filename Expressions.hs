@@ -94,16 +94,14 @@ ifStmt :: Column -> Parser Expr
 ifStmt col =
   do sws col
      reserved "if"
-     pos1 <- getPosition
-     let col1 = sourceColumn pos1
-     cond  <- expression col1
-     reserved "then"
+     cond  <- expression col
      pos2 <- getPosition
      let col2 = sourceColumn pos2
+     reserved "then"
      expr1 <- expression col2
-     reserved "else"
      pos3 <- getPosition
      let col3 = sourceColumn pos3
+     reserved "else"
      expr2 <- expression col3
      return $ If cond expr1 expr2
      
@@ -600,8 +598,8 @@ nestwhere (h:t) wexpr = case h of
                           otherwise -> nestwhere t wexpr
 
 whereStmt col =
-  do sws col
-     whiteSpace
+  do whiteSpace
+     sws col
      reserved "where"
      assignment <- sepBy1 (whiteSpace >> assignment col) (oneOf ",")
      return $ nestwhere assignment
