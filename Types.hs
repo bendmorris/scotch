@@ -17,6 +17,7 @@
 module Types where
 
 import Text.ParserCombinators.Parsec
+import Numeric
 
 -- a bindable identifier
 data Id = Name String 
@@ -49,7 +50,7 @@ data Value = NumInt Integer
 instance Show (Value) where
     show (Str s) = "\"" ++ s ++ "\""
     show (NumInt n) = show n
-    show (NumFloat n) = show n
+    show (NumFloat n) = showFFloat Nothing n ""
     show (Bit True) = "true"
     show (Bit False) = "false"
     show (List l) = show l
