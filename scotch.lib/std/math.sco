@@ -30,5 +30,5 @@ even(n) = int(n) / 2 == n / 2.0
 odd(n) = not even(n)
 
 # prime
-prime(n) = (case len(divisors) of 0: true, otherwise: false) 
+prime(n) = (case len(divisors) of 0: true, otherwise: false)
            where divisors = [for i in (2 + [3 .. n-1, 2]), i, n mod i == 0]

@@ -40,7 +40,7 @@ substitute exp params =
              where newname = inparams x params
     Val (Proc p) -> Val (Proc ([substitute e params | e <- p]))
     Val (Lambda ids expr) -> Val (Lambda ids (substitute expr params))
-    Val v -> Val v
+    Val (Thread e) -> Val (Thread (substitute e params))
     ToInt x -> ToInt (substitute x params)
     ToFloat x -> ToFloat (substitute x params)
     ToStr x -> ToStr (substitute x params)

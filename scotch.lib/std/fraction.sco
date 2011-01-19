@@ -12,9 +12,9 @@ fraction(s) = read_fraction(s, "0")
 to_float(Fraction(a,b)) = float(a) / b
 
 reduce_fraction(Fraction(a,b)) = 
-  (case len(divisors) of
+  case len(divisors) of
      0: Fraction(a,b),
-     otherwise: reduce_fraction(Fraction(a / divisors @ 0, b / divisors @ 0)))
+     otherwise: reduce_fraction(Fraction(a / divisors @ 0, b / divisors @ 0))
   where divisors := [for i in reverse([2..b]), i, a mod i == 0, b mod i == 0]
 
 Fraction(a,b) + Fraction(c,d) = if b == d

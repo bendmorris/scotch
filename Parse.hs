@@ -30,7 +30,8 @@ summary (h:t) = if h == '\n' then "" else h : summary t
 
 statement :: Parser PosExpr
 statement = try (do pos <- getPosition
-                    expr <- expression
+                    let col = sourceColumn pos
+                    expr <- expression col
                     return (Just pos, expr))
             <|> (do pos <- getPosition
                     chars <- many1 (noneOf "")
