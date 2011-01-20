@@ -26,7 +26,7 @@ median'([]) = 0
 median(h+t) = median'(sort(h+t))
 median([]) = 0
 
-even(n) = int(n) / 2 == n / 2.0
+even(n) = n mod 2 == 0
 odd(n) = not even(n)
 
 # prime

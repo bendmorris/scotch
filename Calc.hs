@@ -81,6 +81,9 @@ vmod (Val (NumInt a)) (Val (NumFloat 0)) = div_by_zero
 vmod (Val (NumFloat a)) (Val (NumInt 0)) = div_by_zero
 vmod (Val (NumFloat a)) (Val (NumFloat 0)) = div_by_zero
 vmod (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (mod a b))
+vmod (Val (NumInt a)) (Val (NumFloat b)) = Val (NumInt (mod a (truncate b)))
+vmod (Val (NumFloat a)) (Val (NumInt b)) = Val (NumInt (mod (truncate a) b))
+vmod (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumInt (mod (truncate a) (truncate b)))
 vmod a b = Func (Name "%") [a, b]
 -- exponent
 vexp (Val (NumInt a)) (Val (NumInt b)) = if b > 0 then Val (NumInt (a ^ b)) 
