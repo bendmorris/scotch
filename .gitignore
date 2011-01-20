@@ -1,3 +1,9 @@
 *.hi
 *.o
+*.txt
+*.deb
+*.sco
+control
 scotch
+scotch.lib/parscotch/*
+scotch.lib/scotchy/*
