@@ -99,4 +99,4 @@ tests += assert_equal((Apple 3) ** (Apple 2), 9)
 import std.units
 tests += assert_equal(convert_unit(Kilo 1000, to_mega), Mega 1.0)
 
-run_tests
+run_tests(tests)
