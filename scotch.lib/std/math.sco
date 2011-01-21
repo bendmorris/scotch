@@ -26,8 +26,12 @@ median'([]) = 0
 median(h+t) = median'(sort(h+t))
 median([]) = 0
 
+# even, odd
 even(n) = n mod 2 == 0
 odd(n) = not even(n)
+
+# absolute value
+abs(n) = if n < 0 then -n else n
 
 # prime
 prime(n) = (case len(divisors) of 0: true, otherwise: false)
