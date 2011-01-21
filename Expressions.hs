@@ -147,21 +147,18 @@ threadStmt col =
 rangeStmt :: Column -> Parser Expr
 rangeStmt col =
   try (do sws col
-          reservedOp "["
-          expr1 <- whiteSpace >> expression col
-          reservedOp ".."
-          expr2 <- whiteSpace >> expression col
-          reserved ","
-          expr3 <- whiteSpace >> expression col
-          reservedOp "]"
-          return $ Range expr1 expr2 expr3)
-  <|> try (do sws col
-              reservedOp "["
-              expr1 <- expression col
-              reservedOp ".."
-              expr2 <- expression col
-              reservedOp "]"
-              return $ Range expr1 expr2 (Val (NumInt 1)))
+          brackets (do expr1 <- whiteSpace >> expression col
+                       symbol ".."
+                       expr2 <- whiteSpace >> expression col
+                       symbol ","
+                       expr3 <- whiteSpace >> expression col
+                       return $ Range expr1 expr2 expr3))
+  <|>
+  try (do sws col
+          brackets (do expr1 <- whiteSpace >> expression col
+                       symbol ".."
+                       expr2 <- whiteSpace >> expression col
+                       return $ Range expr1 expr2 (Val (NumInt 1))))
 
 takeStmt :: Column -> Parser Expr
 takeStmt col =
