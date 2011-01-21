@@ -39,8 +39,11 @@ eval exp vars = case exp of
                                                                       Val (List l) -> Val (List (take (fromIntegral i) l))
                                                                       ListExpr l -> eval (ListExpr (take (fromIntegral i) l)) vars
                                                                       otherwise -> otherwise
-                                              Func f args -> eval (Take n (eval (Func f args) vars)) vars
-                                              otherwise -> Exception $ "Take from non-list"
+                                              otherwise -> case eval (Take n (eval otherwise vars)) vars of
+                                                             Val (List l) -> eval (Take n (Val (List l))) vars
+                                                             ListExpr l -> eval (Take n (ListExpr l)) vars
+                                                             Range f t s -> eval (Take n (Range f t s)) vars
+                                                             otherwise -> Exception $ "Take from non-list"
                           otherwise -> Exception $ "Non-integer in take expression"
   ListExpr l ->         case (validList l) of
                           Val _ -> case validList [Val item | item <- l'] of
