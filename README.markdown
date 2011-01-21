@@ -1,4 +1,4 @@
-<a href='http://www.pledgie.com/campaigns/14464'><img alt='Click here to lend your support to: Support the Scotch programming language and make a donation at www.pledgie.com !' src='http://www.pledgie.com/campaigns/14464.png?skin_name=chrome' border='0' /></a>
+<a href='http://www.pledgie.com/campaigns/14464'><img alt='Click here to lend your support to: Support the Scotch programming language and make a donation at www.pledgie.com !' src='http://pledgie.com/campaigns/14464.png?skin_name=chrome' border='0' /></a>
 
 Copyright (c) 2010 Ben Morris. All rights reserved.
 
