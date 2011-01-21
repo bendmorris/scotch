@@ -159,6 +159,18 @@ rangeStmt col =
                        symbol ".."
                        expr2 <- whiteSpace >> expression col
                        return $ Range expr1 expr2 (Val (NumInt 1))))
+  <|>
+  try (do sws col
+          brackets (do expr1 <- whiteSpace >> expression col
+                       symbol ".."
+                       symbol ","
+                       expr3 <- whiteSpace >> expression col
+                       return $ Range expr1 (Skip) expr3))
+  <|>
+  try (do sws col
+          brackets (do expr1 <- whiteSpace >> expression col
+                       symbol ".."
+                       return $ Range expr1 (Skip) (Val (NumInt 1))))
 
 takeStmt :: Column -> Parser Expr
 takeStmt col =

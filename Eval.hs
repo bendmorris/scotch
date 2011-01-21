@@ -183,6 +183,10 @@ eval exp vars = case exp of
                                                                   Val (NumInt k) -> Val $ List [NumInt x | x <- [i, i+k .. j]]
                                                                   Exception e -> Exception e
                                                                   otherwise -> Exception "Non-integer argument in range"
+                                              Skip -> case (eval step vars) of
+                                                        Val (NumInt k) -> Val $ List [NumInt x | x <- [i, i+k ..]]
+                                                        Exception e -> Exception e
+                                                        otherwise -> Exception "Non-integer argument in range"
                                               Exception e -> Exception e
                                               otherwise -> Exception "Non-integer argument in range"
                           Exception e -> Exception e
