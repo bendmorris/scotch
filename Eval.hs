@@ -33,7 +33,13 @@ eval exp vars = case exp of
   Import s t ->         Skip
   Take n x ->           case (eval n vars) of
                           Val (NumInt i) -> case x of
+                                              Val (List l) -> Val (List (take (fromIntegral i) l))
                                               ListExpr l -> eval (ListExpr (take (fromIntegral i) l)) vars
+                                              Range from to step -> case eval (Range from to step) vars of
+                                                                      Val (List l) -> Val (List (take (fromIntegral i) l))
+                                                                      ListExpr l -> eval (ListExpr (take (fromIntegral i) l)) vars
+                                                                      otherwise -> otherwise
+                                              Func f args -> eval (Take n (eval (Func f args) vars)) vars
                                               otherwise -> Exception $ "Take from non-list"
                           otherwise -> Exception $ "Non-integer in take expression"
   ListExpr l ->         case (validList l) of
