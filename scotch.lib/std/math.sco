@@ -34,5 +34,6 @@ odd(n) = not even(n)
 abs(n) = if n < 0 then -n else n
 
 # prime
-prime(n) = (case len(divisors) of 0: true, otherwise: false)
-           where divisors = [for i in (2 + [3 .. n-1, 2]), i, n mod i == 0]
+prime(n) = if n < 1 then false
+           else case len(divisors) of 0: true, otherwise: false
+           where divisors = [for i in (2 + [3 .. n-1, 2]), i, n mod i == 0, n > 2]
