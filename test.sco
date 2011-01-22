@@ -99,4 +99,7 @@ tests += assert_equal((Apple 3) ** (Apple 2), 9)
 import std.units
 tests += assert_equal(convert_unit(Kilo 1000, to_mega), Mega 1.0)
 
+tests += assert_equal(take 5 from [1..], [1,2,3,4,5])
+tests += assert_equal(take 5 from [1..,2], [1,3,5,7,9])
+
 run_tests(tests)

@@ -20,6 +20,7 @@ import Data.List
 import Numeric
 import System.Directory
 import Types
+import Exceptions
 import Bindings
 import Calc
 import Substitute
@@ -43,8 +44,8 @@ eval exp vars = case exp of
                                                              Val (List l) -> eval (Take n (Val (List l))) vars
                                                              ListExpr l -> eval (Take n (ListExpr l)) vars
                                                              Range f t s -> eval (Take n (Range f t s)) vars
-                                                             otherwise -> Exception $ "Take from non-list"
-                          otherwise -> Exception $ "Non-integer in take expression"
+                                                             otherwise -> exTakeNonList
+                          otherwise -> exTakeNonInt
   ListExpr l ->         case (validList l) of
                           Val _ -> case validList [Val item | item <- l'] of
                                      Exception e -> Exception e
@@ -83,16 +84,17 @@ eval exp vars = case exp of
                           Val (NumFloat f) -> Val $ NumInt (truncate f)
                           Val (Str s) -> Val $ NumInt (read s)
                           Exception e -> Exception e
-                          otherwise -> Exception ("Can't convert " ++ show otherwise ++ " to integer.")
+                          otherwise -> exCantConvert (show otherwise) "integer"
   ToFloat x ->          case (eval x vars) of
                           Val (NumInt i) -> Val $ NumFloat (fromIntegral i)
                           Val (NumFloat f) -> Val $ NumFloat f
                           Val (Str s) -> Val $ NumFloat (read s :: Double)
                           Exception e -> Exception e
-                          otherwise -> Exception ("Can't convert " ++ show otherwise ++ " to float.")
+                          otherwise -> exCantConvert (show otherwise) "float"
   ToStr x ->            case (eval x vars) of                       
                           Val (Str s) -> Val $ Str s
                           Val (NumFloat f) -> Val $ Str $ showFFloat Nothing f ""
+                          Func f args -> exNoMatch f args
                           Exception e -> Exception e
                           otherwise -> Val $ Str (show otherwise)
   Subs n x ->           case (eval x vars) of
@@ -100,16 +102,16 @@ eval exp vars = case exp of
                                             Val (NumInt n) -> if n >= 0 && 
                                                                  n < (fromIntegral (length l))
                                                               then Val (l !! (fromIntegral n))
-                                                              else Exception ("Member " ++ show n ++ " not in list")
+                                                              else exNotInList n
                                             Val (List l') ->  eval (ListExpr [Subs (Val i) (Val (List l)) | i <- l']) vars
-                                            otherwise ->      Exception ("Non-numerical subscript " ++ show otherwise)
+                                            otherwise ->      exNonNumSubs otherwise
                           Val (Str s) ->  case (eval n vars) of
                                             Val (NumInt n) -> if n >= 0 && 
                                                                  n < (fromIntegral (length s))
                                                               then Val (Str ([s !! (fromIntegral n)]))
-                                                              else Exception ("Member " ++ show n ++ " not in list")
+                                                              else exNotInList n
                                             Val (List l') ->  eval (ListExpr [Subs (Val i) (Val (Str s)) | i <- l']) vars
-                                            otherwise ->      Exception ("Non-numerical subscript " ++ show otherwise)
+                                            otherwise ->      exNonNumSubs otherwise
                           Val (Hash l) -> case eval n vars of
                                             Exception e -> Exception e
                                             otherwise -> case (eval (ToStr otherwise) vars) of
@@ -117,7 +119,7 @@ eval exp vars = case exp of
                                                            Exception e ->    Exception e
                                                            otherwise ->      Exception $ show otherwise
                           Func f args ->  exp
-                          otherwise ->    Exception $ show otherwise ++ " has no members"
+                          otherwise ->    exNotList otherwise
   Add x y ->            eval (calc (eval x vars) (eval y vars) (vadd)) vars
   Sub x y ->            eval (calc (eval x vars) (eval y vars) (vsub)) vars
   Prod x y ->           eval (calc (eval x vars) (eval y vars) (vprod)) vars
@@ -138,19 +140,19 @@ eval exp vars = case exp of
                                               otherwise -> err
                           Val (Bit False) -> Val (Bit False)
                           otherwise -> err
-                        where err = Exception $ "Type mismatch: " ++ show(eval x vars) ++ " and " ++ show(eval y vars)
+                        where err = exTypeMismatch (eval x vars) (eval y vars) "and"
   Or x y ->             case eval x vars of
                           Val (Bit True) -> Val (Bit True)                                            
                           Val (Bit False) -> case eval y vars of
                                                Val (Bit b) -> Val (Bit b)
                                                otherwise -> err
                           otherwise -> err
-                        where err = Exception $ "Type mismatch: " ++ show(eval x vars) ++ " and " ++ show(eval y vars)
+                        where err = exTypeMismatch (eval x vars) (eval y vars) "or"
   Not x ->              case eval x vars of
                           Exception s -> Exception s
                           Val r -> case r of
                                      Bit b -> Val (Bit (not b))
-                                     otherwise -> Exception "Expected boolean"
+                                     otherwise -> exNotBool otherwise
   Def f x y ->          eval y (addBinding (f, ([], x)) vars)
   EagerDef f x y ->     eval y (addBinding (f, ([], eval x vars)) vars)
   Defun f p x y ->      eval y (addBinding (f, (p, x)) 
@@ -168,7 +170,7 @@ eval exp vars = case exp of
                           Val (Bit True) -> eval x vars
                           Val (Bit False) -> eval y vars
                           Exception e -> Exception e
-                          otherwise -> Exception $ "Non-boolean condition " ++ show cond
+                          otherwise -> exNotBool cond
   Case check (h:t) ->   case (eval check vars) of
                           Exception e -> Exception e
                           otherwise -> caseExpr otherwise (h:t)
@@ -182,29 +184,29 @@ eval exp vars = case exp of
                                               Val (NumInt j) -> case (eval step vars) of
                                                                   Val (NumInt k) -> Val $ List [NumInt x | x <- [i, i+k .. j]]
                                                                   Exception e -> Exception e
-                                                                  otherwise -> Exception "Non-integer argument in range"
+                                                                  otherwise -> exNonIntInRange
                                               Skip -> case (eval step vars) of
                                                         Val (NumInt k) -> Val $ List [NumInt x | x <- [i, i+k ..]]
                                                         Exception e -> Exception e
-                                                        otherwise -> Exception "Non-integer argument in range"
+                                                        otherwise -> exNonIntInRange
                                               Exception e -> Exception e
-                                              otherwise -> Exception "Non-integer argument in range"
+                                              otherwise -> exNonIntInRange
                           Exception e -> Exception e
-                          otherwise -> Exception "Non-integer argument in range"
+                          otherwise -> exNonIntInRange
   FileObj f ->          case eval f vars of
                           Val (Str s) -> Val $ File s
-                          otherwise -> Exception "Non-string filename"
+                          otherwise -> exNonStrFilename
   Output x ->           Output (eval (Func (Name "show") [x]) vars)
   FileWrite f x ->      case (eval f vars) of
                           Val (File f) -> case (eval x vars) of
                                             Val (Str s) -> FileWrite (Val (File f)) (Val (Str s))
-                                            otherwise -> Exception $ "Write non-string " ++ show otherwise
-                          otherwise -> Exception $ "Write to non-file " ++ show otherwise
+                                            otherwise -> exWriteNonString otherwise
+                          otherwise -> exWriteNonFile otherwise
   FileAppend f x ->     case (eval f vars) of
                           Val (File f) -> case (eval x vars) of
                                             Val (Str s) -> FileAppend (Val (File f)) (Val (Str s))
-                                            otherwise -> Exception $ "Write non-string " ++ show otherwise
-                          otherwise -> Exception $ "Write to non-file " ++ show otherwise
+                                            otherwise -> exWriteNonString otherwise
+                          otherwise -> exWriteNonFile otherwise
   AtomExpr s v ->       case validList atomList of
                           Exception e -> Exception e
                           otherwise -> Val $ Atom s [case result of
@@ -225,7 +227,7 @@ eval exp vars = case exp of
                          otherwise -> False
        
        caseExpr :: Expr -> [(Id, Expr)] -> Expr
-       caseExpr check [] = Exception $ "No match for case expression " ++ show check
+       caseExpr check [] = exNoCaseMatch check
        caseExpr check (h:t) = if pattern_match [param] [check]
                               then eval (substitute expr (funcall (zip [param] [check]))) vars
                               else caseExpr check t
@@ -391,8 +393,8 @@ subfile exp vars =
                                           case exists of 
                                             True -> do contents <- readFile f
                                                        return $ Val $ Str contents
-                                            False -> return $ Exception "File does not exist"
-                       otherwise -> do return $ Exception "Invalid file"
+                                            False -> return $ exFileDNE
+                       otherwise -> do return $ exInvalidFile
     Func f args -> do args' <- iolist [subfile arg vars | arg <- args]
                       return $ Func f args'
     otherwise -> do return otherwise

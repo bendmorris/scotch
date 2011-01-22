@@ -25,6 +25,7 @@ import System.Console.Haskeline
 import System.Console.Haskeline.IO
 import ReadFile
 import Types
+import Exceptions
 import Bindings
 import Parse
 import Eval
@@ -102,7 +103,7 @@ loop verbose bindings state =
                          -- evaluate parsed input
                          result <- do r <- ieval parsed bindings
                                       case r of
-                                        Func f args -> return $ Exception $ "Function " ++ show f ++ " " ++ show args ++ " doesn't match any defined patterns"
+                                        Func f args -> return $ exNoMatch f args
                                         otherwise -> return otherwise
                          if verbose then putStrLn (show parsed)
                                     else return ()

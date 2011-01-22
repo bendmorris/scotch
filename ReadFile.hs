@@ -23,6 +23,7 @@ import Control.Concurrent
 import Text.ParserCombinators.Parsec
 import Parse
 import Types
+import Exceptions
 import Bindings
 import Eval
 import Hash
@@ -36,7 +37,7 @@ wexecute verbose (h:t) bindings =
      -- evaluate the parsed code
      result <- do r <- ieval parsed bindings
                   case r of
-                    Func f args -> return $ Exception $ "Function " ++ show f ++ " " ++ show args ++ " doesn't match any defined patterns"
+                    Func f args -> return $ exNoMatch f args
                     otherwise -> return otherwise
      if verbose then putStrLn (show parsed)
                 else return ()        
