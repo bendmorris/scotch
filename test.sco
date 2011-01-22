@@ -17,7 +17,7 @@ tests += assert_equal(split("a.b.c", "."), ["a","b","c"])
 
 import std.math
 tests += assert_equal(filter(even, [1..10]), [2,4,6,8,10])
-tests += assert_equal(foldl(x, y -> x + y, 0, [1..100]), 5050)
+tests += assert_equal(reduce(x, y -> x + y, [1..100], 0), 5050)
 
 apply(f, x, n) = f(x) + apply(f, x, n-1)
 apply(f, x, 0) = 0
