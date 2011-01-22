@@ -39,12 +39,16 @@ eval exp vars = case exp of
                                               Range from to step -> case eval (Range from to step) vars of
                                                                       Val (List l) -> Val (List (take (fromIntegral i) l))
                                                                       ListExpr l -> eval (ListExpr (take (fromIntegral i) l)) vars
+                                                                      Exception e -> Exception e
                                                                       otherwise -> otherwise
+                                              Exception e -> Exception e
                                               otherwise -> case eval (Take n (eval otherwise vars)) vars of
                                                              Val (List l) -> eval (Take n (Val (List l))) vars
                                                              ListExpr l -> eval (Take n (ListExpr l)) vars
                                                              Range f t s -> eval (Take n (Range f t s)) vars
+                                                             Exception e -> Exception e
                                                              otherwise -> exTakeNonList
+                          Exception e -> Exception e
                           otherwise -> exTakeNonInt
   ListExpr l ->         case (validList l) of
                           Val _ -> case validList [Val item | item <- l'] of
