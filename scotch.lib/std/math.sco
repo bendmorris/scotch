@@ -35,5 +35,6 @@ abs(n) = if n < 0 then -n else n
 
 # prime
 prime(n) = if n < 1 then false
-           else case len(divisors) of 0: true, otherwise: false
-           where divisors = [for i in (2 + [3 .. n-1, 2]), i, n mod i == 0, n > 2]
+           else case len(take 1 from divisors'(n)) of 0: true, otherwise: false
+divisors'(n) = [for i in (2 + [3 .. n-1, 2]), i, n mod i == 0, n > 2]
+divisors(n) = [for i in ([1 .. n-1]), i, n mod i == 0, n > 0]
