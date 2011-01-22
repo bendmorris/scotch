@@ -83,10 +83,11 @@ left(h+t, 0) = []
 left([], n) = []
 right(h+t, n) = reverse(left(reverse(h+t), n))
 
-foldl(f, z, h+t) = foldl(f, f(z, h), t)
-foldl(f, z, []) = z
-foldr(f, z, h+t) = f(h, foldr(f, z, t))
-foldr(f, z, []) = z
+foldl(f, h+t, z) = foldl(f, t, f(z, h))
+foldl(f, [], z) = z
+foldr(f, h+t, z) = f(h, foldr(f, t, z))
+foldr(f, [], z) = z
+reduce = foldl
 
 filter(f, h+t) = case f(h) of 
                    true: h + filter(f, t),
@@ -96,9 +97,9 @@ map(f, h+t) = [for i in h+t, f(i)]
 
 show(a) = str(a)
 
-sum(h+t, s) = foldl(x, y -> x + y, s, h+t)
+sum(h+t, s) = foldl(x, y -> x + y, h+t, s)
 sum(l) = sum(l, 0)
-prod(h+t) = foldl(x, y -> x * y, 1, h+t)
+prod(h+t) = foldl(x, y -> x * y, h+t, 1)
 
 sort(h+t) = qsort(h+t)
 qsort(h+t, n) = case (len(h+t) < n) of
