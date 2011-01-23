@@ -1,0 +1,355 @@
+<style type="text/css">
+    h2, h3, h4, h5, h6 {margin: 30px 0 20px 0;}
+    h1 {color: #081}
+    h2 {color: #34b}
+    h3, h4, h5, h6 {color: #3b4}
+    pre, code {color: #444}
+</style>
+
+<h1 id="scotch-programming-language">Scotch Programming Language</h1>
+<p>This is the official documentation for the Scotch programming language.</p>
+<div class="toc">
+<ul>
+<li><a href="#scotch-programming-language">Scotch Programming Language</a><ul>
+<li><a href="#data-types">Data Types</a><ul>
+<li><a href="#numeric-data">Numeric data</a></li>
+<li><a href="#boolean-values">Boolean values</a></li>
+<li><a href="#strings">Strings</a></li>
+<li><a href="#lists">Lists</a></li>
+<li><a href="#hash-tables">Hash tables</a></li>
+<li><a href="#files">Files</a></li>
+<li><a href="#procs">Procs</a></li>
+<li><a href="#threads">Threads</a></li>
+<li><a href="#data-constructors">Data constructors</a></li>
+</ul>
+</li>
+<li><a href="#modules">Modules</a></li>
+<li><a href="#variables">Variables</a><ul>
+<li><a href="#lazy-definition">Lazy definition</a></li>
+<li><a href="#eager-definition">Eager definition</a></li>
+<li><a href="#temporary-definition">Temporary definition</a></li>
+</ul>
+</li>
+<li><a href="#functions">Functions</a><ul>
+<li><a href="#function-definition">Function definition</a><ul>
+<li><a href="#pattern-matching">Pattern matching</a></li>
+</ul>
+</li>
+<li><a href="#higher-order-functionspartial-application">Higher order functions/partial application</a></li>
+<li><a href="#operator-definition">Operator definition</a></li>
+<li><a href="#anonymous-functions">Anonymous functions</a></li>
+</ul>
+</li>
+<li><a href="#other-expressions">Other Expressions</a><ul>
+<li><a href="#skip">Skip</a></li>
+<li><a href="#if">If</a></li>
+<li><a href="#case">Case</a></li>
+<li><a href="#take">Take</a></li>
+<li><a href="#value-conversion">Value conversion</a></li>
+<li><a href="#inputoutput">Input/output</a></li>
+<li><a href="#list-comprehension">List comprehension</a></li>
+</ul>
+</li>
+<li><a href="#standard-library">Standard Library</a><ul>
+<li><a href="#stdlib">std.lib</a></li>
+<li><a href="#stdmath">std.math</a></li>
+<li><a href="#stddecimal">std.decimal</a></li>
+<li><a href="#stdfraction">std.fraction</a></li>
+<li><a href="#stdunits">std.units</a></li>
+<li><a href="#stdunit">std.unit</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<h2 id="data-types">Data Types</h2>
+<h3 id="numeric-data">Numeric data</h3>
+<p>Two numeric types are supported by default in Scotch: integers and floats.
+Type conversion between these two types is automatic.</p>
+<p>The following operations are defined:</p>
+<ul>
+<li>Addition: <code>2 + 1</code></li>
+<li>Subtraction: <code>2 - 1</code></li>
+<li>Multiplication: <code>2 * 1</code></li>
+<li>Division: <code>2 / 1</code></li>
+<li>Exponent: <code>2 ^ 2</code></li>
+<li>Remainder: <code>2 % 1</code> or <code>2 mod 1</code></li>
+<li>Equality: <code>2 == 2</code></li>
+<li>Greater than: <code>3 &gt; 2</code></li>
+<li>Less than: <code>2 &lt; 3</code></li>
+<li>Inequality: <code>1 != 2</code> or <code>1 not 2</code></li>
+</ul>
+<p>An operation between an integer and a float will be converted to a float.
+Operations between only integers, for example, <code>3 / 2</code>, will produce an integer
+result; in this case, <code>1</code> instead of the expected <code>1.5</code>. To get around this,
+use <code>3 / 2.0</code> instead; the result will be expressed as a float.</p>
+<p>Note that if highly accurate decimal calculations are needed, floats are not
+sufficient as they are imperfect floating point representations of numbers.
+You should use the decimal type defined in <a href="#stddecimal">std.decimal</a> or the 
+fraction type defined in <a href="#stdfraction">std.fraction</a> instead; these types 
+preserve accuracy.</p>
+<h3 id="boolean-values">Boolean values</h3>
+<p>The reserved words <code>true</code> and <code>false</code> represent the boolean values.</p>
+<p>Boolean operations include <code>and</code> (or <code>&amp;</code>), <code>or</code> (or <code>|</code>), and <code>not</code>.</p>
+<h3 id="strings">Strings</h3>
+<p>Strings are denoted using <code>'single quotes'</code> or <code>"double quotes"</code>. The string
+doesn't end at the end of the line, but at the closing quote, allowing for
+multiline strings:</p>
+<pre><code>"Here's
+an example
+of a multi-
+line string"
+</code></pre>
+<p>When a number is added to a string, the number is automatically converted to
+its string representation; adding an empty list <code>[]</code> to a string makes no
+change. Strings can also be added together: <code>"a" + "b" == "ab"</code></p>
+<p>Strings can be multiplied, producing multiple copies; for example, <code>"abc" * 3</code> 
+will produce <code>"abcabcabc"</code>.</p>
+<h3 id="lists">Lists</h3>
+<p>Lists are a fundamental type in any functional language. In Scotch, lists are
+immutable and can contain heterogeneous mixes of datatypes. Lists are 
+designated with square brackets, like so:</p>
+<pre><code>[1, 2, 3, "a", "b", "c"]
+</code></pre>
+<p>List members are accessed with the <code>@</code> operator: <code>[1, 2] @ 0</code> returns the first
+element, <code>1</code>. Using the <code>@</code> operator followed by a list will access several 
+members at once: <code>[1, 2, 3] @ [0, 1]</code> returns the first two elements of the 
+list, or <code>[1, 2]</code>.</p>
+<p>Lists can be multiplied, producing multiple copies; for example, <code>[1,2] * 3</code> 
+will produce <code>[1,2,1,2,1,2]</code>.</p>
+<p>Adding a single value to a list will add that value to the list. For example,</p>
+<pre><code>[1,2,3] + 4 == [1,2,3,4]
+</code></pre>
+<p>To add multiple values to a list, add two lists together. For example,</p>
+<pre><code>[1,2,3] + [4,5,6] == [1,2,3,4,5,6]
+</code></pre>
+<p>Importantly, there are no "tuples" in Scotch. A tuple is generally defined as 
+an immutable list of heterogeneous datatypes; since Scotch lists fit this
+definition, lists can be used in place of tuples.</p>
+<p>Ranges can be generated automatically, using <code>..</code>: <code>[1..10]</code> returns the 
+numbers from 1 to 10. Step size can also be defined: <code>[2..10,2]</code> returns every
+2nd number. If no ending number is designated (<code>[1..]</code>), an infinite list is
+returned; this must be used in combination with <a href="#take">take</a> or it will
+never end.</p>
+<h3 id="hash-tables">Hash tables</h3>
+<p>Hash tables are unordered collections of key-value pairs, allowing values to be
+looked up quickly by key. Hash tables use the following syntax:</p>
+<pre><code>hash = {1:1, 2:2, 'a':3, 'b':4, name="Bob", age=23}
+</code></pre>
+<p>These values can be looked up using the <code>@</code> operator, i.e. <code>hash @ 'name'</code> or
+<code>hash @ 'b'</code>.</p>
+<p>Any datatype can be used as a hash key; it is important to note that the type 
+will be converted to a string, so <code>hash @ 1</code> and <code>hash @ '1'</code> will refer to the 
+same value in the hash table.</p>
+<p>To add to a hash table, add two hash tables together. For example,</p>
+<pre><code>{a=1, b=2} + {c=3} == {a=1, b=2, c=3}
+</code></pre>
+<h3 id="files">Files</h3>
+<p>File objects are created with angled brackets around a filename (as a string)
+like so: <code>&lt;"test.txt"&gt;</code>.</p>
+<p>The following are examples of file operations:</p>
+<pre><code>file = &lt;"test.txt"&gt;
+read(file)
+write(file, "blah blah")
+append(file, "blah blah")
+</code></pre>
+<p><code>read(file)</code> returns the contents of a file, as a string.</p>
+<h3 id="procs">Procs</h3>
+<p>A proc is an imperative-style procedure, which evaluates expressions in
+sequence. They are defined with the <code>do</code> keyword like this:</p>
+<pre><code>do print 1
+   print 2
+   print 3
+</code></pre>
+<p>It is important that the left sides of the expressions be lined up; this
+designates what expressions should be part of the proc.</p>
+<p>The <code>std.lib.execute</code> function evaluates each expression in a list. Passing a
+list of procs will evaluate each proc in sequence.</p>
+<h3 id="threads">Threads</h3>
+<p>Using the <code>thread</code> keyword followed by a proc will execute the proc 
+cocurrently, creating a lightweight thread.</p>
+<h3 id="data-constructors">Data constructors</h3>
+<p>Custom data constructors can be used without being defined. A data constructor
+is an atom (an identifier in CamelCase) followed by either a single value or
+a comma-separated list of values, surrounded by parentheses.</p>
+<p>Here are some examples:</p>
+<pre><code>Dog "Max"
+Cat "Sandy"
+Decimal(10, 5)
+Person("Sam", 15, [1,2,3])
+</code></pre>
+<h2 id="modules">Modules</h2>
+<p>A Scotch code file is called a module. Modules can be imported using the 
+<code>import</code> keyword, like so:</p>
+<pre><code>import std.math
+import test
+</code></pre>
+<p>Periods in a module name designates directory structure, so <code>std.math</code> would be 
+found in <code>std/math.sco</code>. The module will be searched for first in the current
+directory, then in the <code>scotch.lib</code> directory.</p>
+<p>When a module is imported, it is completely executed; any native 
+variable/function definitions from that module are then added to the current 
+definitions.</p>
+<h2 id="variables">Variables</h2>
+<p>Scotch defines variables using both lazy and eager strategies.</p>
+<h3 id="lazy-definition">Lazy definition</h3>
+<pre><code>a = b + 1
+</code></pre>
+<p>When the variable <code>a</code> is found, it will be replaced by the current value of
+<code>b + 1</code>. As <code>b</code> changes, <code>a</code> will also change.</p>
+<h3 id="eager-definition">Eager definition</h3>
+<pre><code>a := b + 1
+</code></pre>
+<p>This defines <code>a</code> to be the value of <code>b + 1</code> at the time it was defined. So, if
+<code>b</code> changes after this definition, <code>a</code> will remain the same.</p>
+<h3 id="temporary-definition">Temporary definition</h3>
+<pre><code>a + b
+where a = 1, b = 2
+</code></pre>
+<p><code>where</code> creates a temporary variable definition, valid only for the preceding 
+expression.</p>
+<h2 id="functions">Functions</h2>
+<h3 id="function-definition">Function definition</h3>
+<pre><code>f(n) = n * 10
+f(a, b) = a + b
+</code></pre>
+<h4 id="pattern-matching">Pattern matching</h4>
+<pre><code>f(0) = "The argument is zero!"
+</code></pre>
+<p>Only when function <code>f</code> is called with one argument, <code>0</code>, will it return this
+definition.</p>
+<pre><code>len(head+tail) = 1 + len(tail)
+len([]) = 0
+</code></pre>
+<p>This is a recursive list (or string) length function. The first definition will
+match either a list or a string; <code>head</code> will be defined as the first element or
+character, and <code>tail</code> will be defined as everything else. The function will be
+called again on everything but the first element, over and over, until it is
+called on an empty list (or string).</p>
+<pre><code>f(Dog d) = "A dog named " + d
+</code></pre>
+<p>This function definition will apply only when f is called with the value 
+<code>Dog (something)</code> (a <a href="#data-constructors">data constructor</a>). The value 
+following the atom <code>Dog</code> will be set as <code>d</code>.</p>
+<h3 id="higher-order-functionspartial-application">Higher order functions/partial application</h3>
+<p>Functions can be passed as arguments to other functions. For example, with a
+function <code>prime</code> that returns true if a number is prime,</p>
+<pre><code>filter(prime, [1..100])
+</code></pre>
+<p>will return all prime numbers from 1 to 100.</p>
+<p>"Partially applied functions" are functions that will be called with additional
+arguments in the future. For example:</p>
+<pre><code>add(x, y) = x + y
+apply(f, x) = f(x)
+apply(add(10), 5)
+</code></pre>
+<p><code>add(10)</code> would normally not be a valid function call because there is no
+definition of <code>add</code> that takes only one argument. But when <code>add(10)</code> is called
+with another argument, 5, the result is 10 + 5, or 15.</p>
+<h3 id="operator-definition">Operator definition</h3>
+<p>Custom binary operators can be defined as if they were functions. For example:</p>
+<pre><code>a ** b = a ^ b
+</code></pre>
+<p>We've just defined the (previously undefined) ** operator as another exponent 
+operator.</p>
+<p>Addition between Apples and Bananas is undefined and will result in an 
+exception. We can define this operation like so:</p>
+<pre><code>Apple a + Banana b = Strawberry (a + b)
+</code></pre>
+<p>Now, the expression <code>(Apple 1) + (Banana 2)</code> will evaluate to <code>Strawberry 3</code>.</p>
+<p>Commutative operators can be defined using <code>&lt;=&gt;</code> so that redundant function
+definitions aren't necessary.</p>
+<pre><code>Apple a + Banana b &lt;=&gt; Strawberry (a + b)
+</code></pre>
+<p>This example will match both <code>(Apple 1) + (Banana 2)</code> and 
+<code>(Banana 2) + (Apple 1)</code>.</p>
+<h3 id="anonymous-functions">Anonymous functions</h3>
+<p>Anonymous functions are expressed like this:</p>
+<pre><code>x, y -&gt; x + y
+</code></pre>
+<p>This sample represents an anonymous addition function. It takes two arguments,
+<code>x</code> and <code>y</code>, and returns <code>x + y</code>.</p>
+<p>These functions can be used in place of regularly defined functions. For
+example, <code>reduce(x, y -&gt; x + y, [1..10], 0)</code> will sum all numbers from 1 to 10.</p>
+<h2 id="other-expressions">Other Expressions</h2>
+<h3 id="skip">Skip</h3>
+<p><code>skip</code> does nothing.</p>
+<h3 id="if">If</h3>
+<pre><code>if true then "yes" else "no"
+</code></pre>
+<h3 id="case">Case</h3>
+<p>Case expressions employ <a href="#pattern-matching">pattern matching</a> similar to
+functions.</p>
+<pre><code>case v of
+  Apple a: a,
+  Banana b: b,
+  otherwise: otherwise
+</code></pre>
+<p>In this example, if <code>v</code> was <code>Apple 1</code>, it would match the first case; if it
+is neither an Apple nor a Banana, it will match to <code>otherwise</code> (which is really
+just a variable identifier, so the value becomes bound to the variable called
+<code>otherwise</code> when the expression is evaluated.)</p>
+<h3 id="take">Take</h3>
+<p><code>take</code> is used to take the first <code>n</code> elements from a list. For example,</p>
+<pre><code>take 10 from [1..]
+</code></pre>
+<p>will return the first 10 elements in the infinite list <code>[1..]</code>.</p>
+<h3 id="value-conversion">Value conversion</h3>
+<p>Values can be explicitly converted to an integer, float, or string. For 
+example:</p>
+<pre><code>str(1)
+float(1)
+int(1.2)
+int('1')
+</code></pre>
+<h3 id="inputoutput">Input/output</h3>
+<pre><code>print "Hello world!"
+print "What's your name?"
+name := input
+print "Hello, " + name + "."
+</code></pre>
+<p>The <code>print</code> statement actually calls the function <code>show</code> on whatever it's
+displaying. This allows you to define custom instances of <code>show</code>:</p>
+<pre><code>show(Dog d) = "A dog named " + d
+print Dog "Max"
+</code></pre>
+<h3 id="list-comprehension">List comprehension</h3>
+<p>List comprehensions allow quick, easy construction of lists by iterating over 
+a collection.</p>
+<pre><code>[for i in [1..10], j in [1..20], i * j, i &gt; 5, j &lt; 9]
+</code></pre>
+<p>This list comprehension returns <code>i * j</code> for every <code>i</code> from 1 to 10 and every
+<code>j</code> from 1 to 20, but only if <code>i</code> is more than 5 and <code>j</code> is less than 9.</p>
+<p>The following types can be used as collections:</p>
+<ul>
+<li><a href="#lists">Lists</a></li>
+<li><a href="#strings">Strings</a> (each character)</li>
+<li><a href="#hash-tables">Hash tables</a> (treated as an unordered list of [key, value])</li>
+<li><a href="#files">Files</a> (iterates over the contents of the file as a string, line by line)</li>
+</ul>
+<h2 id="standard-library">Standard Library</h2>
+<h3 id="stdlib">std.lib</h3>
+<p>The <code>std.lib</code> module contains basic, common functions. This module is 
+automatically imported, so its definitions are always available.</p>
+<h3 id="stdmath">std.math</h3>
+<p>Contains various useful mathematical functions.</p>
+<h3 id="stddecimal">std.decimal</h3>
+<p>Defines the <code>Decimal</code> data constructor, for high precision decimal arithmetic.
+Decimals can be created using the <code>decimal</code> function, i.e. <code>decimal("0.501")</code>.
+Decimal arithmetic:</p>
+<pre><code>decimal("0.5") + decimal("0.1") == decimal("0.6")
+</code></pre>
+<h3 id="stdfraction">std.fraction</h3>
+<p>Defines the <code>Fraction</code> data constructor, for fractional arithmetic. Fractions
+can be created using the <code>fraction</code> function, i.e. <code>fraction("11/32")</code>.
+Fraction arithmetic:</p>
+<pre><code>fraction("1/6") + fraction("1/7") == fraction("13/42")
+</code></pre>
+<h3 id="stdunits">std.units</h3>
+<p>SI unit conversion. Data constructors representing unit magnitude, i.e.
+<code>Kilo 1</code> or <code>Deci 2</code>, can be converted to and from other SI units like so:</p>
+<pre><code>convert_unit(Mega 2, to_kilo) == Kilo 2000.0
+</code></pre>
+<h3 id="stdunit">std.unit</h3>
+<p>A very simple unit testing framework.</p>
