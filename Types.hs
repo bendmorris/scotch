@@ -80,6 +80,7 @@ data Expr = Exception String                -- undefined
           | ToInt (Expr)                    -- conversion to integer
           | ToFloat (Expr)                  -- conversion to float
           | ToStr (Expr)                    -- conversion to string
+          | ToList (Expr)                   -- conversion to list
           | Subs Expr Expr                  -- list subscript
           | Add Expr Expr                   -- addition
           | Sub Expr Expr                   -- subtraction
@@ -128,6 +129,7 @@ instance Show(Expr) where
     show (ToInt i) = "int(" ++ show i ++ ")"
     show (ToFloat f) = "float(" ++ show f ++ ")"
     show (ToStr s) = "str(" ++ show s ++ ")"
+    show (ToList l) = "list(" ++ show l ++ ")"
     show (Subs n s) = show s ++ "[" ++ show n ++ "]"
     show (Add x y) = show x ++ " + " ++ show y
     show (Sub x y) = show x ++ " - " ++ show y
@@ -150,12 +152,12 @@ instance Show(Expr) where
     show (If cond x y) = "(if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y ++ ")"
     show (Case c o) = "(case " ++ show c ++ " " ++ show o ++ ")"
     show (For x y z w) = "[for " ++ show x ++ " in " ++ show y ++ " " ++ show z ++ " " ++ show w ++ "]"
-    show (Range x y z) = "[" ++ (show x) ++ ".." ++ (show y) ++ "," ++ (show z) ++ ")"
+    show (Range x y z) = "[" ++ (show x) ++ ".." ++ (show y) ++ "," ++ (show z) ++ "]"
     show (Output x) = "print " ++ show x
     show Input = "input"
     show (Import s t) = "import " ++ (show s) ++ (if s == t then "" 
                                                   else " as " ++ show t)
-    show (FileObj f) = "<<" ++ show f ++ ">>"
+    show (FileObj f) = "<" ++ show f ++ ">"
     show (FileRead f) = "read " ++ show f
     show (FileWrite f x) = "write " ++ show f ++ " " ++ show x
     show (FileAppend f x) = "append " ++ show f ++ " " ++ show x

@@ -18,3 +18,4 @@ exWriteNonFile a = Exception $ "Can't write to non-file " ++ show a
 exNoCaseMatch a = Exception $ "Case expression " ++ show a ++ " doesn't match any defined patterns"
 exFileDNE = Exception "File does not exist"
 exInvalidFile = Exception "Invalid file"
+exUnableToEval a = Exception $ "Unable to evaluate: " ++ show a

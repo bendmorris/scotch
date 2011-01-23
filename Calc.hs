@@ -129,3 +129,9 @@ validList (h:t) = case h of
                    Exception e -> Exception e
                    Val (Undefined e) -> Exception e
                    otherwise -> validList t
+                   
+computableList [] = True
+computableList (h:t) = case h of
+                         Val (Null) -> False
+                         Val v -> computableList t
+                         otherwise -> False

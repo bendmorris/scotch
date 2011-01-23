@@ -192,7 +192,7 @@ inStmt col =
      reserved "in"
      list <- expression col
      reserved ","
-     return (iterator, list)
+     return (iterator, ToList list)
 listCompStmt :: Column -> Parser Expr
 listCompStmt col =
   do sws col
@@ -215,7 +215,7 @@ notStmt col =
      return $ Not expr
      
 conversionStmt :: Column -> Parser Expr
-conversionStmt col = try (toIntStmt col) <|> try (toFloatStmt col) <|> (toStrStmt col)
+conversionStmt col = try (toIntStmt col) <|> try (toFloatStmt col) <|> try (toStrStmt col) <|> (toListStmt col)
 
 toIntStmt col =
   do sws col
@@ -232,6 +232,11 @@ toStrStmt col =
      reserved "str"
      expr <- parens (expression col)
      return $ ToStr expr
+toListStmt col =
+  do sws col 
+     reserved "list"
+     expr <- parens (expression col)
+     return $ ToList expr
      
 -- value parsers
 

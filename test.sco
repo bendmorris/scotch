@@ -47,8 +47,7 @@ file_name = "test.sco"
 file = (<file_name>)
 tests += assert_equal(split(read(file) + "abcdefg", "\n") @ 0, "# Tests")
 r = read(file)
-# This test doesn't yet pass, due to a known issue with iofile
-# tests += assert_equal(split(r, "\n") @ 0, "# Tests")
+tests += assert_equal(split(r, "\n") @ 0, "# Tests")
 
 f(n) = n
 tests += assert_equal([for i in [1..2], f(i)], [1, 2])
@@ -64,7 +63,7 @@ tests += assert_equal(apply(a -> a * 10, 10), 100)
 
 b = 2
 dict = {'a':1,'b':b, c=5}
-tests += assert_equal([for i in ['a', 'b', 'c'], dict @ i], [1,2,5])
+tests += assert_equal([for i in "abc", dict @ i], [1,2,5])
 
 tests += assert_equal({} + {'a':1}, {'a':1})
 tests += assert_equal(std.math.pi, pi)
@@ -101,5 +100,7 @@ tests += assert_equal(convert_unit(Kilo 1000, to_mega), Mega 1.0)
 
 tests += assert_equal(take 5 from [1..], [1,2,3,4,5])
 tests += assert_equal(take 5 from [1..,2], [1,3,5,7,9])
+
+tests += assert_equal((take 1 from [for i in <'test.sco'>, i]) @ 0, "# Tests")
 
 run_tests(tests)

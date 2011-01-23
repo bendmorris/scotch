@@ -12,6 +12,18 @@ This is the official documentation for the Scotch programming language.
 
 [TOC]
 
+## What's New: Version 0.2.1
+
+* New std libraries: std.decimal (accurate decimal arithmetic), std.fraction (fractional arithmetic), std.units (SI unit conversion), std.unit (simple unit testing)
+* Operator overloading and commutative operator definition with <=>
+* Take: "take 10 from [1..10000]" returns [1..10], etc
+* Infinite lists: [1..], [2.., 2]
+* List/string slicing: [1..100] @ [0..9] returns [1..10]
+* Implemented a hash table for variable/function definitions to improve lookup time, increasing speed of recursive functions dramatically
+* Fixed various parsing errors
+* Significant whitespace, reducing the need for parentheses, semicolons, etc.
+
+
 ## Data Types
 
 
@@ -40,8 +52,9 @@ use `3 / 2.0` instead; the result will be expressed as a float.
 
 Note that if highly accurate decimal calculations are needed, floats are not
 sufficient as they are imperfect floating point representations of numbers.
-You should use the decimal type defined in `std.decimal` or the fraction type 
-defined in `std.fraction` instead; these types preserve accuracy.
+You should use the decimal type defined in [std.decimal](#stddecimal) or the 
+fraction type defined in [std.fraction](#stdfraction) instead; these types 
+preserve accuracy.
 
 
 ### Boolean values
@@ -104,6 +117,8 @@ numbers from 1 to 10. Step size can also be defined: `[2..10,2]` returns every
 returned; this must be used in combination with [take](#take) or it will
 never end.
 
+See also [list comprehensions](#list-comprehension).
+
 
 ### Hash tables
 
@@ -149,9 +164,11 @@ sequence. They are defined with the `do` keyword like this:
        print 3
        
 It is important that the left sides of the expressions be lined up; this
-designates what expressions should be part of the proc.
+designates what expressions should be part of the proc. The first expression
+whose left side is farther to the left than the first proc expression (in this
+case, `print 1`) ends the proc.
 
-The `std.lib.execute` function evaluates each expression in a list. Passing a
+The function `std.lib.execute` evaluates each expression in a list. Passing a
 list of procs will evaluate each proc in sequence.
 
 
@@ -353,13 +370,21 @@ will return the first 10 elements in the infinite list `[1..]`.
 
 ### Value conversion
 
-Values can be explicitly converted to an integer, float, or string. For 
+Values can be explicitly converted to an integer, float, string, or list. For 
 example:
 
     str(1)
     float(1)
     int(1.2)
     int('1')
+    
+The following types can be converted to a list with `list(value)`:
+
+* [Lists](#lists)
+* [Strings](#strings) (each character)
+* [Hash tables](#hash-tables) (treated as an unordered list of [key, value])
+* [Files](#files) (iterates over the contents of the file as a string, line by line)
+* Other values: returns a single member list containing the value
     
 
 ### Input/output
@@ -386,12 +411,8 @@ a collection.
 This list comprehension returns `i * j` for every `i` from 1 to 10 and every
 `j` from 1 to 20, but only if `i` is more than 5 and `j` is less than 9.
 
-The following types can be used as collections:
-
-* [Lists](#lists)
-* [Strings](#strings) (each character)
-* [Hash tables](#hash-tables) (treated as an unordered list of [key, value])
-* [Files](#files) (iterates over the contents of the file as a string, line by line)
+Any value that can be [converted to a list](#value-conversion) can be used as a 
+collection.
 
 
 ## Standard Library

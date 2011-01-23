@@ -11,6 +11,7 @@
 <div class="toc">
 <ul>
 <li><a href="#scotch-programming-language">Scotch Programming Language</a><ul>
+<li><a href="#whats-new-version-021">What's New: Version 0.2.1</a></li>
 <li><a href="#data-types">Data Types</a><ul>
 <li><a href="#numeric-data">Numeric data</a></li>
 <li><a href="#boolean-values">Boolean values</a></li>
@@ -63,6 +64,17 @@
 </li>
 </ul>
 </div>
+<h2 id="whats-new-version-021">What's New: Version 0.2.1</h2>
+<ul>
+<li>New std libraries: std.decimal (accurate decimal arithmetic), std.fraction (fractional arithmetic), std.units (SI unit conversion), std.unit (simple unit testing)</li>
+<li>Operator overloading and commutative operator definition with &lt;=&gt;</li>
+<li>Take: "take 10 from [1..10000]" returns [1..10], etc</li>
+<li>Infinite lists: [1..], [2.., 2]</li>
+<li>List/string slicing: [1..100] @ [0..9] returns [1..10]</li>
+<li>Implemented a hash table for variable/function definitions to improve lookup time, increasing speed of recursive functions dramatically</li>
+<li>Fixed various parsing errors</li>
+<li>Significant whitespace, reducing the need for parentheses, semicolons, etc.</li>
+</ul>
 <h2 id="data-types">Data Types</h2>
 <h3 id="numeric-data">Numeric data</h3>
 <p>Two numeric types are supported by default in Scotch: integers and floats.
@@ -132,6 +144,7 @@ numbers from 1 to 10. Step size can also be defined: <code>[2..10,2]</code> retu
 2nd number. If no ending number is designated (<code>[1..]</code>), an infinite list is
 returned; this must be used in combination with <a href="#take">take</a> or it will
 never end.</p>
+<p>See also <a href="#list-comprehension">list comprehensions</a>.</p>
 <h3 id="hash-tables">Hash tables</h3>
 <p>Hash tables are unordered collections of key-value pairs, allowing values to be
 looked up quickly by key. Hash tables use the following syntax:</p>
@@ -163,8 +176,10 @@ sequence. They are defined with the <code>do</code> keyword like this:</p>
    print 3
 </code></pre>
 <p>It is important that the left sides of the expressions be lined up; this
-designates what expressions should be part of the proc.</p>
-<p>The <code>std.lib.execute</code> function evaluates each expression in a list. Passing a
+designates what expressions should be part of the proc. The first expression
+whose left side is farther to the left than the first proc expression (in this
+case, <code>print 1</code>) ends the proc.</p>
+<p>The function <code>std.lib.execute</code> evaluates each expression in a list. Passing a
 list of procs will evaluate each proc in sequence.</p>
 <h3 id="threads">Threads</h3>
 <p>Using the <code>thread</code> keyword followed by a proc will execute the proc 
@@ -296,13 +311,21 @@ just a variable identifier, so the value becomes bound to the variable called
 </code></pre>
 <p>will return the first 10 elements in the infinite list <code>[1..]</code>.</p>
 <h3 id="value-conversion">Value conversion</h3>
-<p>Values can be explicitly converted to an integer, float, or string. For 
+<p>Values can be explicitly converted to an integer, float, string, or list. For 
 example:</p>
 <pre><code>str(1)
 float(1)
 int(1.2)
 int('1')
 </code></pre>
+<p>The following types can be converted to a list with <code>list(value)</code>:</p>
+<ul>
+<li><a href="#lists">Lists</a></li>
+<li><a href="#strings">Strings</a> (each character)</li>
+<li><a href="#hash-tables">Hash tables</a> (treated as an unordered list of [key, value])</li>
+<li><a href="#files">Files</a> (iterates over the contents of the file as a string, line by line)</li>
+<li>Other values: returns a single member list containing the value</li>
+</ul>
 <h3 id="inputoutput">Input/output</h3>
 <pre><code>print "Hello world!"
 print "What's your name?"
@@ -321,13 +344,8 @@ a collection.</p>
 </code></pre>
 <p>This list comprehension returns <code>i * j</code> for every <code>i</code> from 1 to 10 and every
 <code>j</code> from 1 to 20, but only if <code>i</code> is more than 5 and <code>j</code> is less than 9.</p>
-<p>The following types can be used as collections:</p>
-<ul>
-<li><a href="#lists">Lists</a></li>
-<li><a href="#strings">Strings</a> (each character)</li>
-<li><a href="#hash-tables">Hash tables</a> (treated as an unordered list of [key, value])</li>
-<li><a href="#files">Files</a> (iterates over the contents of the file as a string, line by line)</li>
-</ul>
+<p>Any value that can be <a href="#value-conversion">converted to a list</a> can be used as a 
+collection.</p>
 <h2 id="standard-library">Standard Library</h2>
 <h3 id="stdlib">std.lib</h3>
 <p>The <code>std.lib</code> module contains basic, common functions. This module is 

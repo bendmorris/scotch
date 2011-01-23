@@ -42,23 +42,21 @@ eval exp vars = case exp of
                                                                       Exception e -> Exception e
                                                                       otherwise -> otherwise
                                               Exception e -> Exception e
-                                              otherwise -> case eval (Take n (eval otherwise vars)) vars of
-                                                             Val (List l) -> eval (Take n (Val (List l))) vars
-                                                             ListExpr l -> eval (Take n (ListExpr l)) vars
-                                                             Range f t s -> eval (Take n (Range f t s)) vars
-                                                             Exception e -> Exception e
-                                                             otherwise -> exTakeNonList
+                                              otherwise -> Take (Val (NumInt i)) (eval otherwise vars)
                           Exception e -> Exception e
-                          otherwise -> exTakeNonInt
+                          otherwise -> Take (otherwise) x
   ListExpr l ->         case (validList l) of
-                          Val _ -> case validList [Val item | item <- l'] of
+                          Val _ -> case validList l'' of
                                      Exception e -> Exception e
-                                     otherwise -> Val $ List l'
+                                     otherwise -> if computableList l''
+                                                  then Val $ List l'
+                                                  else ListExpr l
                                    where l' = [case eval item vars of
                                                  Val r -> r
                                                  Exception e -> Undefined e
-                                                 otherwise -> Undefined (show otherwise)
+                                                 otherwise -> Null
                                                | item <- l]
+                                         l'' = [Val item | item <- l']
                           Exception e -> Exception e
   HashExpr l ->         case (validList [snd e | e <- l]) of
                           Val _ -> case validList [Val item | item <- l'] of
@@ -100,7 +98,16 @@ eval exp vars = case exp of
                           Val (NumFloat f) -> Val $ Str $ showFFloat Nothing f ""
                           Func f args -> exNoMatch f args
                           Exception e -> Exception e
-                          otherwise -> Val $ Str (show otherwise)
+                          otherwise -> ToStr (eval otherwise vars)
+  ToList x ->           case (eval x vars) of                       
+                          Val (List l) -> Val $ List l
+                          ListExpr l -> ListExpr l
+                          Val (Str s) -> Val $ List [Str [c] | c <- s]
+                          Val (Hash h) -> ListExpr [ListExpr [Val (Str (fst l)), Val (snd l)] | e <- h, l <- e]
+                          Val (File f) -> Func (Name "split") [FileRead (Val (File f)), Val (Str "\n")]
+                          FileObj f -> Func (Name "split") [FileRead (f), Val (Str "\n")]
+                          Exception e -> Exception e
+                          otherwise -> ListExpr [otherwise]
   Subs n x ->           case (eval x vars) of
                           Val (List l) -> case (eval n vars) of
                                             Val (NumInt n) -> if n >= 0 && 
@@ -121,22 +128,19 @@ eval exp vars = case exp of
                                             otherwise -> case (eval (ToStr otherwise) vars) of
                                                            Val (Str s) ->    eval (Val $ hashMember s l) vars
                                                            Exception e ->    Exception e
-                                                           otherwise ->      Exception $ show otherwise
-                          Func f args ->  exp
-                          otherwise ->    exNotList otherwise
-  Add x y ->            eval (calc (eval x vars) (eval y vars) (vadd)) vars
-  Sub x y ->            eval (calc (eval x vars) (eval y vars) (vsub)) vars
-  Prod x y ->           eval (calc (eval x vars) (eval y vars) (vprod)) vars
-  Div x y ->            eval (calc (eval x vars) (eval y vars) (vdiv)) vars
-  Mod x y ->            eval (calc (eval x vars) (eval y vars) (vmod)) vars
-  Exp x y ->            eval (calc (eval x vars) (eval y vars) (vexp)) vars
-  Eq x y ->             eval (calc (eval x vars) (eval y vars) (veq)) vars
-  InEq x y ->           case eval (calc (eval x vars) (eval y vars) (veq)) vars of
-                          Val (Bit True) -> Val (Bit False)
-                          Val (Bit False) -> Val (Bit True)
-                          otherwise -> otherwise                    
-  Gt x y ->             eval (calc (eval x vars) (eval y vars) (vgt)) vars
-  Lt x y ->             eval (calc (eval x vars) (eval y vars) (vlt)) vars         
+                          otherwise ->    Subs n (eval otherwise vars)
+  Add x y ->            operation x y vadd Add
+  Sub x y ->            operation x y vsub Sub
+  Prod x y ->           operation x y vprod Prod
+  Div x y ->            operation x y vdiv Div
+  Mod x y ->            operation x y vmod Mod
+  Exp x y ->            operation x y vexp Exp
+  Eq x y ->             operation x y veq Eq
+  InEq x y ->           case operation x y veq Eq of
+                          Val (Bit b) -> Val (Bit (not b))
+                          otherwise -> otherwise
+  Gt x y ->             operation x y vgt Gt
+  Lt x y ->             operation x y vlt Lt
   And x y ->            case eval x vars of
                           Val (Bit True) -> case eval y vars of
                                               Val (Bit True) -> Val (Bit True)
@@ -174,16 +178,15 @@ eval exp vars = case exp of
                           Val (Bit True) -> eval x vars
                           Val (Bit False) -> eval y vars
                           Exception e -> Exception e
-                          otherwise -> exNotBool cond
+                          otherwise -> If otherwise x y
   Case check (h:t) ->   case (eval check vars) of
                           Exception e -> Exception e
                           otherwise -> caseExpr otherwise (h:t)
-  For id x y conds ->   eval (case (eval x vars) of
-                                 Val (List l) -> ListExpr (forloop id [Val item | item <- l] y conds)
-                                 Val (Str s) -> ListExpr (forloop id [Val (Str [c]) | c <- s] y conds)
-                                 Val (Hash h) -> For id (ListExpr [ListExpr [Val (Str (fst l)), Val (snd l)] | e <- h, l <- e]) y conds
-                                 Val v -> ListExpr (forloop id [Val v] y conds)
-                                 otherwise -> Exception (show x)) vars
+  For id x y conds ->   case (eval x vars) of
+                          Val (List l) -> ListExpr (forloop id [Val item | item <- l] y conds)
+                          ListExpr l -> ListExpr (forloop id [item | item <- l] y conds)
+                          Exception e -> Exception e
+                          otherwise -> For id otherwise y conds
   Range from to step -> case (eval from vars) of
                           Val (NumInt i) -> case (eval to vars) of
                                               Val (NumInt j) -> case (eval step vars) of
@@ -221,7 +224,12 @@ eval exp vars = case exp of
                                                      | result <- atomList ]
                         where atomList = [eval v' vars | v' <- v]
   otherwise ->          otherwise
- where forloop :: Id -> [Expr] -> Expr -> [Expr] -> [Expr]
+ where operation x y f g = if computableList [x', y'] 
+                           then eval (calc x' y' f) vars
+                           else g x' y'
+                           where x' = eval x vars
+                                 y' = eval y vars
+       forloop :: Id -> [Expr] -> Expr -> [Expr] -> [Expr]
        forloop id [] y conds = []
        forloop id (h:t) y conds = [i | i <- ([e | e <- [eval (substitute y [(id,h)]) vars],
                                              allTrue [eval (substitute cond [(id,h)]) vars | cond <- conds]] 
@@ -292,34 +300,45 @@ iolist (h:t) = do item <- h
 ieval :: Expr -> VarDict -> IO Expr
 ieval expr vars =
   do subbed <- subfile expr vars
-     let result = eval subbed vars
+     result <- subfile (eval subbed vars) vars
      case result of
        Val v -> return result
        Exception e -> return result
        Skip -> return result
-       Output p -> return result
-       FileWrite f p -> return result
-       FileAppend f p -> return result
-       Func f args -> do args' <- iolist [subfile arg vars | arg <- args]
-                         if (eval (Func f args') vars) == result
+       Output p -> do p' <- ieval p vars
+                      return $ Output p'
+       FileWrite f p -> do p' <- ieval p vars
+                           return $ FileWrite f p'
+       FileAppend f p -> do p' <- ieval p vars
+                            return $ FileAppend f p'
+       Func f args -> do args' <- iolist [ieval arg vars | arg <- args]
+                         result' <- ieval (Func f args') vars
+                         if result' == result
                           then return result
                           else ieval result vars
-       otherwise -> do let vars' = case expr of
-                                     Def id x y -> addBinding (id, ([], x)) vars
-                                     EagerDef id x y -> addBinding (id, ([], x)) vars
-                                     otherwise -> vars
-                       ieval result vars'
+       otherwise -> do if expr == result
+                          then return $ exUnableToEval result
+                          else do let vars' = case expr of
+                                                Def id x y -> addBinding (id, ([], x)) vars
+                                                EagerDef id x y -> addBinding (id, ([], x)) vars
+                                                otherwise -> vars
+                                  ieval result vars'
 
 -- subfile: substitutes values for delayed I/O operations
 subfile :: Expr -> VarDict -> IO Expr
 subfile exp vars =
   case exp of
+    Take n x -> do n' <- subfile n vars
+                   x' <- subfile x vars
+                   return $ Take n' x'
     ToInt x -> do x' <- subfile x vars
                   return $ ToInt x'
     ToFloat x -> do x' <- subfile x vars
                     return $ ToFloat x'
     ToStr x -> do x' <- subfile x vars
                   return $ ToStr x'
+    ToList l -> do l' <- subfile l vars
+                   return $ ToList l'
     ListExpr l -> do list <- iolist [subfile e vars | e <- l]
                      return $ ListExpr list
     HashExpr l -> do list1 <- iolist [subfile (fst e) vars | e <- l]
