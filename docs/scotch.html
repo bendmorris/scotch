@@ -74,6 +74,7 @@
 <li>Implemented a hash table for variable/function definitions to improve lookup time, increasing speed of recursive functions dramatically</li>
 <li>Fixed various parsing errors</li>
 <li>Significant whitespace, reducing the need for parentheses, semicolons, etc.</li>
+<li>Conversion to list with <code>list()</code></li>
 </ul>
 <h2 id="data-types">Data Types</h2>
 <h3 id="numeric-data">Numeric data</h3>
@@ -116,6 +117,8 @@ line string"
 <p>When a number is added to a string, the number is automatically converted to
 its string representation; adding an empty list <code>[]</code> to a string makes no
 change. Strings can also be added together: <code>"a" + "b" == "ab"</code></p>
+<p>An empty string (<code>''</code> or <code>""</code>) is considered equal to an empty list <code>[]</code>. They
+can be used interchangeably.</p>
 <p>Strings can be multiplied, producing multiple copies; for example, <code>"abc" * 3</code> 
 will produce <code>"abcabcabc"</code>.</p>
 <h3 id="lists">Lists</h3>

@@ -22,6 +22,7 @@ This is the official documentation for the Scotch programming language.
 * Implemented a hash table for variable/function definitions to improve lookup time, increasing speed of recursive functions dramatically
 * Fixed various parsing errors
 * Significant whitespace, reducing the need for parentheses, semicolons, etc.
+* Conversion to list with `list()`
 
 
 ## Data Types
@@ -78,6 +79,9 @@ multiline strings:
 When a number is added to a string, the number is automatically converted to
 its string representation; adding an empty list `[]` to a string makes no
 change. Strings can also be added together: `"a" + "b" == "ab"`
+
+An empty string (`''` or `""`) is considered equal to an empty list `[]`. They
+can be used interchangeably.
 
 Strings can be multiplied, producing multiple copies; for example, `"abc" * 3` 
 will produce `"abcabcabc"`.
