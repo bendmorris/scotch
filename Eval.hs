@@ -216,14 +216,10 @@ eval exp vars = case exp of
                                             Val (Str s) -> FileAppend (Val (File f)) (Val (Str s))
                                             otherwise -> FileAppend (Val (File f)) otherwise
                           otherwise -> FileAppend otherwise x
-  AtomExpr s v ->       case validList atomList of
+  AtomExpr s v ->       case eval (ListExpr v) vars of
                           Exception e -> Exception e
-                          otherwise -> Val $ Atom s [case result of
-                                                       Exception e -> Undefined e
-                                                       Val r -> r
-                                                       otherwise -> Undefined $ show otherwise
-                                                     | result <- atomList ]
-                        where atomList = [eval v' vars | v' <- v]
+                          Val (List l) -> Val $ Atom s l
+                          otherwise -> AtomExpr s [eval i vars | i <- v]
   otherwise ->          otherwise
  where operation x y f g = if computableList [x', y'] 
                            then eval (calc x' y' f) vars
@@ -302,6 +298,7 @@ ieval :: Expr -> VarDict -> IO Expr
 ieval expr vars =
   do subbed <- subfile expr vars
      result <- subfile (eval subbed vars) vars
+     --putStrLn (show result)
      case result of
        Val v -> return result
        Exception e -> return result
@@ -313,10 +310,9 @@ ieval expr vars =
        FileAppend f p -> do p' <- ieval p vars
                             return $ FileAppend f p'
        Func f args -> do args' <- iolist [ieval arg vars | arg <- args]
-                         result' <- ieval (Func f args') vars
-                         if result' == result
-                          then return result
-                          else ieval result vars
+                         if args == args' 
+                          then return $ Func f args'
+                          else ieval (Func f args') vars
        otherwise -> do if expr == result
                         then return $ exUnableToEval result
                         else do vars' <- case expr of
