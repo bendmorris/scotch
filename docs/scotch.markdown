@@ -392,3 +392,48 @@ The following types can be used as collections:
 * [Strings](#strings) (each character)
 * [Hash tables](#hash-tables) (treated as an unordered list of [key, value])
 * [Files](#files) (iterates over the contents of the file as a string, line by line)
+
+
+## Standard Library
+
+
+### std.lib
+
+The `std.lib` module contains basic, common functions. This module is 
+automatically imported, so its definitions are always available.
+
+
+### std.math
+
+Contains various useful mathematical functions.
+
+
+### std.decimal
+
+Defines the `Decimal` data constructor, for high precision decimal arithmetic.
+Decimals can be created using the `decimal` function, i.e. `decimal("0.501")`.
+Decimal arithmetic:
+
+    decimal("0.5") + decimal("0.1") == decimal("0.6")
+
+
+### std.fraction
+
+Defines the `Fraction` data constructor, for fractional arithmetic. Fractions
+can be created using the `fraction` function, i.e. `fraction("11/32")`.
+Fraction arithmetic:
+
+    fraction("1/6") + fraction("1/7") == fraction("13/42")
+
+
+### std.units
+
+SI unit conversion. Data constructors representing unit magnitude, i.e.
+`Kilo 1` or `Deci 2`, can be converted to and from other SI units like so:
+
+    convert_unit(Mega 2, to_kilo) == Kilo 2000.0
+
+
+### std.unit
+
+A very simple unit testing framework.
