@@ -236,8 +236,7 @@ This defines `a` to be the value of `b + 1` at the time it was defined. So, if
 
 ### Temporary definition
     
-    a + b
-    where a = 1, b = 2
+    a + b where a = 1, b = 2
 
 `where` creates a temporary variable definition, valid only for the preceding 
 expression.
