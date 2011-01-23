@@ -50,7 +50,7 @@ eval exp vars = case exp of
                                      Exception e -> Exception e
                                      otherwise -> if computableList l''
                                                   then Val $ List l'
-                                                  else ListExpr l
+                                                  else ListExpr [eval i vars | i <- l]
                                    where l' = [case eval item vars of
                                                  Val r -> r
                                                  Exception e -> Undefined e
@@ -86,13 +86,13 @@ eval exp vars = case exp of
                           Val (NumFloat f) -> Val $ NumInt (truncate f)
                           Val (Str s) -> Val $ NumInt (read s)
                           Exception e -> Exception e
-                          otherwise -> exCantConvert (show otherwise) "integer"
+                          otherwise -> ToInt otherwise
   ToFloat x ->          case (eval x vars) of
                           Val (NumInt i) -> Val $ NumFloat (fromIntegral i)
                           Val (NumFloat f) -> Val $ NumFloat f
                           Val (Str s) -> Val $ NumFloat (read s :: Double)
                           Exception e -> Exception e
-                          otherwise -> exCantConvert (show otherwise) "float"
+                          otherwise -> ToFloat otherwise
   ToStr x ->            case (eval x vars) of                       
                           Val (Str s) -> Val $ Str s
                           Val (NumFloat f) -> Val $ Str $ showFFloat Nothing f ""
@@ -192,29 +192,30 @@ eval exp vars = case exp of
                                               Val (NumInt j) -> case (eval step vars) of
                                                                   Val (NumInt k) -> Val $ List [NumInt x | x <- [i, i+k .. j]]
                                                                   Exception e -> Exception e
-                                                                  otherwise -> exNonIntInRange
+                                                                  otherwise -> Range (Val (NumInt i)) (Val (NumInt j)) otherwise
                                               Skip -> case (eval step vars) of
                                                         Val (NumInt k) -> Val $ List [NumInt x | x <- [i, i+k ..]]
                                                         Exception e -> Exception e
-                                                        otherwise -> exNonIntInRange
+                                                        otherwise -> Range (Val (NumInt i)) Skip otherwise
                                               Exception e -> Exception e
-                                              otherwise -> exNonIntInRange
+                                              otherwise -> Range (Val (NumInt i)) otherwise step
                           Exception e -> Exception e
-                          otherwise -> exNonIntInRange
+                          otherwise -> Range otherwise to step
   FileObj f ->          case eval f vars of
                           Val (Str s) -> Val $ File s
-                          otherwise -> exNonStrFilename
+                          otherwise -> FileObj otherwise
   Output x ->           Output (eval (Func (Name "show") [x]) vars)
+  FileRead f ->         FileRead (eval f vars)
   FileWrite f x ->      case (eval f vars) of
                           Val (File f) -> case (eval x vars) of
                                             Val (Str s) -> FileWrite (Val (File f)) (Val (Str s))
-                                            otherwise -> exWriteNonString otherwise
-                          otherwise -> exWriteNonFile otherwise
+                                            otherwise -> FileWrite (Val (File f)) otherwise
+                          otherwise -> FileWrite otherwise x
   FileAppend f x ->     case (eval f vars) of
                           Val (File f) -> case (eval x vars) of
                                             Val (Str s) -> FileAppend (Val (File f)) (Val (Str s))
-                                            otherwise -> exWriteNonString otherwise
-                          otherwise -> exWriteNonFile otherwise
+                                            otherwise -> FileAppend (Val (File f)) otherwise
+                          otherwise -> FileAppend otherwise x
   AtomExpr s v ->       case validList atomList of
                           Exception e -> Exception e
                           otherwise -> Val $ Atom s [case result of
@@ -317,12 +318,13 @@ ieval expr vars =
                           then return result
                           else ieval result vars
        otherwise -> do if expr == result
-                          then return $ exUnableToEval result
-                          else do let vars' = case expr of
-                                                Def id x y -> addBinding (id, ([], x)) vars
-                                                EagerDef id x y -> addBinding (id, ([], x)) vars
-                                                otherwise -> vars
-                                  ieval result vars'
+                        then return $ exUnableToEval result
+                        else do vars' <- case expr of
+                                           Def id x y -> do return $ addBinding (id, ([], x)) vars
+                                           EagerDef id x y -> do x' <- ieval x vars
+                                                                 return $ addBinding (id, ([], x')) vars
+                                           otherwise -> do return vars
+                                ieval result vars'
 
 -- subfile: substitutes values for delayed I/O operations
 subfile :: Expr -> VarDict -> IO Expr
@@ -418,7 +420,7 @@ subfile exp vars =
                                             True -> do contents <- readFile f
                                                        return $ Val $ Str contents
                                             False -> return $ exFileDNE
-                       otherwise -> do return $ exInvalidFile
+                       otherwise -> return $ FileRead f
     Func f args -> do args' <- iolist [subfile arg vars | arg <- args]
                       return $ Func f args'
     otherwise -> do return otherwise

@@ -292,9 +292,9 @@ lambdaStmt col =
 fileStmt :: Column -> Parser Expr
 fileStmt col =
   do sws col
-     reservedOp "<"
+     symbol "<"
      expr <- expression col
-     reservedOp ">"
+     symbol ">"
      return $ FileObj expr
 
 strValue :: Column -> Parser Value
@@ -450,10 +450,10 @@ varcallStmt col =
 -- statements
 
 stmt col = 
+  try (assignment col) <|>
   try (fileStmt col) <|>
   try (printStmt col) <|>
   try (importStmt col) <|>
-  try (assignment col) <|>
   try (writeStmt col) <|>
   try (appendStmt col)
   
@@ -491,7 +491,9 @@ defOpStmt col =
      operator <- whiteSpace >> many1 (oneOf operatorSymbol)
      param2 <- whiteSpace >> identifierOrValue col
      reservedOp "="
-     expr <- expression col
+     pos <- getPosition
+     let col' = sourceColumn pos
+     expr <- expression col'
      return $ Defun (Name operator) [param1, param2] expr Skip
      
 commutativeDefOpStmt :: Column -> Parser Expr
@@ -501,7 +503,9 @@ commutativeDefOpStmt col =
      operator <- whiteSpace >> many1 (oneOf operatorSymbol)
      param2 <- whiteSpace >> identifierOrValue col
      reservedOp "<=>"
-     expr <- expression col
+     pos <- getPosition
+     let col' = sourceColumn pos
+     expr <- expression col'
      return $ Defun (Name operator) [param2, param1] expr 
              (Defun (Name operator) [param1, param2] expr (Skip))
 
@@ -536,17 +540,19 @@ defunStmt col =
      var <- identifier
      params <- parens (idList col)
      reservedOp "="
-     expr <- expression col
+     pos <- getPosition
+     let col' = sourceColumn pos
+     expr <- expression col'
      return $ Defun (Name var) params expr Skip
 
 eagerStmt :: Column -> Parser Expr
 eagerStmt col =
   do sws col
      var <- identifier
-     w <- whiteSpace
      reservedOp ":="
-     w <- whiteSpace
-     expr <- expression col
+     pos <- getPosition
+     let col' = sourceColumn pos
+     expr <- expression col'
      return $ EagerDef (Name var) expr Skip
      
 accumulateStmt :: Column -> Parser Expr
@@ -554,15 +560,19 @@ accumulateStmt col =
   do sws col
      var <- identifier
      reservedOp "+="
-     expr <- expression col
+     pos <- getPosition
+     let col' = sourceColumn pos
+     expr <- expression col'
      return $ EagerDef (Name var) (Add (Var (Name var)) (expr)) Skip
      
 assignStmt :: Column -> Parser Expr
 assignStmt col =
   do sws col
      var <- identifier
-     reservedOp "="
-     expr1 <- expression col
+     symbol "="
+     pos <- getPosition
+     let col' = sourceColumn pos
+     expr1 <- expression col'
      return $ Def (Name var) expr1 Skip
 
 assignment :: Column -> Parser Expr
@@ -629,27 +639,30 @@ customOp col =
 
 opCall op expr1 expr2 = Func (Name op) [expr1, expr2]
 
+rsvdOp col op = do sws col
+                   reservedOp op
+
 operators col = 
-  [[Infix  (reservedOp "@"   >> return (subs            )) AssocLeft],
-   [Infix  (reservedOp "^"   >> return (Exp             )) AssocLeft],
-   [Infix  (reservedOp "mod" >> return (Mod             )) AssocLeft,
-    Infix  (reservedOp "%"   >> return (Mod             )) AssocLeft],
-   [Infix  (reservedOp "*"   >> return (Prod            )) AssocLeft,
-    Infix  (reservedOp "/"   >> return (Div             )) AssocLeft],
-   [Infix  (reservedOp "+"   >> return (Add             )) AssocLeft,
-    Infix  (reservedOp "-"   >> return (Sub             )) AssocLeft],
-   [Infix  (reservedOp "=="  >> return (Eq              )) AssocLeft,
-    Infix  (reservedOp "<="  >> return (ltEq            )) AssocLeft,
-    Infix  (reservedOp ">="  >> return (gtEq            )) AssocLeft,
-    Infix  (reservedOp "not" >> return (InEq            )) AssocLeft,
-    Infix  (reservedOp "!="  >> return (InEq            )) AssocLeft,
-    Infix  (reservedOp ">"   >> return (Gt              )) AssocLeft,
-    Infix  (reservedOp "<"   >> return (Lt              )) AssocLeft],
-   [Infix  (reservedOp "and" >> return (And             )) AssocLeft,
-    Infix  (reservedOp "or"  >> return (Or              )) AssocLeft,
-    Infix  (reservedOp "&"   >> return (And             )) AssocLeft,
-    Infix  (reservedOp "|"   >> return (Or              )) AssocLeft],
-   [Prefix (reservedOp "-"   >> return (Prod (Val (NumInt (-1)))))],
+  [[Infix  (rsvdOp col "@"   >> return (subs            )) AssocLeft],
+   [Infix  (rsvdOp col "^"   >> return (Exp             )) AssocLeft],
+   [Infix  (rsvdOp col "mod" >> return (Mod             )) AssocLeft,
+    Infix  (rsvdOp col "%"   >> return (Mod             )) AssocLeft],
+   [Infix  (rsvdOp col "*"   >> return (Prod            )) AssocLeft,
+    Infix  (rsvdOp col "/"   >> return (Div             )) AssocLeft],
+   [Infix  (rsvdOp col "+"   >> return (Add             )) AssocLeft,
+    Infix  (rsvdOp col "-"   >> return (Sub             )) AssocLeft],
+   [Infix  (rsvdOp col "=="  >> return (Eq              )) AssocLeft,
+    Infix  (rsvdOp col "<="  >> return (ltEq            )) AssocLeft,
+    Infix  (rsvdOp col ">="  >> return (gtEq            )) AssocLeft,
+    Infix  (rsvdOp col "not" >> return (InEq            )) AssocLeft,
+    Infix  (rsvdOp col "!="  >> return (InEq            )) AssocLeft,
+    Infix  (rsvdOp col ">"   >> return (Gt              )) AssocLeft,
+    Infix  (rsvdOp col "<"   >> return (Lt              )) AssocLeft],
+   [Infix  (rsvdOp col "and" >> return (And             )) AssocLeft,
+    Infix  (rsvdOp col "or"  >> return (Or              )) AssocLeft,
+    Infix  (rsvdOp col "&"   >> return (And             )) AssocLeft,
+    Infix  (rsvdOp col "|"   >> return (Or              )) AssocLeft],
+   [Prefix (rsvdOp col "-"   >> return (Prod (Val (NumInt (-1)))))],
    [Infix  (do { op <- customOp col;return (opCall op   )}) AssocLeft],
    [Postfix(do { w <- whereStmt col;return (w           )})          ]
    ]

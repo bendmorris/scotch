@@ -310,6 +310,11 @@ just a variable identifier, so the value becomes bound to the variable called
 <pre><code>take 10 from [1..]
 </code></pre>
 <p>will return the first 10 elements in the infinite list <code>[1..]</code>.</p>
+<p>For lists, take will not evaluate the entire list, but only the first n 
+elements that it needs, so <code>take 10 from [1..100]</code> and 
+<code>take 10 from [1..100000000]</code> require the same amount of time.</p>
+<p>For functions, currently the entire function is evaluated <em>before</em> take. This
+means that infinite functions are still impossible.</p>
 <h3 id="value-conversion">Value conversion</h3>
 <p>Values can be explicitly converted to an integer, float, string, or list. For 
 example:</p>

@@ -367,6 +367,13 @@ just a variable identifier, so the value becomes bound to the variable called
     
 will return the first 10 elements in the infinite list `[1..]`.
 
+For lists, take will not evaluate the entire list, but only the first n 
+elements that it needs, so `take 10 from [1..100]` and 
+`take 10 from [1..100000000]` require the same amount of time.
+
+For functions, currently the entire function is evaluated *before* take. This
+means that infinite functions are still impossible.
+
 
 ### Value conversion
 
