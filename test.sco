@@ -1,6 +1,8 @@
 # Tests
 import std.unit
 
+print "Defining tests..."
+
 tests += assert_equal(1 + 1, 2)
 tests += assert_equal("abc" + "def", "abcdef")
 tests += assert_equal(head("abcdef"), "a")
@@ -102,5 +104,7 @@ tests += assert_equal(take 5 from [1..], [1,2,3,4,5])
 tests += assert_equal(take 5 from [1..,2], [1,3,5,7,9])
 
 tests += assert_equal((take 1 from [for i in <'test.sco'>, i]) @ 0, "# Tests")
+
+print "Running tests..."
 
 run_tests(tests)

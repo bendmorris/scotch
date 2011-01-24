@@ -252,9 +252,9 @@ functionCall f args (h:t) vars =
     Val (HFunc (h)) -> if length params > 0 
                        then checkTailRecursion fp args definition newcall vars
                        else case snd $ (varBinding fp (vars !! varHash fp) vars) !! 0 of
-                              Func f' args' -> Func f' [eval arg vars | arg <- (args' ++ args)]
+                              Func f' args' -> eval (Func f' [eval arg vars | arg <- (args' ++ args)]) vars
                               otherwise -> functionCall f args t vars
-    Val (Lambda ids func) -> substitute func (funcall (zip ids args))
+    Val (Lambda ids func) -> eval (substitute func (funcall (zip ids args))) vars
     Func f' args' -> Func f' [eval arg vars | arg <- (args' ++ args)]
     Val (Atom s l) -> Val (Atom s (l ++ [case arg of
                                            Val v -> v
@@ -268,7 +268,7 @@ functionCall f args (h:t) vars =
         definition = funcBinding fp args (vars !! varHash fp) vars
         params = fst definition
         expr = snd definition
-        newcall = substitute expr (funcall (zip params args))
+        newcall = eval (substitute expr (funcall (zip params args))) vars
 
 tailcall definition f args args' vars = 
   if definition' == definition 
@@ -298,7 +298,6 @@ iolist (h:t) = do item <- h
 ieval :: Expr -> VarDict -> IO Expr
 ieval expr vars =
   do result <- subfile (eval expr vars) vars
-     --putStrLn (show result)
      case result of
        Val v -> return result
        Exception e -> return result
