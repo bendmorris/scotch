@@ -32,7 +32,7 @@ eval :: Expr -> VarDict -> Expr
 eval exp [] = eval exp emptyHash
 eval exp vars = case exp of
   Import s t ->         Skip
-  Take n x ->           case (eval n vars) of
+  Take n x ->           case n of
                           Val (NumInt i) -> case x of
                                               Val (List l) -> Val (List (take (fromIntegral i) l))
                                               ListExpr l -> eval (ListExpr (take (fromIntegral i) l)) vars
@@ -41,10 +41,11 @@ eval exp vars = case exp of
                                                                       ListExpr l -> eval (ListExpr (take (fromIntegral i) l)) vars
                                                                       Exception e -> Exception e
                                                                       otherwise -> otherwise
+                                              For id x y conds -> For id (Take (Val (NumInt i)) x) y conds
                                               Exception e -> Exception e
                                               otherwise -> Take (Val (NumInt i)) (eval otherwise vars)
                           Exception e -> Exception e
-                          otherwise -> Take (otherwise) x
+                          otherwise -> Take (eval otherwise vars) x
   ListExpr l ->         case (validList l) of
                           Val _ -> case validList l'' of
                                      Exception e -> Exception e
@@ -182,7 +183,7 @@ eval exp vars = case exp of
   Case check (h:t) ->   case (eval check vars) of
                           Exception e -> Exception e
                           otherwise -> caseExpr otherwise (h:t)
-  For id x y conds ->   case (eval x vars) of
+  For id x y conds ->   case eval x vars of
                           Val (List l) -> ListExpr (forloop id [Val item | item <- l] y conds)
                           ListExpr l -> ListExpr (forloop id [item | item <- l] y conds)
                           Exception e -> Exception e
@@ -251,14 +252,14 @@ functionCall f args (h:t) vars =
     Val (HFunc (h)) -> if length params > 0 
                        then checkTailRecursion fp args definition newcall vars
                        else case snd $ (varBinding fp (vars !! varHash fp) vars) !! 0 of
-                              Func f' args' -> eval (Func f' [eval arg vars | arg <- (args' ++ args)]) vars
+                              Func f' args' -> Func f' [eval arg vars | arg <- (args' ++ args)]
                               otherwise -> functionCall f args t vars
-    Val (Lambda ids func) -> eval (substitute func (funcall (zip ids args))) vars
-    Func f' args' -> eval (Func f' [eval arg vars | arg <- (args' ++ args)]) vars
+    Val (Lambda ids func) -> substitute func (funcall (zip ids args))
+    Func f' args' -> Func f' [eval arg vars | arg <- (args' ++ args)]
     Val (Atom s l) -> Val (Atom s (l ++ [case arg of
                                            Val v -> v
                                          | arg <- args]))
-    AtomExpr s l -> eval (AtomExpr s (l ++ args)) vars
+    AtomExpr s l -> AtomExpr s (l ++ args)
     otherwise -> functionCall f args t vars
   where fp = case vardef of
                Val (HFunc (f')) -> f'
@@ -267,7 +268,7 @@ functionCall f args (h:t) vars =
         definition = funcBinding fp args (vars !! varHash fp) vars
         params = fst definition
         expr = snd definition
-        newcall = eval (substitute expr (funcall (zip params args))) vars
+        newcall = substitute expr (funcall (zip params args))
 
 tailcall definition f args args' vars = 
   if definition' == definition 
@@ -292,12 +293,11 @@ iolist [] = do return []
 iolist (h:t) = do item <- h
                   rest <- iolist t
                   return (item:rest)
-                  
+
 -- ieval: evaluates an expression completely, replacing I/O operations as necessary
 ieval :: Expr -> VarDict -> IO Expr
 ieval expr vars =
-  do subbed <- subfile expr vars
-     result <- subfile (eval subbed vars) vars
+  do result <- subfile (eval expr vars) vars
      --putStrLn (show result)
      case result of
        Val v -> return result
