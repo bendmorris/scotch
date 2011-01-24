@@ -17,10 +17,11 @@
 module ReadFile where
 
 import Data.List
+import Data.ByteString (readFile)
 import System.Directory
 import System.Environment.Executable
 import Control.Concurrent
-import Text.ParserCombinators.Parsec
+import Text.Parsec.Pos
 import Parse
 import Types
 import Exceptions
@@ -141,6 +142,6 @@ importFile verbose s t =
 
 -- interpret the contents of a file
 execute :: Bool -> String -> VarDict -> IO VarDict
-execute verbose file bindings = do input <- readFile file
+execute verbose file bindings = do input <- Prelude.readFile file
                                    let parsed = Parse.read file input
                                    wexecute verbose parsed bindings

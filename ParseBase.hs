@@ -18,10 +18,11 @@ module ParseBase where
 
 import System.IO
 import Control.Monad
-import Text.ParserCombinators.Parsec
-import Text.ParserCombinators.Parsec.Expr
-import Text.ParserCombinators.Parsec.Language
-import qualified Text.ParserCombinators.Parsec.Token as Token
+import Text.Parsec.ByteString
+import Text.Parsec.Expr
+import Text.Parsec.Char
+import Text.Parsec.Language
+import qualified Text.Parsec.Token as Token
 
 
 upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

@@ -17,8 +17,13 @@
 module Expressions where
 
 import Data.List
-import Text.ParserCombinators.Parsec
-import Text.ParserCombinators.Parsec.Expr
+import Text.Parsec.ByteString
+import Text.Parsec.Expr
+import Text.Parsec.Char
+import Text.Parsec.Language
+import Text.Parsec.Prim
+import Text.Parsec.Pos
+import Text.Parsec.Combinator
 import Types
 import Hash
 import ParseBase
@@ -28,12 +33,10 @@ import ParseBase
 sws col = do pos <- getPosition
              if (sourceColumn pos) < col then fail "" else return ()
 
-expression :: Column -> Parser Expr
 expression col = try (stmt col) <|> try (operation col) <|> try (term col)
            
 operation col = buildExpressionParser (operators col) ((term col) <|> parens (term col))
 
-term :: Column -> Parser Expr
 term col = try (valueExpr col) <|>
            try (parens (expression col))
 
@@ -90,7 +93,6 @@ valueExpr col =
 
 
 
-ifStmt :: Column -> Parser Expr
 ifStmt col =
   do sws col
      reserved "if"
@@ -105,7 +107,6 @@ ifStmt col =
      expr2 <- expression col3
      return $ If cond expr1 expr2
      
-caseStmt :: Column -> Parser Expr
 caseStmt col =
   do sws col
      reserved "case"
@@ -119,32 +120,27 @@ caseStmt col =
                         ) (oneOf ",")
      return $ Case check cases
      
-skipStmt :: Column -> Parser Expr
 skipStmt col = do sws col
                   reserved "skip"
                   return Skip
 
-readStmt :: Column -> Parser Expr
 readStmt col =
   do sws col
      reserved "read"
      expr <- parens (expression col)
      return $ FileRead (expr)
      
-inputStmt :: Column -> Parser Expr
 inputStmt col =
   do sws col
      reserved "input"
      return $ Input
      
-threadStmt :: Column -> Parser Expr
 threadStmt col =
   do sws col
      reserved "thread"
      expr <- expression col
      return $ Val $ Thread expr
      
-rangeStmt :: Column -> Parser Expr
 rangeStmt col =
   try (do sws col
           brackets (do expr1 <- whiteSpace >> expression col
@@ -172,7 +168,6 @@ rangeStmt col =
                        symbol ".."
                        return $ Range expr1 (Skip) (Val (NumInt 1))))
 
-takeStmt :: Column -> Parser Expr
 takeStmt col =
   do sws col
      reserved "take"
@@ -185,7 +180,6 @@ nestedListComp (h:t) expr conds = For (Name (fst h)) (snd h) (nestedListComp t e
                                     (if t == [] then conds else [])
 nestedListComp [] expr conds = expr
 
-inStmt :: Column -> Parser (String, Expr)
 inStmt col = 
   do sws col
      iterator <- identifier
@@ -193,7 +187,6 @@ inStmt col =
      list <- expression col
      reserved ","
      return (iterator, ToList list)
-listCompStmt :: Column -> Parser Expr
 listCompStmt col =
   do sws col
      reserved "for"
@@ -204,17 +197,14 @@ listCompStmt col =
                        return cond)
      return $ nestedListComp ins expr conds
      
-forStmt :: Column -> Parser Expr
 forStmt col = brackets (listCompStmt col)
      
-notStmt :: Column -> Parser Expr
 notStmt col =
   do sws col
      reserved "not"
      expr <- expression col
      return $ Not expr
      
-conversionStmt :: Column -> Parser Expr
 conversionStmt col = try (toIntStmt col) <|> try (toFloatStmt col) <|> try (toStrStmt col) <|> (toListStmt col)
 
 toIntStmt col =
@@ -240,10 +230,8 @@ toListStmt col =
      
 -- value parsers
 
-exprList :: Column -> Parser [Expr]
 exprList col = sepBy (whiteSpace >> expression col) (oneOf ",")
 
-identifierOrValue :: Column -> Parser Id
 identifierOrValue col = 
   try (idAtom col) <|> 
   try (idSplit col) <|> 
@@ -275,13 +263,11 @@ idPattern col =
      return $ Pattern val
        
 
-idList :: Column -> Parser [Id]
 idList col = 
   do sws col
      id <- sepBy (whiteSpace >> identifierOrValue col) (oneOf ",")
      return $ id
 
-lambdaStmt :: Column -> Parser Expr
 lambdaStmt col =
   do sws col
      ids <- idList col
@@ -289,7 +275,6 @@ lambdaStmt col =
      expr <- expression col
      return $ Val $ Lambda ids expr
 
-fileStmt :: Column -> Parser Expr
 fileStmt col =
   do sws col
      symbol "<"
@@ -297,7 +282,6 @@ fileStmt col =
      symbol ">"
      return $ FileObj expr
 
-strValue :: Column -> Parser Value
 strValue col = 
   do sws col
      quote <- oneOf "\"'"
@@ -320,24 +304,20 @@ strValue col =
      oneOf [quote]
      whiteSpace
      return $ Str chars
-strStmt :: Column -> Parser Expr
 strStmt col =
   do sws col
      str <- strValue col
      return $ Val str
      
-intValue :: Column -> Parser Value
 intValue col =
   do sws col
      val <- integer
      return $ NumInt val
-intStmt :: Column -> Parser Expr
 intStmt col =
   do sws col
      val <- intValue col
      return $ Val val
      
-floatValue :: Column -> Parser Value
 floatValue col =
   do sws col
      reservedOp "-"
@@ -349,13 +329,11 @@ floatValue col =
      val <- float
      whiteSpace
      return $ NumFloat val
-floatStmt :: Column -> Parser Expr
 floatStmt col =
   do sws col
      val <- floatValue col
      return $ Val val
 
-atomValue :: Column -> Parser Value
 atomValue col =
   do sws col
      initial <- oneOf upperCase
@@ -365,7 +343,6 @@ atomValue col =
                     return [val']) <|>
             do return []
      return $ Atom (initial : chars) val
-atomStmt :: Column -> Parser Expr
 atomStmt col =
   do sws col
      initial <- oneOf upperCase
@@ -376,7 +353,6 @@ atomStmt col =
              do return []
      return $ AtomExpr (initial : chars) expr
 
-procStmt :: Column -> Parser Expr
 procStmt col =
   do sws col
      reserved "do"
@@ -385,18 +361,15 @@ procStmt col =
      exprs <- many $ expression col'
      return $ Val $ Proc exprs
 
-listValue :: Column -> Parser Value
 listValue col =
   do sws col
      exprs <- brackets (sepBy (value col) (oneOf ","))
      return $ List exprs
-listStmt :: Column -> Parser Expr
 listStmt col =
   do sws col
      exprs <- brackets (exprList col)
      return $ ListExpr exprs
      
-keyValue :: Column -> Parser (String, Value)
 keyValue col =
   do sws col
      key <- do quote <- oneOf "\"'"
@@ -407,7 +380,6 @@ keyValue col =
      val <- whiteSpace >> value col
      return (key, val)
      
-keyExpr :: Column -> Parser (Expr, Expr)
 keyExpr col = try (
   do sws col
      key <- whiteSpace >> (many (oneOf (upperCase ++ lowerCase)))
@@ -421,25 +393,21 @@ keyExpr col = try (
      expr <- whiteSpace >> expression col
      return (key, expr)
   )
-hashValue :: Column -> Parser Value
 hashValue col =
   do sws col
      keysValues <- braces (sepBy (whiteSpace >> keyValue col) (oneOf ","))
      return $ Hash (makeHash keysValues)
-hashStmt :: Column -> Parser Expr
 hashStmt col =
   do sws col
      keysValues <- braces (sepBy (whiteSpace >> keyExpr col) (oneOf ","))
      return $ HashExpr keysValues
 
-funcallStmt :: Column -> Parser Expr
 funcallStmt col =
   do sws col
      var <- identifier
      params <- parens (exprList col)
      return $ Func (Name var) params
      
-varcallStmt :: Column -> Parser Expr
 varcallStmt col =
   do sws col
      var <- identifier
@@ -458,19 +426,16 @@ stmt col =
   try (appendStmt col)
   
 
-printStmt :: Column -> Parser Expr
 printStmt col =
   do sws col
      reserved "print"
      expr <- expression col
      return $ Output (expr)
 
-moduleName :: Column -> Parser [String]
 moduleName col =
   do sws col
      sepBy (many (oneOf (upperCase ++ lowerCase ++ numeric))) (oneOf ".")     
 
-importStmt :: Column -> Parser Expr
 importStmt col =
   try (do sws col
           reserved "import"
@@ -484,7 +449,6 @@ importStmt col =
           mod <- moduleName col
           return $ Import mod mod)
 
-defOpStmt :: Column -> Parser Expr
 defOpStmt col =
   do sws col
      param1 <- whiteSpace >> identifierOrValue col
@@ -496,7 +460,6 @@ defOpStmt col =
      expr <- expression col'
      return $ Defun (Name operator) [param1, param2] expr Skip
      
-commutativeDefOpStmt :: Column -> Parser Expr
 commutativeDefOpStmt col =
   do sws col
      param1 <- whiteSpace >> identifierOrValue col
@@ -511,7 +474,6 @@ commutativeDefOpStmt col =
 
 defprocStmt col = try (defprocFun col) <|> try (defprocVar col)
 
-defprocVar :: Column -> Parser Expr
 defprocVar col =
   do sws col
      var <- identifier
@@ -522,7 +484,6 @@ defprocVar col =
      exprs <- many $ expression col'
      return $ Defproc (Name var) [] exprs Skip
 
-defprocFun :: Column -> Parser Expr
 defprocFun col =
   do sws col
      var <- identifier
@@ -534,7 +495,6 @@ defprocFun col =
      exprs <- many $ expression col'
      return $ Defproc (Name var) params exprs Skip
 
-defunStmt :: Column -> Parser Expr
 defunStmt col =
   do sws col
      var <- identifier
@@ -545,7 +505,6 @@ defunStmt col =
      expr <- expression col'
      return $ Defun (Name var) params expr Skip
 
-eagerStmt :: Column -> Parser Expr
 eagerStmt col =
   do sws col
      var <- identifier
@@ -555,7 +514,6 @@ eagerStmt col =
      expr <- expression col'
      return $ EagerDef (Name var) expr Skip
      
-accumulateStmt :: Column -> Parser Expr
 accumulateStmt col =
   do sws col
      var <- identifier
@@ -565,7 +523,6 @@ accumulateStmt col =
      expr <- expression col'
      return $ EagerDef (Name var) (Add (Var (Name var)) (expr)) Skip
      
-assignStmt :: Column -> Parser Expr
 assignStmt col =
   do sws col
      var <- identifier
@@ -575,7 +532,6 @@ assignStmt col =
      expr1 <- expression col'
      return $ Def (Name var) expr1 Skip
 
-assignment :: Column -> Parser Expr
 assignment col = 
   try (defprocStmt col) <|>              
   try (defunStmt col) <|> 
@@ -585,7 +541,6 @@ assignment col =
   try (commutativeDefOpStmt col) <|>
   try (defOpStmt col)
      
-writeStmt :: Column -> Parser Expr
 writeStmt col =
   do sws col
      reserved "write"
@@ -595,7 +550,6 @@ writeStmt col =
      expr <- expression col
      symbol ")"
      return $ FileWrite file expr
-appendStmt :: Column -> Parser Expr
 appendStmt col =
   do sws col
      reserved "append"

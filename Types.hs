@@ -16,7 +16,7 @@
 
 module Types where
 
-import Text.ParserCombinators.Parsec
+import Text.Parsec.Pos
 import Numeric
 
 -- a bindable identifier

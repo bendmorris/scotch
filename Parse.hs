@@ -16,28 +16,31 @@
 
 module Parse where
 
-import Text.ParserCombinators.Parsec
+import Data.ByteString
+import Text.Parsec.ByteString
+import Text.Parsec.Expr
+import Text.Parsec.Char
+import Text.Parsec.Combinator
+import Text.Parsec.Prim
+import Text.Parsec.Pos
 import Types
 import Hash
 import Expressions
 import ParseBase
 
-parser :: Parser [PosExpr]
 parser = many (whiteSpace >> statement)
 
 summary [] = []
 summary (h:t) = if h == '\n' then "" else h : summary t
 
-statement :: Parser PosExpr
 statement = try (do pos <- getPosition
                     let col = sourceColumn pos
                     expr <- expression col
                     return (Just pos, expr))
             <|> (do pos <- getPosition
                     chars <- many1 (noneOf "")
-                    return (Just pos, Exception $ "Parse error: Unable to parse text starting with \"" ++ summary (take 30 chars) ++ "\""))
+                    return (Just pos, Exception $ "Parse error: Unable to parse text starting with \"" ++ summary (Prelude.take 30 chars) ++ "\""))
                            
-
 read name s = case (parse parser name s) of
                 Right r -> r
                 otherwise -> [(Nothing, Exception "Parse error")]
