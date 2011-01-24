@@ -94,10 +94,10 @@ eval exp vars = case exp of
                           Val (Str s) -> Val $ NumFloat (read s :: Double)
                           Exception e -> Exception e
                           otherwise -> ToFloat otherwise
-  ToStr x ->            case (eval x vars) of                       
+  ToStr x ->            case (eval x vars) of
                           Val (Str s) -> Val $ Str s
                           Val (NumFloat f) -> Val $ Str $ showFFloat Nothing f ""
-                          Func f args -> exNoMatch f args
+                          Val v -> Val $ Str (show v)
                           Exception e -> Exception e
                           otherwise -> ToStr (eval otherwise vars)
   ToList x ->           case (eval x vars) of                       
