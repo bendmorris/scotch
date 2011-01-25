@@ -341,11 +341,11 @@ int('1')
 </code></pre>
 <p>The following types can be converted to a list with <code>list(value)</code>:</p>
 <ul>
-<li><a href="#lists">Lists</a></li>
+<li><a href="#lists">Lists</a> (returns the list, unchanged)</li>
 <li><a href="#strings">Strings</a> (each character)</li>
 <li><a href="#hash-tables">Hash tables</a> (treated as an unordered list of [key, value])</li>
 <li><a href="#files">Files</a> (iterates over the contents of the file as a string, line by line)</li>
-<li>Other values: returns a single member list containing the value</li>
+<li>Any other value: returns a single member list containing the value</li>
 </ul>
 <h3 id="inputoutput">Input/output</h3>
 <pre><code>print "Hello world!"

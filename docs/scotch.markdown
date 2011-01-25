@@ -399,11 +399,11 @@ example:
     
 The following types can be converted to a list with `list(value)`:
 
-* [Lists](#lists)
+* [Lists](#lists) (returns the list, unchanged)
 * [Strings](#strings) (each character)
 * [Hash tables](#hash-tables) (treated as an unordered list of [key, value])
 * [Files](#files) (iterates over the contents of the file as a string, line by line)
-* Other values: returns a single member list containing the value
+* Any other value: returns a single member list containing the value
     
 
 ### Input/output
