@@ -107,7 +107,13 @@ result; in this case, <code>1</code> instead of the expected <code>1.5</code>. T
 use <code>3 / 2.0</code> instead; the result will be expressed as a float.</p>
 <p>Note that if highly accurate decimal calculations are needed, floats are not
 sufficient as they are imperfect floating point representations of numbers.
-You should use the decimal type defined in <a href="#stddecimal">std.decimal</a> or the 
+This can produce unexpected results, like the following:</p>
+<pre><code>&gt;&gt; 0.2 + 0.4 == 0.6000000000000001
+true
+&gt;&gt; 0.2 + 0.4 == 0.6
+false
+</code></pre>
+<p>You should use the decimal type defined in <a href="#stddecimal">std.decimal</a> or the 
 fraction type defined in <a href="#stdfraction">std.fraction</a> instead; these types 
 preserve accuracy.</p>
 <h3 id="boolean-values">Boolean values</h3>
@@ -400,7 +406,8 @@ persist until the end of the session.</p>
 <p>The <code>-i</code> flag will execute the module, then enter interactive mode.</p>
 <h2 id="verbose-mode">Verbose mode</h2>
 <p>Running the interpreter with the <code>-v</code> flag will run it in verbose mode. In this
-mode, the AST representation of every line of code evaluated is output.</p>
+mode, the AST representation of every expression is output before the 
+expression is evaluated.</p>
 <p>Typing <code>-v</code> during interactive mode will toggle verbose mode.</p>
 <h2 id="evaluating-scotch-from-the-command-line">Evaluating Scotch from the command line</h2>
 <p>Use <code>scotch "1 + 1" -e</code> to evaluate a Scotch expression. Note that most 

@@ -54,6 +54,14 @@ use `3 / 2.0` instead; the result will be expressed as a float.
 
 Note that if highly accurate decimal calculations are needed, floats are not
 sufficient as they are imperfect floating point representations of numbers.
+This can produce unexpected results, like the following:
+
+    >> 0.2 + 0.4 == 0.6000000000000001
+    true
+    >> 0.2 + 0.4 == 0.6
+    false
+
+
 You should use the decimal type defined in [std.decimal](#stddecimal) or the 
 fraction type defined in [std.fraction](#stdfraction) instead; these types 
 preserve accuracy.
