@@ -3,6 +3,7 @@
 *.txt
 *.deb
 *.sco
+*.osc
 control
 scotch
 scotch.lib/parscotch/*

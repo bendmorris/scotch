@@ -143,7 +143,12 @@ execute :: Bool -> String -> VarDict -> IO VarDict
 execute verbose file bindings = do optimized <- doesFileExist (file ++ ".osc")
                                    input <- Prelude.readFile (file ++ ".sco")
                                    parsed <- case optimized of
-                                               True -> do bytes <- Data.ByteString.Lazy.readFile (file ++ ".osc")
+                                               True -> do t1 <- getModificationTime (file ++ ".sco")
+                                                          t2 <- getModificationTime (file ++ ".osc")
+                                                          if t1 > t2 then do let exprs = (Parse.read (file ++ ".sco") input)
+                                                                             serialize (file ++ ".osc") exprs
+                                                                     else do return ()
+                                                          bytes <- Data.ByteString.Lazy.readFile (file ++ ".osc")
                                                           return $ Parse.readBinary (bytes)
                                                False -> do let exprs = (Parse.read (file ++ ".sco") input)
                                                            serialize (file ++ ".osc") exprs
