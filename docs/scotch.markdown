@@ -188,7 +188,7 @@ list of procs will evaluate each proc in sequence.
 ### Threads
 
 Using the `thread` keyword followed by a proc will execute the proc 
-cocurrently, creating a lightweight thread.
+concurrently, creating a lightweight thread.
 
 
 ### Data constructors
