@@ -213,8 +213,8 @@ A Scotch code file is called a module. Modules can be imported using the
     import std.math
     import test
     
-Periods in a module name designates directory structure, so `std.math` would be 
-found in `std/math.sco`. The module will be searched for first in the current
+Periods in a module name designate directory structure, so `std.math` would be 
+found at `std/math.sco`. The module will be searched for first in the current
 directory, then in the `scotch.lib` directory.
     
 When a module is imported, it is completely executed; any native 
