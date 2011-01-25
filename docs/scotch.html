@@ -62,6 +62,13 @@
 </li>
 </ul>
 </li>
+<li><a href="#the-scotch-interpreter">The Scotch Interpreter</a><ul>
+<li><a href="#interactive-mode">Interactive mode</a></li>
+<li><a href="#interpreting-a-module">Interpreting a module</a></li>
+<li><a href="#verbose-mode">Verbose mode</a></li>
+<li><a href="#evaluating-scotch-from-the-command-line">Evaluating Scotch from the command line</a></li>
+</ul>
+</li>
 </ul>
 </div>
 <h2 id="whats-new-version-030">What's New: Version 0.3.0</h2>
@@ -223,7 +230,7 @@ definitions.</p>
 <p>This defines <code>a</code> to be the value of <code>b + 1</code> at the time it was defined. So, if
 <code>b</code> changes after this definition, <code>a</code> will remain the same.</p>
 <h3 id="temporary-definition">Temporary definition</h3>
-<pre><code>a + b where a = 1, b = 2
+<pre><code>a + b where a = 1, b := 2
 </code></pre>
 <p><code>where</code> creates a temporary variable definition, valid only for the preceding 
 expression.</p>
@@ -379,3 +386,25 @@ Fraction arithmetic:</p>
 </code></pre>
 <h3 id="stdunit">std.unit</h3>
 <p>A very simple unit testing framework.</p>
+<h1 id="the-scotch-interpreter">The Scotch Interpreter</h1>
+<p>No formal specification of the Scotch language exists; the Scotch interpreter
+represents the de facto language standard.</p>
+<h2 id="interactive-mode">Interactive mode</h2>
+<p>Simply run <code>scotch</code> to enter interactive mode. Entering expressions into the
+interpreter will cause them to be immediately evaluated, and the resulting
+value (if any) will be displayed.</p>
+<p>Variable/function definitions and module imports can also be used and will
+persist until the end of the session.</p>
+<h2 id="interpreting-a-module">Interpreting a module</h2>
+<p>Running <code>scotch modulename</code> or <code>scotch file.sco</code> will execute a Scotch module.</p>
+<p>The <code>-i</code> flag will execute the module, then enter interactive mode.</p>
+<h2 id="verbose-mode">Verbose mode</h2>
+<p>Running the interpreter with the <code>-v</code> flag will run it in verbose mode. In this
+mode, the AST representation of every line of code evaluated is output.</p>
+<p>Typing <code>-v</code> during interactive mode will toggle verbose mode.</p>
+<h2 id="evaluating-scotch-from-the-command-line">Evaluating Scotch from the command line</h2>
+<p>Use <code>scotch "1 + 1" -e</code> to evaluate a Scotch expression. Note that most 
+evaluations do not produce output; you'll need to use a <code>print</code> statement to
+display the results.</p>
+<p>This can also be used with the <code>-i</code> flag to continue in interactive mode after
+evaluating the expression.</p>

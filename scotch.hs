@@ -82,7 +82,7 @@ loop verbose bindings state =
         Just "vars" -> do putStrLn (foldl (++) "" 
                                    ["** " ++ show binding ++ "\n" | e <- bindings, binding <- e])
                           loop verbose bindings state
-        Just ":set -v" -> loop (not verbose) bindings state
+        Just "-v" -> loop (not verbose) bindings state
         Just input -> do -- parse input
                          let readinput = Parse.read "Interpreter" input
                          parsed <- case length readinput of

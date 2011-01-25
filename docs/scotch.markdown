@@ -237,7 +237,7 @@ This defines `a` to be the value of `b + 1` at the time it was defined. So, if
 
 ### Temporary definition
     
-    a + b where a = 1, b = 2
+    a + b where a = 1, b := 2
 
 `where` creates a temporary variable definition, valid only for the preceding 
 expression.
@@ -469,3 +469,46 @@ SI unit conversion. Data constructors representing unit magnitude, i.e.
 ### std.unit
 
 A very simple unit testing framework.
+
+
+
+# The Scotch Interpreter
+
+No formal specification of the Scotch language exists; the Scotch interpreter
+represents the de facto language standard.
+
+
+## Interactive mode
+
+Simply run `scotch` to enter interactive mode. Entering expressions into the
+interpreter will cause them to be immediately evaluated, and the resulting
+value (if any) will be displayed.
+
+Variable/function definitions and module imports can also be used and will
+persist until the end of the session.
+
+
+## Interpreting a module
+
+Running `scotch modulename` or `scotch file.sco` will execute a Scotch module.
+
+The `-i` flag will execute the module, then enter interactive mode.
+
+
+## Verbose mode
+
+Running the interpreter with the `-v` flag will run it in verbose mode. In this
+mode, the AST representation of every expression is output before the 
+expression is evaluated.
+
+Typing `-v` during interactive mode will toggle verbose mode.
+
+
+## Evaluating Scotch from the command line
+
+Use `scotch "1 + 1" -e` to evaluate a Scotch expression. Note that most 
+evaluations do not produce output; you'll need to use a `print` statement to
+display the results.
+
+This can also be used with the `-i` flag to continue in interactive mode after
+evaluating the expression.
