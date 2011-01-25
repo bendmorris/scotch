@@ -16,6 +16,9 @@ head([]) = []
 # Returns a list or string, minus the first element.
 tail(h+t) = t
 tail([]) = []
+# Returns the last element in a list
+last(h+t) = (l) @ (len(l) - 1)
+            where l := h + t
 # Returns a list or string in reverse order.
 reverse(h+t) = reverse(t) + h
 reverse([]) = []
