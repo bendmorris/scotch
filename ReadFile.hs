@@ -17,7 +17,7 @@
 module ReadFile where
 
 import Data.List
-import Data.ByteString (readFile)
+import Data.ByteString.Lazy (readFile)
 import System.Directory
 import System.Environment.Executable
 import Control.Concurrent
@@ -78,13 +78,13 @@ wexecute verbose (h:t) bindings =
        otherwise -> do new <- newBindings
                        wexecute verbose t (addBindings new bindings)
      where name = case position of
-                    Just p -> sourceName p
+                    Just p -> fst p
                     Nothing -> ""
            line = case position of
-                    Just p -> sourceLine p
+                    Just p -> fst (snd p)
                     Nothing -> 1
            column = case position of
-                     Just p -> sourceColumn p
+                     Just p -> snd (snd p)
                      Nothing -> 1
            showPosition = name ++ ": Line " ++ show line ++ ", column " ++ show column
            position = fst h
@@ -94,9 +94,7 @@ importName [] = ""
 importName (h:t) = "/" ++ h ++ (importName t)
 searchPathMatch :: [String] -> IO String
 searchPathMatch [] = do return ""
-searchPathMatch (h:t) = do exists <- if isSuffixOf ".sco" h 
-                                     then doesFileExist h 
-                                     else doesDirectoryExist h
+searchPathMatch (h:t) = do exists <- doesFileExist (h ++ ".sco")
                            case exists of
                              True -> return h
                              False -> searchPathMatch t
@@ -107,10 +105,10 @@ importFile verbose s t =
      fullPath <- splitExecutablePath
      let libDir = (fst fullPath) ++ "scotch.lib"
      let moduleName = importName s
-     let searchPath = [currDir ++ moduleName ++ "/main.sco",
-                       currDir ++ moduleName ++ ".sco",
-                       libDir ++ moduleName ++ "/main.sco",
-                       libDir ++ moduleName ++ ".sco"]
+     let searchPath = [currDir ++ moduleName ++ "/main",
+                       currDir ++ moduleName,
+                       libDir ++ moduleName ++ "/main",
+                       libDir ++ moduleName]
      path <- searchPathMatch searchPath
      stdlib <- if s == ["std", "lib"] then do return (False, []) 
                                       else importFile False ["std", "lib"] ["std", "lib"]
@@ -142,6 +140,12 @@ importFile verbose s t =
 
 -- interpret the contents of a file
 execute :: Bool -> String -> VarDict -> IO VarDict
-execute verbose file bindings = do input <- Prelude.readFile file
-                                   let parsed = Parse.read file input
+execute verbose file bindings = do optimized <- doesFileExist (file ++ ".osc")
+                                   input <- Prelude.readFile (file ++ ".sco")
+                                   parsed <- case optimized of
+                                               True -> do bytes <- Data.ByteString.Lazy.readFile (file ++ ".osc")
+                                                          return $ Parse.readBinary (bytes)
+                                               False -> do let exprs = (Parse.read (file ++ ".sco") input)
+                                                           serialize (file ++ ".osc") exprs
+                                                           return exprs
                                    wexecute verbose parsed bindings

@@ -60,8 +60,8 @@ main = do args <- getArgs
                          if interpret then loop verbose statement state
                                       else return ()
                  else do let filename = case isSuffixOf ".sco" (args !! 0) of
-                                         True -> args !! 0
-                                         False -> (args !! 0) ++ ".sco"
+                                         True -> [(args !! 0) !! n| n <- [0..length (args !! 0) - 5]]
+                                         False -> args !! 0
                          newbindings <- execute verbose filename bindings'
                          -- if the -i flag is set, start the interpreter
                          if interpret then loop verbose newbindings state

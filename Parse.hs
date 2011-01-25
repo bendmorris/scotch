@@ -16,7 +16,8 @@
 
 module Parse where
 
-import Data.ByteString
+import Data.ByteString.Lazy
+import Data.Binary
 import Text.Parsec.ByteString
 import Text.Parsec.Expr
 import Text.Parsec.Char
@@ -36,11 +37,15 @@ summary (h:t) = if h == '\n' then "" else h : summary t
 statement = try (do pos <- getPosition
                     let col = sourceColumn pos
                     expr <- expression col
-                    return (Just pos, expr))
+                    return (Just (sourceName pos, (sourceLine pos, sourceColumn pos)), expr))
             <|> (do pos <- getPosition
                     chars <- many1 (noneOf "")
-                    return (Just pos, Exception $ "Parse error: Unable to parse text starting with \"" ++ summary (Prelude.take 30 chars) ++ "\""))
+                    return (Just (sourceName pos, (sourceLine pos, sourceColumn pos)), 
+                            Exception $ "Parse error: Unable to parse text starting with \"" ++ summary (Prelude.take 30 chars) ++ "\""))
                            
 read name s = case (parse parser name s) of
                 Right r -> r
                 otherwise -> [(Nothing, Exception "Parse error")]
+                
+serialize file exprs = Data.ByteString.Lazy.writeFile file (encode (exprs :: [PosExpr]))
+readBinary bytes = decode bytes :: [PosExpr]
