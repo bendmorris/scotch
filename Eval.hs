@@ -109,25 +109,32 @@ eval exp vars = case exp of
                           FileObj f -> Func (Name "split") [FileRead (f), Val (Str "\n")]
                           Exception e -> Exception e
                           otherwise -> ListExpr [otherwise]
-  Subs n x ->           case (eval x vars) of
+  Subs n x ->           case x of
                           Val (List l) -> case (eval n vars) of
-                                            Val (NumInt n) -> if n >= 0 && 
-                                                                 n < (fromIntegral (length l))
+                                            Val (NumInt n) -> if n >= 0 {-&& 
+                                                                 n < (fromIntegral (length l))-}
                                                               then Val (l !! (fromIntegral n))
                                                               else exNotInList n
-                                            Val (List l') ->  eval (ListExpr [Subs (Val i) (Val (List l)) | i <- l']) vars
+                                            Val (List l') ->  ListExpr [Subs (Val i) (Val (List l)) | i <- l']
+                                            otherwise ->      exNonNumSubs otherwise
+                          ListExpr l ->   case (eval n vars) of
+                                            Val (NumInt n) -> if n >= 0 {-&& 
+                                                                 n < (fromIntegral (length l))-}
+                                                              then l !! (fromIntegral n)
+                                                              else exNotInList n
+                                            Val (List l') ->  ListExpr [Subs (Val i) (ListExpr l) | i <- l']
                                             otherwise ->      exNonNumSubs otherwise
                           Val (Str s) ->  case (eval n vars) of
-                                            Val (NumInt n) -> if n >= 0 && 
-                                                                 n < (fromIntegral (length s))
+                                            Val (NumInt n) -> if n >= 0 {-&& 
+                                                                 n < (fromIntegral (length s))-}
                                                               then Val (Str ([s !! (fromIntegral n)]))
                                                               else exNotInList n
-                                            Val (List l') ->  eval (ListExpr [Subs (Val i) (Val (Str s)) | i <- l']) vars
+                                            Val (List l') ->  ListExpr [Subs (Val i) (Val (Str s)) | i <- l']
                                             otherwise ->      exNonNumSubs otherwise
                           Val (Hash l) -> case eval n vars of
                                             Exception e -> Exception e
                                             otherwise -> case (eval (ToStr otherwise) vars) of
-                                                           Val (Str s) ->    eval (Val $ hashMember s l) vars
+                                                           Val (Str s) ->    Val $ hashMember s l
                                                            Exception e ->    Exception e
                           otherwise ->    Subs n (eval otherwise vars)
   Add x y ->            operation x y vadd Add
