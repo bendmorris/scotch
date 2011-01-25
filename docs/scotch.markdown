@@ -12,8 +12,9 @@ This is the official documentation for the Scotch programming language.
 
 [TOC]
 
-## What's New: Version 0.2.1
+## What's New: Version 0.3.0
 
+* After a module is parsed, a binary version is stored, resulting in a significant speedup
 * New std libraries: std.decimal (accurate decimal arithmetic), std.fraction (fractional arithmetic), std.units (SI unit conversion), std.unit (simple unit testing)
 * Operator overloading and commutative operator definition with <=>
 * Take: "take 10 from [1..10000]" returns [1..10], etc
