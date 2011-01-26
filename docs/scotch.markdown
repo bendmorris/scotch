@@ -221,6 +221,13 @@ When a module is imported, it is completely executed; any native
 variable/function definitions from that module are then added to the current 
 definitions.
 
+Definitions from a module are given a qualified name; for example, `pi` as
+defined in `std.math` would be `std.math.pi`. You can use any amount of
+specificity to refer to this variable (`pi`, `math.pi`, or `std.math.pi`). If
+you define a new variable `pi` after importing `std.math`, `pi` will refer to 
+that new variable, while `math.pi` and `std.math.pi` still point to the 
+definition from `std.math`.
+
 
 ## Variables
 
@@ -231,8 +238,8 @@ Scotch defines variables using both lazy and eager strategies.
 
     a = b + 1
     
-When the variable `a` is found, it will be replaced by the current value of
-`b + 1`. As `b` changes, `a` will also change.
+This means that in expressions using `a`, the `a` will be substituted with
+`b + 1`. As the value of `b` changes, the value of `a` will also change.
 
 
 ### Eager definition
