@@ -45,6 +45,10 @@ wexecute verbose (h:t) bindings =
      let newBindings = case parsed of
                          Def id x Skip -> do return [(id, ([], x))]
                          EagerDef id x Skip -> do evaluated <- ieval x bindings
+                                                  case evaluated of
+                                                    Exception e -> do putStrLn $ show $ Exception e
+                                                                      return []
+                                                    otherwise -> return [(id, ([], evaluated))]
                                                   return [(id, ([], evaluated))]
                          Defun id p x s -> do return $ newDefs $ Defun id p x s
                          Defproc id params x Skip -> do return [(id, (params, Val (Proc x))), (id, ([], Val (HFunc id)))]
