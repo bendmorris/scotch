@@ -100,7 +100,7 @@ eval exp vars = case exp of
                           Val v -> Val $ Str (show v)
                           Exception e -> Exception e
                           otherwise -> ToStr (eval otherwise vars)
-  ToList x ->           case (eval x vars) of                       
+  ToList x ->           case (eval x vars) of
                           Val (List l) -> Val $ List l
                           ListExpr l -> ListExpr l
                           Val (Str s) -> Val $ List [Str [c] | c <- s]
@@ -108,7 +108,8 @@ eval exp vars = case exp of
                           Val (File f) -> Func (Name "split") [FileRead (Val (File f)), Val (Str "\n")]
                           FileObj f -> Func (Name "split") [FileRead (f), Val (Str "\n")]
                           Exception e -> Exception e
-                          otherwise -> ListExpr [otherwise]
+                          Val v -> Val (List [v])
+                          otherwise -> ToList (eval otherwise vars)
   Subs n x ->           case x of
                           Val (List l) -> case (eval n vars) of
                                             Val (NumInt n) -> if n >= 0 {-&& 
