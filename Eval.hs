@@ -171,10 +171,10 @@ eval exp vars = case exp of
                           Val r -> case r of
                                      Bit b -> Val (Bit (not b))
                                      otherwise -> exNotBool otherwise
-  Def f x y ->          eval y (addBinding (f, ([], x)) vars)
+  Def f x y ->          eval (substitute y [(f, x)]) vars
   EagerDef f x y ->     case eval x vars of
                           Exception e -> Exception e
-                          Val v -> eval y (addBinding (f, ([], Val v)) vars)
+                          Val v -> eval (substitute y [(f, Val v)]) vars
                           otherwise -> EagerDef f (eval otherwise vars) y
   Defun f p x y ->      eval y (addBinding (f, (p, x)) 
                                 (addBinding(f, ([], Val (HFunc f)))  
@@ -267,7 +267,7 @@ eval exp vars = case exp of
        caseExpr :: Expr -> [(Id, Expr)] -> Expr
        caseExpr check [] = exNoCaseMatch check
        caseExpr check (h:t) = if pattern_match [param] [check]
-                              then eval (substitute expr (funcall (zip [param] [check]))) vars
+                              then substitute expr (funcall (zip [param] [check]))
                               else caseExpr check t
                               where param = fst h
                                     expr = snd h
@@ -295,7 +295,7 @@ functionCall f args (h:t) vars =
         definition = funcBinding fp args (vars !! varHash fp) vars
         params = fst definition
         expr = snd definition
-        newcall = eval (substitute expr (funcall (zip params args))) vars
+        newcall = substitute expr (funcall (zip params args))
 
 tailcall definition f args args' vars = 
   if definition' == definition 
