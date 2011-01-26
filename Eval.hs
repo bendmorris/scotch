@@ -171,7 +171,10 @@ eval exp vars = case exp of
                                      Bit b -> Val (Bit (not b))
                                      otherwise -> exNotBool otherwise
   Def f x y ->          eval y (addBinding (f, ([], x)) vars)
-  EagerDef f x y ->     eval y (addBinding (f, ([], eval x vars)) vars)
+  EagerDef f x y ->     case x of
+                          Exception e -> Exception e
+                          Val v -> eval y (addBinding (f, ([], Val v)) vars)
+                          otherwise -> EagerDef f (eval x vars) y
   Defun f p x y ->      eval y (addBinding (f, (p, x)) 
                                 (addBinding(f, ([], Val (HFunc f)))  
                                  vars))
