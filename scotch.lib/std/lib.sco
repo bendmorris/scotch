@@ -81,7 +81,7 @@ replace([], s, r) = []
 only(h+t, s) = (if contains(s, h) then h else "") + only(t, s)
 only([], s) = []
 
-left(h+t, n) = h + left(t, n-1)
+left(h+t, n) = take n from h+t
 left(h+t, 0) = []
 left([], n) = []
 right(h+t, n) = reverse(left(reverse(h+t), n))
@@ -92,9 +92,7 @@ foldr(f, h+t, z) = f(h, foldr(f, t, z))
 foldr(f, [], z) = z
 reduce = foldl
 
-filter(f, h+t) = case f(h) of 
-                   true: h + filter(f, t),
-                   otherwise: filter(f, t)
+filter(f, h+t) = [for i in h+t, i where f(i)]
 filter(f, []) = []
 map(f, h+t) = [for i in h+t, f(i)]
 

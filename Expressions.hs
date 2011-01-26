@@ -8,7 +8,7 @@
     Scotch is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOnoR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+    GNU General Publilc License for more details.
 
     You should have received a copy of the GNU General Public License
     along with Scotch.  If not, see <http://www.gnu.org/licenses/>.
@@ -192,9 +192,10 @@ listCompStmt col =
      reserved "for"
      ins <- many (try (inStmt col))
      expr <- expression col
-     conds <- many (do reserved ","
-                       cond <- whiteSpace >> expression col
-                       return cond)
+     conds <- try (do reserved "where"
+                      exprs <- sepBy (whiteSpace >> expression col) (oneOf ",")
+                      return exprs) <|>
+                   do return []
      return $ nestedListComp ins expr conds
      
 forStmt col = brackets (listCompStmt col)

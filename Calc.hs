@@ -59,10 +59,10 @@ vprod (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (a * b))
 vprod (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a * b))
 vprod (Val (NumInt a)) (Val (NumFloat b)) = Val (NumFloat ((realToFrac a) * b))
 vprod (Val (NumFloat a)) (Val (NumInt b)) = Val (NumFloat (a * (realToFrac b)))
-vprod (Val (Str s)) (Val (NumInt b)) = Val (Str (foldl (++) "" (take (fromIntegral b) (repeat s))))
-vprod (Val (NumInt b)) (Val (Str s)) = Val (Str (foldl (++) "" (take (fromIntegral b) (repeat s))))
-vprod (Val (List l)) (Val (NumInt b)) = Val (List (foldl (++) [] (take (fromIntegral b) (repeat l))))
-vprod (Val (NumInt b)) (Val (List l)) = Val (List (foldl (++) [] (take (fromIntegral b) (repeat l))))
+vprod (Val (Str s)) (Val (NumInt b)) = Val (Str (foldr (++) "" (take (fromIntegral b) (repeat s))))
+vprod (Val (NumInt b)) (Val (Str s)) = Val (Str (foldr (++) "" (take (fromIntegral b) (repeat s))))
+vprod (Val (List l)) (Val (NumInt b)) = Val (List (foldr (++) [] (take (fromIntegral b) (repeat l))))
+vprod (Val (NumInt b)) (Val (List l)) = Val (List (foldr (++) [] (take (fromIntegral b) (repeat l))))
 vprod a b = Func (Name "*") [a, b]
 -- division
 div_by_zero = Exception "Division by zero"

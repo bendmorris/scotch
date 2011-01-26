@@ -189,6 +189,8 @@ data Expr = Exception String                -- undefined
           | If Expr Expr Expr               -- conditional
           | Case Expr [(Id, Expr)]          -- case expression
           | For Id (Expr) (Expr) [Expr]     -- iteration
+          | TakeFor Id (Expr) (Expr) [Expr] Integer
+                                            -- take from list comprehension
           | Range (Expr) (Expr) (Expr)      -- range
           | Output Expr                     -- output
           | Input                           -- get a line of input from the user
@@ -205,6 +207,7 @@ instance Show(Expr) where
     show (Val v) = show v
     show (ListExpr l) = show l
     show (Take a b) = "take " ++ show a ++ " from " ++ show b
+    show (TakeFor a b c d e) = show (Take (Val (NumInt e)) (For a b c d))
     show (HashExpr h) = "{" ++ (if length items > 0
                                 then tail (foldl (++) "" items)
                                 else "") ++ "}"
@@ -213,7 +216,7 @@ instance Show(Expr) where
     show (ToFloat f) = "float(" ++ show f ++ ")"
     show (ToStr s) = "str(" ++ show s ++ ")"
     show (ToList l) = "list(" ++ show l ++ ")"
-    show (Subs n s) = show s ++ "[" ++ show n ++ "]"
+    show (Subs n s) = show s ++ " @" ++ show n
     show (Add x y) = show x ++ " + " ++ show y
     show (Sub x y) = show x ++ " - " ++ show y
     show (Prod x y) = show x ++ " * " ++ show y
@@ -221,6 +224,7 @@ instance Show(Expr) where
     show (Mod x y) = show x ++ " mod " ++ show y
     show (Exp x y) = show x ++ " ^ " ++ show y
     show (Eq x y) = show x ++ " == " ++ show y
+    show (InEq x y) = show x ++ " != " ++ show y
     show (Gt x y) = show x ++ " > " ++ show y
     show (Lt x y) = show x ++ " < " ++ show y
     show (And x y) = show x ++ " & " ++ show y

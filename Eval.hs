@@ -41,7 +41,8 @@ eval exp vars = case exp of
                                                                       ListExpr l -> eval (ListExpr (take (fromIntegral i) l)) vars
                                                                       Exception e -> Exception e
                                                                       otherwise -> otherwise
-                                              For id x y conds -> For id (Take (Val (NumInt i)) x) y conds
+                                              Val (Str s) -> Val $ Str $ take (fromIntegral i) s
+                                              For id x y conds -> TakeFor id x y conds i
                                               Exception e -> Exception e
                                               otherwise -> Take (Val (NumInt i)) (eval otherwise vars)
                           Exception e -> Exception e
@@ -195,12 +196,28 @@ eval exp vars = case exp of
                           otherwise -> If otherwise x y
   Case check (h:t) ->   case (eval check vars) of
                           Exception e -> Exception e
-                          otherwise -> caseExpr otherwise (h:t)
+                          Val v -> caseExpr (Val v) (h:t)
+                          otherwise -> Case otherwise (h:t)
   For id x y conds ->   case eval x vars of
-                          Val (List l) -> ListExpr (forloop id [Val item | item <- l] y conds)
-                          ListExpr l -> ListExpr (forloop id [item | item <- l] y conds)
-                          Exception e -> Exception e
-                          otherwise -> For id otherwise y conds
+                          Val (List l) ->   ListExpr [substitute y [(id, Val item)] | item <- l,
+                                                      allTrue [substitute cond [(id, Val item)] | cond <- conds]
+                                                      ]
+                          ListExpr l ->     ListExpr [substitute y [(id, item)] | item <- l,
+                                                      allTrue [substitute cond [(id, item)] | cond <- conds]
+                                                      ]
+                          Exception e ->    Exception e
+                          otherwise ->      For id otherwise y conds
+  TakeFor id x y conds n -> case eval x vars of
+                          Val (List l) ->   ListExpr (take (fromIntegral n)
+                                                     [substitute y [(id, Val item)] | item <- l,
+                                                      allTrue [substitute cond [(id, Val item)] | cond <- conds]
+                                                      ])
+                          ListExpr l ->     ListExpr (take (fromIntegral n)
+                                                     [substitute y [(id, item)] | item <- l,
+                                                      allTrue [substitute cond [(id, item)] | cond <- conds]
+                                                      ])
+                          Exception e ->    Exception e
+                          otherwise ->      TakeFor id otherwise y conds n
   Range from to step -> case (eval from vars) of
                           Val (NumInt i) -> case (eval to vars) of
                                               Val (NumInt j) -> case (eval step vars) of
@@ -240,15 +257,12 @@ eval exp vars = case exp of
                            else g x' y'
                            where x' = eval x vars
                                  y' = eval y vars
-       forloop :: Id -> [Expr] -> Expr -> [Expr] -> [Expr]
-       forloop id [] y conds = []
-       forloop id (h:t) y conds = [i | i <- ([e | e <- [eval (substitute y [(id,h)]) vars],
-                                             allTrue [eval (substitute cond [(id,h)]) vars | cond <- conds]] 
-                                             ++ (forloop id t y conds))]
        allTrue [] = True
-       allTrue (h:t) = case h of
+       allTrue (h:t) = case eval h vars of
                          Val (Bit True) -> allTrue t
-                         otherwise -> False
+                         Exception e -> False
+                         Val v -> False
+                         otherwise -> if otherwise == h then False else allTrue (otherwise : t)
        
        caseExpr :: Expr -> [(Id, Expr)] -> Expr
        caseExpr check [] = exNoCaseMatch check
