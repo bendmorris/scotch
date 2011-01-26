@@ -181,7 +181,9 @@ eval exp vars = case exp of
   Var x ->              eval (snd ((varBinding x (vars !! varHash x) vars) !! 0)) vars
   Func f args ->        case validList evalArgs of
                           Exception e -> Exception e
-                          otherwise -> functionCall f evalArgs (varBinding f (vars !! varHash f) vars) vars
+                          otherwise -> if computableList evalArgs
+                                       then functionCall f evalArgs (varBinding f (vars !! varHash f) vars) vars
+                                       else Func f evalArgs
                         where evalArgs = [eval arg vars | arg <- args]
   If cond x y ->        case eval (eval cond vars) vars of
                           Val (Bit True) -> eval x vars
@@ -231,7 +233,7 @@ eval exp vars = case exp of
                           otherwise -> AtomExpr s [eval i vars | i <- v]
   otherwise ->          otherwise
  where operation x y f g = if computableList [x', y'] 
-                           then eval (calc x' y' f) vars
+                           then calc x' y' f
                            else g x' y'
                            where x' = eval x vars
                                  y' = eval y vars
@@ -260,10 +262,10 @@ functionCall f args (h:t) vars =
     Val (HFunc (h)) -> if length params > 0 
                        then checkTailRecursion fp args definition newcall vars
                        else case snd $ (varBinding fp (vars !! varHash fp) vars) !! 0 of
-                              Func f' args' -> eval (Func f' [eval arg vars | arg <- (args' ++ args)]) vars
+                              Func f' args' -> Func f' [eval arg vars | arg <- (args' ++ args)]
                               otherwise -> functionCall f args t vars
-    Val (Lambda ids func) -> eval (substitute func (funcall (zip ids args))) vars
-    Func f' args' -> Func f' [eval arg vars | arg <- (args' ++ args)]
+    Val (Lambda ids func) -> substitute func (funcall (zip ids args))
+    Func f' args' -> Func f' (args' ++ args)
     Val (Atom s l) -> Val (Atom s (l ++ [case arg of
                                            Val v -> v
                                          | arg <- args]))
