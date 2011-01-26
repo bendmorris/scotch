@@ -16,6 +16,7 @@ tests += assert_equal(apply(f, 1), 1)
 tests += assert_equal(apply(g, 1), 2)
 
 tests += assert_equal(split("a.b.c", "."), ["a","b","c"])
+tests += assert_equal(join(["a","b","c"], "."), "a.b.c")
 
 import std.math
 tests += assert_equal(filter(even, [1..10]), [2,4,6,8,10])

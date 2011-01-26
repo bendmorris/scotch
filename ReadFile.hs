@@ -44,7 +44,8 @@ wexecute verbose (h:t) bindings =
                 else return ()        
      let newBindings = case parsed of
                          Def id x Skip -> do return [(id, ([], x))]
-                         EagerDef id x Skip -> do return [(id, ([], eval x bindings))]
+                         EagerDef id x Skip -> do evaluated <- ieval x bindings
+                                                  return [(id, ([], evaluated))]
                          Defun id p x s -> do return $ newDefs $ Defun id p x s
                          Defproc id params x Skip -> do return [(id, (params, Val (Proc x))), (id, ([], Val (HFunc id)))]
                          Import s t -> do i <- importFile verbose s t
