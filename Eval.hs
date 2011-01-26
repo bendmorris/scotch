@@ -355,6 +355,10 @@ subfile exp vars =
     Take n x -> do n' <- subfile n vars
                    x' <- subfile x vars
                    return $ Take n' x'
+    TakeFor a b c d e -> do b' <- subfile b vars
+                            c' <- subfile c vars
+                            d' <- iolist [subfile i vars | i <- d]
+                            return $ TakeFor a b' c' d' e
     ToInt x -> do x' <- subfile x vars
                   return $ ToInt x'
     ToFloat x -> do x' <- subfile x vars
