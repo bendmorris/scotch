@@ -192,10 +192,9 @@ listCompStmt col =
      reserved "for"
      ins <- many (try (inStmt col))
      expr <- expression col
-     conds <- try (do reserved "where"
-                      exprs <- sepBy (whiteSpace >> expression col) (oneOf ",")
-                      return exprs) <|>
-                   do return []
+     conds <- many (do symbol ","
+                       cond <- whiteSpace >> expression col
+                       return cond)
      return $ nestedListComp ins expr conds
      
 forStmt col = brackets (listCompStmt col)

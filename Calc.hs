@@ -63,6 +63,8 @@ vprod (Val (Str s)) (Val (NumInt b)) = Val (Str (foldr (++) "" (take (fromIntegr
 vprod (Val (NumInt b)) (Val (Str s)) = Val (Str (foldr (++) "" (take (fromIntegral b) (repeat s))))
 vprod (Val (List l)) (Val (NumInt b)) = Val (List (foldr (++) [] (take (fromIntegral b) (repeat l))))
 vprod (Val (NumInt b)) (Val (List l)) = Val (List (foldr (++) [] (take (fromIntegral b) (repeat l))))
+vprod (Val (Bit a)) (Val (NumInt (-1))) = Val (Bit (not a))
+vprod (Val (NumInt (-1))) (Val (Bit a)) = Val (Bit (not a))
 vprod a b = Func (Name "*") [a, b]
 -- division
 div_by_zero = Exception "Division by zero"
@@ -134,5 +136,6 @@ validList (h:t) = case h of
                    
 computableList [] = True
 computableList (h:t) = case h of
+                         Val (InvalidValue) -> False
                          Val v -> computableList t
                          otherwise -> False

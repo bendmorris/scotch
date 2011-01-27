@@ -68,6 +68,7 @@ data Value = NumInt Integer
            | Undefined String
            | File String
            | Atom String [Value]
+           | InvalidValue
            deriving Eq
 instance Show (Value) where
     show (Str s) = "\"" ++ s ++ "\""
@@ -91,6 +92,7 @@ instance Show (Value) where
                               0 -> ""
                               1 -> " " ++ show (v !! 0)
                               otherwise -> " " ++ show v)
+    show InvalidValue = "**invalid value**"
 instance Binary(Value) where
     put (Str s) =           do put (4 :: Word8)
                                put s

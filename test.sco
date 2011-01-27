@@ -106,6 +106,11 @@ tests += assert_equal(take 5 from [1..,2], [1,3,5,7,9])
 
 tests += assert_equal((take 1 from [for i in <'test.sco'>, i]) @ 0, "# Tests")
 
+b = a where a = 1
+tests += assert_equal(b, 1)
+tests += assert_equal(take 1 from [for i in [1..], i], [1])
+tests += assert_equal(take 10 from [for i in [1..], i, prime(i)], [1,2,3,5,7,11,13,17,19,23])
+
 print "Running tests..."
 
 run_tests(tests)

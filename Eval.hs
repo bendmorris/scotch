@@ -56,7 +56,7 @@ eval exp vars = case exp of
                                    where l' = [case eval item vars of
                                                  Val r -> r
                                                  Exception e -> Undefined e
-                                                 otherwise -> Null
+                                                 otherwise -> InvalidValue
                                                | item <- l]
                                          l'' = [Val item | item <- l']
                           Exception e -> Exception e
@@ -157,9 +157,7 @@ eval exp vars = case exp of
   Mod x y ->            operation x y vmod Mod
   Exp x y ->            operation x y vexp Exp
   Eq x y ->             operation x y veq Eq
-  InEq x y ->           case operation x y veq Eq of
-                          Val (Bit b) -> Val (Bit (not b))
-                          otherwise -> otherwise
+  InEq x y ->           eval (Prod (operation x y veq Eq) (Val (NumInt (-1)))) vars
   Gt x y ->             operation x y vgt Gt
   Lt x y ->             operation x y vlt Lt
   And x y ->            case eval x vars of
@@ -215,9 +213,9 @@ eval exp vars = case exp of
                                               otherwise -> eval (LambdaCall (eval otherwise vars) evalArgs) vars
                                        else LambdaCall x evalArgs
                         where evalArgs = [eval arg vars | arg <- args]
-  If cond x y ->        case eval (eval cond vars) vars of
-                          Val (Bit True) -> eval x vars
-                          Val (Bit False) -> eval y vars
+  If cond x y ->        case eval cond vars of
+                          Val (Bit True) -> x
+                          Val (Bit False) -> y
                           Exception e -> Exception e
                           otherwise -> If otherwise x y
   Case check (h:t) ->   case (eval check vars) of
@@ -370,7 +368,7 @@ ieval expr vars =
        FileAppend f p -> do p' <- ieval p vars
                             return $ FileAppend f p'
        Func f args -> do args' <- iolist [ieval arg vars | arg <- args]
-                         if args == args' 
+                         if expr == Func f args' 
                           then return $ Func f args'
                           else ieval (Func f args') vars
        LambdaCall x args -> do args' <- iolist [ieval arg vars | arg <- args]

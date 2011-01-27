@@ -6,9 +6,9 @@ license = do import std.license
 startup = do import std.startup
 
 # Returns the length of a string or list.
-len'(h+t, a) = len'(t, a+1)
-len'([], a) = a
-len(l) = len'(l, 0)
+len(h+t, a) = len(t, a+1)
+len([], a) = a
+len(l) = len(l, 0)
 
 # Returns the first element in a string or list.
 head(h+t) = h
@@ -92,7 +92,7 @@ foldr(f, h+t, z) = f(h, foldr(f, t, z))
 foldr(f, [], z) = z
 reduce = foldl
 
-filter(f, h+t) = [for i in h+t, i where f(i)]
+filter(f, h+t) = [for i in h+t, i, f(i)]
 filter(f, []) = []
 map(f, h+t) = [for i in h+t, f(i)]
 

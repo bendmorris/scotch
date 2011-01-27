@@ -15,7 +15,7 @@ reduce_fraction(Fraction(a,b)) =
   case len(take 1 from divisors) of
      0: Fraction(a,b),
      otherwise: reduce_fraction(Fraction(a / divisors @ 0, b / divisors @ 0))
-  where divisors := [for i in reverse([2..b]), i where a mod i == 0, b mod i == 0]
+  where divisors := [for i in reverse([2..b]), i, a mod i == 0, b mod i == 0]
   
 numerator(Fraction(a,b)) = a
 denominator(Fraction(a,b)) = b
