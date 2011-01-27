@@ -111,6 +111,10 @@ tests += assert_equal(b, 1)
 tests += assert_equal(take 1 from [for i in [1..], i], [1])
 tests += assert_equal(take 10 from [for i in [1..], i, prime(i)], [1,2,3,5,7,11,13,17,19,23])
 
+a = 1
+thread do a = 2
+tests += assert_equal(a, 1)
+
 print "Running tests..."
 
 run_tests(tests)
