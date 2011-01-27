@@ -73,13 +73,8 @@ substitute exp params =
     Func f args -> case inparamsid f params of
                      (Null, (f', [])) -> Func f' [substitute arg params | arg <- args]
                      (Null, (f', otherargs)) -> Func f' [substitute arg params | arg <- otherargs ++ args]
-                     (Lambda ids expr, _) -> substitute (LambdaCall (Lambda ids (substitute expr params)) args) params
-    LambdaCall (Lambda ids expr) args -> substitute (Defun (Name "lambda") ids (substitute expr params) (
-                                                      Def (Name "lambda") (Val (HFunc (Name "lambda"))) (
-                                                       Func (Name "lambda") args
-                                                       )
-                                                      )
-                                                     ) params
+                     (Lambda ids expr, _) -> substitute (LambdaCall (Val (Lambda ids (substitute expr params))) args) params
+    LambdaCall x args -> LambdaCall (substitute x params) [substitute arg params | arg <- args]
     Output x -> Output (substitute x params)
     FileObj x -> FileObj (substitute x params)
     FileRead x -> FileRead (substitute x params)

@@ -30,7 +30,7 @@ lowerCase = "abcdefghijklmnopqrstuvwxyz"
 numeric = "0123456789"
 idSymbol = "_!'."
 operatorSymbol = "!@#$%^&*+-*/=<>?|`:"
-forbiddenOps = ["=", ":=", ":"]
+forbiddenOps = ["=", ":=", ":", "->", "<-"]
 
 languageDef =
   emptyDef { Token.commentStart    = "{-",
@@ -54,9 +54,9 @@ languageDef =
                                       ","
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
-                                      "!=", "<", ">", "and", "or", "not", ":", "->",
+                                      "!=", "<", ">", "and", "or", "not", ":", 
                                       "<=", ">=", "+=", "<<", ">>", "..", "::",
-                                      "@", "mod", "%"
+                                      "@", "mod", "%", "->", "<-"
                                      ]
            }
            

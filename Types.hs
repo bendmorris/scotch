@@ -185,7 +185,7 @@ data Expr = Exception String                -- undefined
           | Defproc Id [Id] [Expr] Expr     -- procedure definition
           | Var Id                          -- identifier
           | Func Id [Expr]                  -- function call
-          | LambdaCall Value [Expr]         -- lambda function call
+          | LambdaCall Expr [Expr]          -- lambda function call
           | If Expr Expr Expr               -- conditional
           | Case Expr [(Id, Expr)]          -- case expression
           | For Id (Expr) (Expr) [Expr]     -- iteration

@@ -19,3 +19,5 @@ exNoCaseMatch a = Exception $ "Case expression " ++ show a ++ " doesn't match an
 exFileDNE = Exception "File does not exist"
 exInvalidFile = Exception "Invalid file"
 exUnableToEval a = Exception $ "Unable to evaluate: " ++ show a
+exImproperCall v = Exception $ show v ++ " is not a function"
+exWrongNumArgs = Exception $ "Wrong number of arguments for lambda call"

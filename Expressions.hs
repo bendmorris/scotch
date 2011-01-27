@@ -582,10 +582,18 @@ whereStmt col =
      reserved "where"
      assignment <- sepBy1 (whiteSpace >> assignment col) (oneOf ",")
      return $ nestwhere assignment
+     
+lambdaCallStmt col =
+  do whiteSpace
+     reservedOp "<-"
+     args <- sepBy1 (whiteSpace >> expression col) (oneOf ",")
+     return $ lambdaCall args
+     
+lambdaCall args expr = LambdaCall expr args
 
 customOp col = 
-  do sws col
-     whiteSpace
+  do whiteSpace
+     sws col
      op <- many1 (oneOf operatorSymbol)
      whiteSpace
      if isInfixOf [op] forbiddenOps
@@ -618,6 +626,7 @@ operators col =
     Infix  (rsvdOp col "&"   >> return (And             )) AssocLeft,
     Infix  (rsvdOp col "|"   >> return (Or              )) AssocLeft],
    [Prefix (rsvdOp col "-"   >> return (Prod (Val (NumInt (-1)))))],
+   [Postfix(do { l <- lambdaCallStmt col; return (l     )})          ],
    [Infix  (do { op <- customOp col;return (opCall op   )}) AssocLeft],
    [Postfix(do { w <- whereStmt col;return (w           )})          ]
    ]

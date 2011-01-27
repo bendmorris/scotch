@@ -200,6 +200,19 @@ eval exp vars = case exp of
                                        then functionCall f evalArgs (varBinding f (vars !! varHash f) vars) vars
                                        else Func f evalArgs
                         where evalArgs = [eval arg vars | arg <- args]
+  LambdaCall x args ->  case validList evalArgs of
+                          Exception e -> Exception e
+                          otherwise -> if computableList evalArgs
+                                       then case eval x vars of
+                                              Exception e -> Exception e
+                                              Val (HFunc f) -> eval (Func f args) vars
+                                              Val (Lambda params f) -> if length params == length args
+                                                                       then substitute f (zip params evalArgs)
+                                                                       else exWrongNumArgs
+                                              Val v -> exImproperCall v
+                                              otherwise -> LambdaCall (eval otherwise vars) args
+                                       else LambdaCall x evalArgs
+                        where evalArgs = [eval arg vars | arg <- args]
   If cond x y ->        case eval (eval cond vars) vars of
                           Val (Bit True) -> eval x vars
                           Val (Bit False) -> eval y vars
@@ -358,6 +371,10 @@ ieval expr vars =
                          if args == args' 
                           then return $ Func f args'
                           else ieval (Func f args') vars
+       LambdaCall x args -> do args' <- iolist [ieval arg vars | arg <- args]
+                               if args == args' 
+                                then return $ LambdaCall x args'
+                                else ieval (LambdaCall x args') vars
        otherwise -> do if expr == result
                         then return $ exUnableToEval result
                         else do vars' <- case expr of
@@ -468,4 +485,6 @@ subfile exp vars =
                        otherwise -> return $ FileRead f
     Func f args -> do args' <- iolist [subfile arg vars | arg <- args]
                       return $ Func f args'
+    LambdaCall x args -> do args' <- iolist [subfile arg vars | arg <- args]
+                            return $ LambdaCall x args'
     otherwise -> do return otherwise
