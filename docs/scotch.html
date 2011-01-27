@@ -382,10 +382,15 @@ print Dog "Max"
 <h3 id="list-comprehension">List comprehension</h3>
 <p>List comprehensions allow quick, easy construction of lists by iterating over 
 a collection.</p>
-<pre><code>[for i in [1..10], j in [1..20], i * j where i &gt; 5, j &lt; 9]
+<pre><code>[for i in [1..10], j in [1..20], i * j, i &gt; 5, j &lt; 9]
 </code></pre>
 <p>This list comprehension returns <code>i * j</code> for every <code>i</code> from 1 to 10 and every
 <code>j</code> from 1 to 20, but only if <code>i</code> is more than 5 and <code>j</code> is less than 9.</p>
+<p>The pattern looks like this: </p>
+<pre><code>[for id1 in collection1, id2 in collection2, ...
+     expression,
+     condition1, condition2, ...]
+</code></pre>
 <p>Any value that can be <a href="#value-conversion">converted to a list</a> can be used as a 
 collection.</p>
 <h2 id="standard-library">Standard Library</h2>

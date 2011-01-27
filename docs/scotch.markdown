@@ -453,10 +453,16 @@ displaying. This allows you to define custom instances of `show`:
 List comprehensions allow quick, easy construction of lists by iterating over 
 a collection.
 
-    [for i in [1..10], j in [1..20], i * j where i > 5, j < 9]
+    [for i in [1..10], j in [1..20], i * j, i > 5, j < 9]
     
 This list comprehension returns `i * j` for every `i` from 1 to 10 and every
 `j` from 1 to 20, but only if `i` is more than 5 and `j` is less than 9.
+
+The pattern looks like this: 
+    
+    [for id1 in collection1, id2 in collection2, ...
+         expression,
+         condition1, condition2, ...] 
 
 Any value that can be [converted to a list](#value-conversion) can be used as a 
 collection.
