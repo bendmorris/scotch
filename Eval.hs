@@ -139,7 +139,18 @@ eval exp vars = case exp of
                                                            Val (Str s) ->    Val $ hashMember s l
                                                            Exception e ->    Exception e
                           otherwise ->    Subs n (eval otherwise vars)
-  Add x y ->            operation x y vadd Add
+  Add x y ->            case x of
+                          Exception e ->    Exception e
+                          ListExpr l ->     case y of
+                                              Exception e -> Exception e
+                                              ListExpr l' -> ListExpr (l ++ l')
+                                              Val v -> Add (eval x vars) y
+                                              otherwise -> Add x (eval y vars)
+                          Val v ->          case y of
+                                              Exception e -> Exception e
+                                              Val v -> vadd x y
+                                              otherwise -> Add x (eval y vars)
+                          otherwise -> Add (eval x vars) y
   Sub x y ->            operation x y vsub Sub
   Prod x y ->           operation x y vprod Prod
   Div x y ->            operation x y vdiv Div
@@ -218,20 +229,20 @@ eval exp vars = case exp of
                                                       ])
                           Exception e ->    Exception e
                           otherwise ->      TakeFor id otherwise y conds n
-  Range from to step -> case (eval from vars) of
-                          Val (NumInt i) -> case (eval to vars) of
-                                              Val (NumInt j) -> case (eval step vars) of
+  Range from to step -> case from of
+                          Val (NumInt i) -> case to of
+                                              Val (NumInt j) -> case step of
                                                                   Val (NumInt k) -> Val $ List [NumInt x | x <- [i, i+k .. j]]
                                                                   Exception e -> Exception e
-                                                                  otherwise -> Range (Val (NumInt i)) (Val (NumInt j)) otherwise
+                                                                  otherwise -> Range from to (eval step vars)
                                               Skip -> case (eval step vars) of
                                                         Val (NumInt k) -> Val $ List [NumInt x | x <- [i, i+k ..]]
                                                         Exception e -> Exception e
-                                                        otherwise -> Range (Val (NumInt i)) Skip otherwise
+                                                        otherwise -> Range from Skip otherwise
                                               Exception e -> Exception e
-                                              otherwise -> Range (Val (NumInt i)) otherwise step
+                                              otherwise -> Range from (eval to vars) step
                           Exception e -> Exception e
-                          otherwise -> Range otherwise to step
+                          otherwise -> Range (eval from vars) to step
   FileObj f ->          case eval f vars of
                           Val (Str s) -> Val $ File s
                           otherwise -> FileObj otherwise
@@ -252,11 +263,19 @@ eval exp vars = case exp of
                           Val (List l) -> Val $ Atom s l
                           otherwise -> AtomExpr s [eval i vars | i <- v]
   otherwise ->          otherwise
- where operation x y f g = if computableList [x', y'] 
-                           then calc x' y' f
-                           else g x' y'
-                           where x' = eval x vars
-                                 y' = eval y vars
+ where operation x y f g = case x of
+                             Val v -> case y of
+                                        Val v -> calc x y f
+                                        Exception e -> Exception e
+                                        otherwise -> if y' == y 
+                                                     then operation x y' f g
+                                                     else g x y'
+                                                     where y' = eval y vars
+                             Exception e -> Exception e
+                             otherwise -> if x' == x
+                                          then operation x' y f g
+                                          else g x' y
+                                          where x' = eval x vars
        allTrue [] = True
        allTrue (h:t) = case eval h vars of
                          Val (Bit True) -> allTrue t
