@@ -205,12 +205,14 @@ eval exp vars = case exp of
                           otherwise -> if computableList evalArgs
                                        then case eval x vars of
                                               Exception e -> Exception e
-                                              Val (HFunc f) -> eval (Func f args) vars
-                                              Val (Lambda params f) -> if length params == length args
+                                              Val (HFunc f) -> eval (Func f evalArgs) vars
+                                              Func f args' -> eval (Func f (args' ++ evalArgs)) vars
+                                              Val (Lambda params f) -> if length params == length evalArgs
                                                                        then substitute f (zip params evalArgs)
-                                                                       else exWrongNumArgs
+                                                                       else eval (LambdaCall (Val (Lambda params f)) evalArgs) vars
                                               Val v -> exImproperCall v
-                                              otherwise -> LambdaCall (eval otherwise vars) args
+                                              LambdaCall x' args' -> eval (LambdaCall x' (args' ++ evalArgs)) vars
+                                              otherwise -> eval (LambdaCall (eval otherwise vars) evalArgs) vars
                                        else LambdaCall x evalArgs
                         where evalArgs = [eval arg vars | arg <- args]
   If cond x y ->        case eval (eval cond vars) vars of

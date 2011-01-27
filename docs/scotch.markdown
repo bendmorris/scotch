@@ -268,6 +268,19 @@ expression.
     f(n) = n * 10
     f(a, b) = a + b
     
+    
+### Calling a function
+
+Named function call:
+
+    f(1, 2)
+    
+Lambda call (call an expression representing either an
+[anonymous function](#anonymous-functions) or a 
+[partially applied function](#higher-order-functionspartial-application)):
+
+    (x, y -> x + y) <- 1, 2
+    
 
 #### Pattern matching
 

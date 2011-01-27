@@ -32,7 +32,8 @@
 </ul>
 </li>
 <li><a href="#functions">Functions</a><ul>
-<li><a href="#function-definition">Function definition</a><ul>
+<li><a href="#function-definition">Function definition</a></li>
+<li><a href="#calling-a-function">Calling a function</a><ul>
 <li><a href="#pattern-matching">Pattern matching</a></li>
 </ul>
 </li>
@@ -251,6 +252,15 @@ expression.</p>
 <h3 id="function-definition">Function definition</h3>
 <pre><code>f(n) = n * 10
 f(a, b) = a + b
+</code></pre>
+<h3 id="calling-a-function">Calling a function</h3>
+<p>Named function call:</p>
+<pre><code>f(1, 2)
+</code></pre>
+<p>Lambda call (call an expression, representing either an
+<a href="#anonymous-functions">anonymous function</a> or a 
+<a href="#higher-order-functionspartial-application">partially applied function</a>):</p>
+<pre><code>(x, y -&gt; x + y) &lt;- 1, 2
 </code></pre>
 <h4 id="pattern-matching">Pattern matching</h4>
 <pre><code>f(0) = "The argument is zero!"
