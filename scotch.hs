@@ -127,9 +127,12 @@ loop verbose bindings state =
                          case result of
                            Output p -> case p of 
                                          Val (Str s) -> putStrLn s
-                                         Val (Atom s l) -> putStrLn $ case eval (Func (Name "show") [p]) bindings of
-                                                                        Val (Str s) -> s
-                                                                        otherwise -> show otherwise
+                                         Val (Atom s l) -> do result <- ieval (Func (Name "show") [p]) bindings
+                                                              case result of
+                                                                Val (Str s) -> putStrLn s
+                                                                Func f args -> putStrLn $ show $ exNoMatch f args
+                                                                otherwise -> putStrLn $ show otherwise
+                                         Func f args -> putStrLn $ show $ exNoMatch f args
                                          otherwise -> putStrLn (show p)
                            FileWrite (Val (File f)) (Val (Str x)) -> writeFile f x
                            FileAppend (Val (File f)) (Val (Str x)) -> appendFile f x

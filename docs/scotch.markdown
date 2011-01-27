@@ -29,6 +29,11 @@ This is the official documentation for the Scotch programming language.
 ## Data Types
 
 
+### Null
+
+`null` is a reserved word, representing nothing.
+
+
 ### Numeric data
 
 Two numeric types are supported by default in Scotch: integers and floats.
@@ -268,20 +273,6 @@ expression.
     f(n) = n * 10
     f(a, b) = a + b
     
-    
-### Calling a function
-
-Named function call:
-
-    f(1, 2)
-    
-Lambda call (call an expression representing either an
-[anonymous function](#anonymous-functions) or a 
-[partially applied function](#higher-order-functionspartial-application)):
-
-    f <- 1, 2
-    (x, y -> x + y) <- 1, 2
-    
 
 #### Pattern matching
 
@@ -304,6 +295,20 @@ called on an empty list (or string).
 This function definition will apply only when f is called with the value 
 `Dog (something)` (a [data constructor](#data-constructors)). The value 
 following the atom `Dog` will be set as `d`.
+
+
+### Calling a function
+
+Named function call:
+
+    f(1, 2)
+    
+Lambda call (call an expression representing either an
+[anonymous function](#anonymous-functions) or a 
+[partially applied function](#higher-order-functionspartial-application)):
+
+    f <- 1, 2
+    (x, y -> x + y) <- 1, 2
 
 
 ### Higher order functions/partial application

@@ -134,6 +134,5 @@ validList (h:t) = case h of
                    
 computableList [] = True
 computableList (h:t) = case h of
-                         Val (Null) -> False
                          Val v -> computableList t
                          otherwise -> False

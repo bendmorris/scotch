@@ -13,6 +13,7 @@
 <li><a href="#scotch-programming-language">Scotch Programming Language</a><ul>
 <li><a href="#whats-new-version-030">What's New: Version 0.3.0</a></li>
 <li><a href="#data-types">Data Types</a><ul>
+<li><a href="#null">Null</a></li>
 <li><a href="#numeric-data">Numeric data</a></li>
 <li><a href="#boolean-values">Boolean values</a></li>
 <li><a href="#strings">Strings</a></li>
@@ -32,11 +33,11 @@
 </ul>
 </li>
 <li><a href="#functions">Functions</a><ul>
-<li><a href="#function-definition">Function definition</a></li>
-<li><a href="#calling-a-function">Calling a function</a><ul>
+<li><a href="#function-definition">Function definition</a><ul>
 <li><a href="#pattern-matching">Pattern matching</a></li>
 </ul>
 </li>
+<li><a href="#calling-a-function">Calling a function</a></li>
 <li><a href="#higher-order-functionspartial-application">Higher order functions/partial application</a></li>
 <li><a href="#operator-definition">Operator definition</a></li>
 <li><a href="#anonymous-functions">Anonymous functions</a></li>
@@ -86,6 +87,8 @@
 <li>Conversion to list with <code>list()</code></li>
 </ul>
 <h2 id="data-types">Data Types</h2>
+<h3 id="null">Null</h3>
+<p><code>null</code> is a reserved word, representing nothing.</p>
 <h3 id="numeric-data">Numeric data</h3>
 <p>Two numeric types are supported by default in Scotch: integers and floats.
 Type conversion between these two types is automatic.</p>
@@ -253,16 +256,6 @@ expression.</p>
 <pre><code>f(n) = n * 10
 f(a, b) = a + b
 </code></pre>
-<h3 id="calling-a-function">Calling a function</h3>
-<p>Named function call:</p>
-<pre><code>f(1, 2)
-</code></pre>
-<p>Lambda call (call an expression representing either an
-<a href="#anonymous-functions">anonymous function</a> or a 
-<a href="#higher-order-functionspartial-application">partially applied function</a>):</p>
-<pre><code>f &lt;- 1, 2
-(x, y -&gt; x + y) &lt;- 1, 2
-</code></pre>
 <h4 id="pattern-matching">Pattern matching</h4>
 <pre><code>f(0) = "The argument is zero!"
 </code></pre>
@@ -281,6 +274,16 @@ called on an empty list (or string).</p>
 <p>This function definition will apply only when f is called with the value 
 <code>Dog (something)</code> (a <a href="#data-constructors">data constructor</a>). The value 
 following the atom <code>Dog</code> will be set as <code>d</code>.</p>
+<h3 id="calling-a-function">Calling a function</h3>
+<p>Named function call:</p>
+<pre><code>f(1, 2)
+</code></pre>
+<p>Lambda call (call an expression representing either an
+<a href="#anonymous-functions">anonymous function</a> or a 
+<a href="#higher-order-functionspartial-application">partially applied function</a>):</p>
+<pre><code>f &lt;- 1, 2
+(x, y -&gt; x + y) &lt;- 1, 2
+</code></pre>
 <h3 id="higher-order-functionspartial-application">Higher order functions/partial application</h3>
 <p>Functions can be passed as arguments to other functions. For example, with a
 function <code>prime</code> that returns true if a number is prime,</p>

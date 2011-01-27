@@ -68,9 +68,12 @@ wexecute verbose (h:t) bindings =
                          return []
        Output x -> do case x of
                         Val (Str s) -> putStrLn s
-                        Val (Atom s l) -> putStrLn $ case eval (Func (Name "show") [x]) bindings of
-                                                       Val (Str s) -> s
-                                                       otherwise -> show otherwise
+                        Val (Atom s l) -> do result <- ieval (Func (Name "show") [x]) bindings
+                                             case result of
+                                               Val (Str s) -> putStrLn s
+                                               Func f args -> putStrLn $ show $ exNoMatch f args
+                                               otherwise -> putStrLn $ show otherwise
+                        Func f args -> putStrLn $ show $ exNoMatch f args
                         otherwise -> putStrLn (show x)
                       wexecute verbose t bindings
        FileWrite (Val (File f)) (Val (Str x)) -> do writeFile f x
