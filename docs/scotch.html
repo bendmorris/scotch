@@ -257,10 +257,11 @@ f(a, b) = a + b
 <p>Named function call:</p>
 <pre><code>f(1, 2)
 </code></pre>
-<p>Lambda call (call an expression, representing either an
+<p>Lambda call (call an expression representing either an
 <a href="#anonymous-functions">anonymous function</a> or a 
 <a href="#higher-order-functionspartial-application">partially applied function</a>):</p>
-<pre><code>(x, y -&gt; x + y) &lt;- 1, 2
+<pre><code>f &lt;- 1, 2
+(x, y -&gt; x + y) &lt;- 1, 2
 </code></pre>
 <h4 id="pattern-matching">Pattern matching</h4>
 <pre><code>f(0) = "The argument is zero!"

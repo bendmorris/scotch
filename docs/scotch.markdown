@@ -279,6 +279,7 @@ Lambda call (call an expression representing either an
 [anonymous function](#anonymous-functions) or a 
 [partially applied function](#higher-order-functionspartial-application)):
 
+    f <- 1, 2
     (x, y -> x + y) <- 1, 2
     
 
