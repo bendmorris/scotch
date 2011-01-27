@@ -228,6 +228,8 @@ you define a new variable `pi` after importing `std.math`, `pi` will refer to
 that new variable, while `math.pi` and `std.math.pi` still point to the 
 definition from `std.math`.
 
+You can change the qualified name using as: `import std.math as m`
+
 
 ## Variables
 
