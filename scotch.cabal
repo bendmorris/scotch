@@ -1,0 +1,22 @@
+Name:               scotch
+Version:            0.3.0
+Synopsis:           Scotch programming langauge interpreter
+License-file:       license.txt
+Author:             Ben Morris
+Maintainer:         ben@bendmorris.com
+Category:           Language
+Cabal-version:      >= 1.2
+Build-type:         Simple
+--BINDIR:           $prefix
+  
+Executable scotch
+  Ghc-options:      -O2
+  Main-is:          scotch.hs
+  Build-depends:    base,
+                    bytestring,
+                    binary,
+                    executable-path,
+                    parsec >= 3.1.0,
+                    directory,
+                    haskeline,
+                    haskell98
