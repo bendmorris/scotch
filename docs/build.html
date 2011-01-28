@@ -1,0 +1,27 @@
+<h1 id="installing-scotch">Installing Scotch</h1>
+<p>Follow these instructions to install Scotch.</p>
+<div class="toc">
+<ul>
+<li><a href="#installing-scotch">Installing Scotch</a><ul>
+<li><a href="#windows">Windows</a></li>
+<li><a href="#mac">Mac</a></li>
+<li><a href="#linux-debian">Linux (Debian)</a></li>
+</ul>
+</li>
+<li><a href="#building-from-source">Building from Source</a></li>
+</ul>
+</div>
+<h2 id="windows">Windows</h2>
+<p>Download and run the installer, then run "scotch.exe" or type "scotch" at the
+command prompt.</p>
+<h2 id="mac">Mac</h2>
+<p>We don't yet have a standard Mac distribution; please follow the instructions
+under <a href="#building-from-source">building from source</a>.</p>
+<h2 id="linux-debian">Linux (Debian)</h2>
+<p>After installing the Debian package, use the command "scotch" from the command
+line to run scotch.</p>
+<h1 id="building-from-source">Building from Source</h1>
+<p>You can build Scotch from source using the cabal tool using the command:</p>
+<pre><code>cabal install --bindir=$prefix
+</code></pre>
+<p>This will build an executable called scotch.</p>
