@@ -141,9 +141,10 @@ loop verbose bindings state =
                                                  return ()
                            Val (Proc p) -> return ()
                            Val v -> case v of
-                                      Atom s l -> putStrLn $ case eval (Func (Name "show") [result]) bindings of
-                                                               Val (Str s) -> s
-                                                               otherwise -> show otherwise
+                                      Atom s l -> do result <- ieval (Func (Name "show") [result]) bindings
+                                                     case result of
+                                                       Val (Str s) -> putStrLn s
+                                                       otherwise -> putStrLn $ show otherwise
                                       otherwise -> putStrLn $ show $ result
                            Exception e -> putStrLn $ show $ Exception e 
                            otherwise -> return ()
