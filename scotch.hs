@@ -104,6 +104,7 @@ loop verbose bindings state =
                          result <- do r <- ieval parsed bindings
                                       case r of
                                         Func f args -> return $ exNoMatch f args
+                                        LambdaCall x args -> return $ exNoMatch x args
                                         otherwise -> return otherwise
                          if verbose then putStrLn (show parsed)
                                     else return ()

@@ -211,7 +211,7 @@ eval exp vars = case exp of
                                               Func f args' -> eval (Func f (args' ++ evalArgs)) vars
                                               Val (Lambda params f) -> if length params == length evalArgs
                                                                        then substitute f (zip params evalArgs)
-                                                                       else eval (LambdaCall (Val (Lambda params f)) evalArgs) vars
+                                                                       else LambdaCall (Val (Lambda params f)) evalArgs
                                               Val v -> exImproperCall v
                                               LambdaCall x' args' -> eval (LambdaCall x' (args' ++ evalArgs)) vars
                                               otherwise -> eval (LambdaCall (eval otherwise vars) evalArgs) vars
