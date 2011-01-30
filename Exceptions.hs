@@ -21,3 +21,4 @@ exInvalidFile = Exception "Invalid file"
 exUnableToEval a = Exception $ "Unable to evaluate: " ++ show a
 exImproperCall v = Exception $ show v ++ " is not a function"
 exWrongNumArgs = Exception $ "Wrong number of arguments for lambda call"
+exEvalMultiple = Exception "Can't interpret multiple expressions simultaneously"

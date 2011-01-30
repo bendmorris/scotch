@@ -33,7 +33,11 @@ eval :: Expr -> VarDict -> Expr
 eval exp [] = eval exp emptyHash
 eval exp vars = case exp of
   EvalExpr x ->         case eval x vars of
-                          Val (Str s) -> Val $ Proc $ [snd i | i <- Parse.read "" s]
+                          Val (Str s) -> case length evaled of
+                                           0 -> Skip
+                                           1 -> evaled !! 0
+                                           2 -> Val $ Proc $ evaled
+                                         where evaled = [snd i | i <- Parse.read "" s]
                           otherwise -> EvalExpr otherwise
   Import s t ->         Skip
   Take n x ->           case n of

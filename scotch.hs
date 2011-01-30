@@ -88,7 +88,7 @@ loop verbose bindings state =
                          parsed <- case length readinput of
                                      0 -> do return (Skip)
                                      1 -> subfile (snd $ head readinput) bindings
-                                     otherwise -> do return (Exception "Parse error - multiple expressions entered in interpreter")
+                                     otherwise -> do return exEvalMultiple
                          imp' <- case parsed of
                                    Import s t -> importFile verbose s t
                                    otherwise -> do return (False, [])
