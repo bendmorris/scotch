@@ -18,7 +18,7 @@ tests += assert_equal(apply(g, 1), 2)
 tests += assert_equal(split("a.b.c", "."), ["a","b","c"])
 tests += assert_equal(join(["a","b","c"], "."), "a.b.c")
 
-import std.math
+eval("import std.math")
 tests += assert_equal(filter(even, [1..10]), [2,4,6,8,10])
 tests += assert_equal(reduce(x, y -> x + y, [1..100], 0), 5050)
 

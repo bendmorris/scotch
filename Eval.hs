@@ -17,6 +17,7 @@
 module Eval where
 
 import Data.List
+import Parse
 import Numeric
 import System.Directory
 import Types
@@ -31,6 +32,9 @@ import Hash
 eval :: Expr -> VarDict -> Expr
 eval exp [] = eval exp emptyHash
 eval exp vars = case exp of
+  EvalExpr x ->         case eval x vars of
+                          Val (Str s) -> Val $ Proc $ [snd i | i <- Parse.read "" s]
+                          otherwise -> EvalExpr otherwise
   Import s t ->         Skip
   Take n x ->           case n of
                           Val (NumInt i) -> case x of
@@ -86,13 +90,13 @@ eval exp vars = case exp of
   ToInt x ->            case (eval x vars) of
                           Val (NumInt i) -> Val $ NumInt i
                           Val (NumFloat f) -> Val $ NumInt (truncate f)
-                          Val (Str s) -> Val $ NumInt (read s)
+                          Val (Str s) -> Val $ NumInt (Prelude.read s)
                           Exception e -> Exception e
                           otherwise -> ToInt otherwise
   ToFloat x ->          case (eval x vars) of
                           Val (NumInt i) -> Val $ NumFloat (fromIntegral i)
                           Val (NumFloat f) -> Val $ NumFloat f
-                          Val (Str s) -> Val $ NumFloat (read s :: Double)
+                          Val (Str s) -> Val $ NumFloat (Prelude.read s :: Double)
                           Exception e -> Exception e
                           otherwise -> ToFloat otherwise
   ToStr x ->            case (eval x vars) of

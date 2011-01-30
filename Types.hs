@@ -202,6 +202,7 @@ data Expr = Exception String                -- undefined
           | FileWrite Expr Expr             -- write to file
           | FileAppend Expr Expr            -- append to file
           | AtomExpr String [Expr]          -- evaluates to an atom value
+          | EvalExpr Expr                 -- eval for metaprogramming
           deriving Eq
 instance Show(Expr) where
     show (Exception s) = "Exception: " ++ s
@@ -252,6 +253,7 @@ instance Show(Expr) where
     show (FileAppend f x) = "append " ++ show f ++ " " ++ show x
     show (AtomExpr s x) = "(" ++ s ++ " " ++ show x ++ ")"
     show (LambdaCall v e) = "(lambda " ++ show v ++ " " ++ show e ++ ")"
+    show (EvalExpr e) = "eval(" ++ show e ++ ")"
 instance Binary(Expr) where
     put (Exception s) =     do put (18 :: Word8)
                                put s
@@ -375,6 +377,8 @@ instance Binary(Expr) where
     put (LambdaCall a b) =  do put (60 :: Word8)
                                put a
                                put b
+    put (EvalExpr a) =      do put (61 :: Word8)
+                               put a
     get = do t <- get :: Get Word8
              case t of 
                18 ->    do s <- get
@@ -498,6 +502,8 @@ instance Binary(Expr) where
                            return $ AtomExpr a b
                60 ->    do a <- get
                            b <- get
-                           return $ LambdaCall a b          
+                           return $ LambdaCall a b
+               61 ->    do a <- get
+                           return $ EvalExpr a
 type ExprPosition = (String, (Int, Int))
 type PosExpr = (Maybe ExprPosition, Expr)

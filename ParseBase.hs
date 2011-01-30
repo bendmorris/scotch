@@ -51,7 +51,7 @@ languageDef =
                                       "lambda",
                                       "import", "as",
                                       "take", "from",
-                                      ","
+                                      "eval"
                                      ],
              Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
                                       "!=", "<", ">", "and", "or", "not", ":", 

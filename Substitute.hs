@@ -80,4 +80,5 @@ substitute exp params =
     FileRead x -> FileRead (substitute x params)
     FileWrite f x -> FileWrite (substitute f params) (substitute x params)
     FileAppend f x -> FileAppend (substitute f params) (substitute x params)
+    EvalExpr x -> EvalExpr (substitute x params)
     otherwise -> otherwise

@@ -67,6 +67,7 @@ value col =
 valueStmt col =
   try (reservedExpr col) <|>
   try (atomStmt col) <|>
+  try (evalStmt col) <|>
   try (procStmt col) <|>
   try (hashStmt col) <|>
   try (listStmt col) <|>
@@ -352,6 +353,12 @@ atomStmt col =
                      return [expr]) <|>
              do return []
      return $ AtomExpr (initial : chars) expr
+     
+evalStmt col =
+  do sws col
+     reserved "eval"
+     expr <- parens (expression col)
+     return $ EvalExpr expr
 
 procStmt col =
   do sws col
@@ -416,7 +423,6 @@ varcallStmt col =
 
 
 -- statements
-
 stmt col = 
   try (assignment col) <|>
   try (fileStmt col) <|>
