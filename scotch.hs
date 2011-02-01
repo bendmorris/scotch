@@ -23,6 +23,7 @@ import Control.Concurrent
 import Data.List
 import System.Console.Haskeline
 import System.Console.Haskeline.IO
+import System.Console.Haskeline.Completion
 import ReadFile
 import Types
 import Exceptions
@@ -41,13 +42,26 @@ iFlag (h:t) = if h == "-i" then True else iFlag t
 eFlag [] = False
 eFlag (h:t) = if h == "-e" then True else eFlag t
 
-main = do args <- getArgs
-          state <- initializeInput defaultSettings
+nextQName [] = []
+nextQName (h:t) = if h == '.' then t else nextQName t
+
+nameMatch str [] = False
+nameMatch str name = if isPrefixOf str name then True 
+                     else nameMatch str (nextQName name)
+
+main = do args <- getArgs          
           let verbose = vFlag args
           let interpret = iFlag args
           let evaluate = eFlag args
           -- import std.lib
           bindings <- importFile verbose ["std", "lib"] ["std", "lib"]
+          let completionFunction str = do return $ [Completion { replacement = binding,
+                                                                 display = binding,
+                                                                 isFinished = False }
+                                                    | i <- snd bindings, binding <- sort (nub [stripName (fst a) | a <- i]), nameMatch str binding]
+          state <- initializeInput (Settings { complete = (completeWord Nothing " " (completionFunction)),
+                                               historyFile = Nothing,
+                                               autoAddHistory = True })
           bindings' <- case bindings of
                          (False, _) -> do putStrLn "Failed to import std.lib."
                                           return emptyHash

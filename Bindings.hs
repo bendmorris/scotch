@@ -27,6 +27,10 @@ type Call = ([Id], Expr)
 type Binding = (Id, Call)
 type VarDict = [[Binding]]
 
+stripName :: Id -> String
+stripName (Name n) = n
+stripName n = ""
+
 varName' :: String -> Int -> String
 varName' s 0 = s
 varName' s n = if s !! n == '.'
