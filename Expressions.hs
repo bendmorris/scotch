@@ -410,15 +410,28 @@ hashStmt col =
      return $ HashExpr keysValues
 
 funcallStmt col =
+  try (
   do sws col
      var <- identifier
      params <- parens (exprList col)
      return $ Func (Name var) params
+  ) <|> try (
+  do sws col
+     var <- parens (customOp col)
+     params <- parens (exprList col)
+     return $ Func (Name var) params
+  )
      
 varcallStmt col =
+  try (
   do sws col
      var <- identifier
      return $ Var (Name var) 
+  ) <|> try (
+  do sws col
+     var <- parens (customOp col)
+     return $ Var (Name var)
+  )
 
 
 
