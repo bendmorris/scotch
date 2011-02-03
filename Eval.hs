@@ -106,6 +106,7 @@ eval exp vars = case exp of
   ToStr x ->            case (eval x vars) of
                           Val (Str s) -> Val $ Str s
                           Val (NumFloat f) -> Val $ Str $ showFFloat Nothing f ""
+                          Val (Undefined u) -> Exception u
                           Val v -> Val $ Str (show v)
                           Exception e -> Exception e
                           otherwise -> ToStr (eval otherwise vars)
@@ -114,8 +115,8 @@ eval exp vars = case exp of
                           ListExpr l -> ListExpr l
                           Val (Str s) -> Val $ List [Str [c] | c <- s]
                           Val (Hash h) -> ListExpr [ListExpr [Val (Str (fst l)), Val (snd l)] | e <- h, l <- e]
-                          Val (File f) -> Func (Name "split") [FileRead (Val (File f)), Val (Str "\n")]
-                          FileObj f -> Func (Name "split") [FileRead (f), Val (Str "\n")]
+                          Val (File f) -> Func (Name "std.lib.split") [FileRead (Val (File f)), Val (Str "\n")]
+                          FileObj f -> Func (Name "std.lib.split") [FileRead (f), Val (Str "\n")]
                           Exception e -> Exception e
                           Val v -> Val (List [v])
                           otherwise -> ToList (eval otherwise vars)
@@ -144,8 +145,9 @@ eval exp vars = case exp of
                           Val (Hash l) -> case eval n vars of
                                             Exception e -> Exception e
                                             otherwise -> case (eval (ToStr otherwise) vars) of
-                                                           Val (Str s) ->    Val $ hashMember s l
+                                                           Val (Str s) ->    eval (Val $ hashMember s l) vars
                                                            Exception e ->    Exception e
+                                                           otherwise ->      Subs otherwise (Val (Hash l))
                           otherwise ->    Subs n (eval otherwise vars)
   Add x y ->            case x of
                           Exception e ->    Exception e
