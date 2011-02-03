@@ -18,5 +18,5 @@ Executable scotch
                     executable-path,
                     parsec >= 3.1.0,
                     directory,
-                    haskeline,
+                    haskeline >= 0.6.3.2,
                     haskell98
