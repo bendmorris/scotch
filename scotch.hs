@@ -125,14 +125,14 @@ loop verbose bindings state =
                                     else return ()
                          -- determine whether any definitions were made
                          newBindings <- case parsed of
-                                          Def id x s -> do return [(id, ([], x))]
+                                          Def id x s -> do return [(localId id, ([], x))]
                                           EagerDef id x Skip -> do evaluated <- ieval x bindings
                                                                    case evaluated of
                                                                      Exception e -> do putStrLn $ show $ Exception e
                                                                                        return []
-                                                                     otherwise -> return [(id, ([], evaluated))]
+                                                                     otherwise -> return [(localId id, ([], evaluated))]
                                           Defun id p x s -> do return $ newDefs $ Defun id p x s
-                                          Defproc id params x Skip -> do return [(id, (params, Val (Proc x))), (id, ([], Val (HFunc id)))]
+                                          Defproc id params x Skip -> do return [(localId id, (params, Val (Proc x))), (id, ([], Val (HFunc id)))]
                                           otherwise -> case result of
                                                          Val (Proc p) -> do e <- (wexecute verbose 
                                                                                   [(Nothing, e) | e <- p] 

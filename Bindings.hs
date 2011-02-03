@@ -149,5 +149,6 @@ permanentDefs id p x s a = case s of
                              Defun id' p' x' s' -> permanentDefs id' p' x' s' (newDef ++ a)
                              Skip -> newDef ++ a
                              otherwise -> []
-                           where newDef = [(id, (p, x)), (id, ([], Val (HFunc id)))]
+                           where newDef = [(localId id, (p, x)), (localId id, ([], Val (HFunc (localId id))))]                                 
 newDefs (Defun id p x s) = permanentDefs id p x s []
+localId id = (Name ("local." ++ stripName id))

@@ -44,15 +44,15 @@ wexecute verbose (h:t) bindings =
      if verbose then putStrLn (show parsed)
                 else return ()        
      let newBindings = case parsed of
-                         Def id x Skip -> do return [(id, ([], x))]
+                         Def id x Skip -> do return [(localId id, ([], x))]
                          EagerDef id x Skip -> do evaluated <- ieval x bindings
                                                   case evaluated of
                                                     Exception e -> do putStrLn $ show $ Exception e
                                                                       return []
-                                                    otherwise -> return [(id, ([], evaluated))]
-                                                  return [(id, ([], evaluated))]
+                                                    otherwise -> return [(localId id, ([], evaluated))]
+                                                  return [(localId id, ([], evaluated))]
                          Defun id p x s -> do return $ newDefs $ Defun id p x s
-                         Defproc id params x Skip -> do return [(id, (params, Val (Proc x))), (id, ([], Val (HFunc id)))]
+                         Defproc id params x Skip -> do return [(localId id, (params, Val (Proc x))), (localId id, ([], Val (HFunc (localId id))))]
                          Import s t -> do i <- importFile verbose s t
                                           b <- case i of 
                                                  (False, _) -> do putStrLn ("Failed to import module " ++ show s)
@@ -137,20 +137,16 @@ importFile verbose s t =
      let success = case path of
                      "" -> False
                      otherwise -> True
-     let newval = [newbinding | newbinding <- 
-                    [((case fst binding of
-                         Name n -> Name (qualifier ++ n)), 
-                       case snd binding of
-                         ([], Val (HFunc (Name n))) -> if fst binding == Name n 
-                                                       then ([], Val (HFunc (Name (qualifier ++ n))))
-                                                       else snd binding
-                         otherwise -> otherwise) | binding <- val],
-                       (name newbinding) !! 0 /= '_' &&
-                       (s == ["std", "lib"] ||
-                        not (isInfixOf "." (snd $ splitAt (length qualifier) (name newbinding))))]
+     let newval = [(Name (qualifier ++ stripLocal (stripName (fst binding))),
+                      case snd binding of
+                        ([], Val (HFunc (Name n))) -> if fst binding == Name n 
+                                                      then ([], Val (HFunc (Name (qualifier ++ (stripLocal n)))))
+                                                      else snd binding
+                        otherwise -> otherwise) 
+                   | binding <- val,
+                     isPrefixOf "local." (stripName (fst binding))]
                    where qualifier = (foldl (++) [] [i ++ "." | i <- t])
-                         name b = case fst b of 
-                                    Name n -> n
+                         stripLocal s = if isPrefixOf "local." s then [s !! n | n <- [length "local." .. (length s) - 1]] else s
      return (success, newBindingHash newval emptyHash)
 
 -- interpret the contents of a file
