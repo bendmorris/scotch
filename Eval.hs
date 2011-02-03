@@ -39,7 +39,7 @@ eval exp vars = case exp of
                                            2 -> Val $ Proc $ evaled
                                          where evaled = [snd i | i <- Parse.read "" s]
                           otherwise -> EvalExpr otherwise
-  Import s t ->         Skip
+  Import s t ->         Import s t
   Take n x ->           case n of
                           Val (NumInt i) -> case x of
                                               Val (List l) -> Val (List (take (fromIntegral i) l))
@@ -200,7 +200,7 @@ eval exp vars = case exp of
                                 (addBinding (f, ([], Val (HFunc f)))
                                  vars))
   Var x ->              case snd ((varBinding x (vars !! varHash x) vars) !! 0) of
-                          Exception e -> HashExpr qualDict
+                          Exception e -> if length qualDict > 0 then HashExpr qualDict else Exception e
                                          where allDefs = [binding | i <- vars, binding <- i]
                                                qualDict = [(Val (Str ([(stripName (fst def)) !! n | n <- [length (stripName x) + 1 .. length (stripName (fst def)) - 1]])), 
                                                             snd (snd def))
@@ -377,6 +377,7 @@ ieval expr vars =
        Val v -> return result
        Exception e -> return result
        Skip -> return result
+       Import s t -> return result
        Output p -> do p' <- ieval p vars
                       return $ Output p'
        FileWrite f p -> do p' <- ieval p vars

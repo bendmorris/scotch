@@ -102,9 +102,17 @@ loop verbose bindings state =
                                      0 -> do return (Skip)
                                      1 -> subfile (snd $ head readinput) bindings
                                      otherwise -> do return exEvalMultiple
+                         -- evaluate parsed input
+                         result <- do r <- ieval parsed bindings
+                                      case r of
+                                        Func f args -> return $ exNoMatch f args
+                                        LambdaCall x args -> return $ exNoMatch x args
+                                        otherwise -> return otherwise
                          imp' <- case parsed of
                                    Import s t -> importFile verbose s t
-                                   otherwise -> do return (False, [])
+                                   otherwise -> case result of
+                                                  Import s t -> importFile verbose s t 
+                                                  otherwise -> do return (False, [])
                          imp <- case imp' of
                                   (False, []) -> do -- there was no attempted import
                                                    return emptyHash
@@ -113,12 +121,6 @@ loop verbose bindings state =
                                                     return emptyHash
                                   (True, b) -> do -- successful module import
                                                   return b
-                         -- evaluate parsed input
-                         result <- do r <- ieval parsed bindings
-                                      case r of
-                                        Func f args -> return $ exNoMatch f args
-                                        LambdaCall x args -> return $ exNoMatch x args
-                                        otherwise -> return otherwise
                          if verbose then putStrLn (show parsed)
                                     else return ()
                          -- determine whether any definitions were made

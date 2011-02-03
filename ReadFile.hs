@@ -63,6 +63,12 @@ wexecute verbose (h:t) bindings =
                          otherwise -> case result of
                                         Val (Proc p) -> do e <- wexecute verbose [(position, e) | e <- p] bindings
                                                            return [i | j <- e, i <- j]
+                                        Import s t -> do i <- importFile verbose s t
+                                                         b <- case i of
+                                                                (False, _) -> do putStrLn ("Failed to import module " ++ show s)
+                                                                                 return []
+                                                                (True, i) -> do return [e | j <- i, e <- j]
+                                                         return b
                                         otherwise -> do return []
      case result of
        Exception e -> do putStrLn ("\nException in " ++ (showPosition) ++ "\n" ++ e ++ "\n")

@@ -21,6 +21,7 @@ tests += assert_equal(join(["a","b","c"], "."), "a.b.c")
 eval("import std.math")
 tests += assert_equal(filter(even, [1..10]), [2,4,6,8,10])
 tests += assert_equal(reduce(x, y -> x + y, [1..100], 0), 5050)
+tests += assert_equal(std.math @ 'pi', 3.141592654)
 
 apply(f, x, n) = f(x) + apply(f, x, n-1)
 apply(f, x, 0) = 0
@@ -109,7 +110,7 @@ tests += assert_equal((take 1 from [for i in <'test.sco'>, i]) @ 0, "# Tests")
 b = a where a = 1
 tests += assert_equal(b, 1)
 tests += assert_equal(take 1 from [for i in [1..], i], [1])
-tests += assert_equal(take 10 from [for i in [1..], i, prime(i)], [1,2,3,5,7,11,13,17,19,23])
+tests += assert_equal(take 10 from [for i in [1..], i, prime(i)], [2,3,5,7,11,13,17,19,23,29])
 
 a = 1
 thread do a = 2
