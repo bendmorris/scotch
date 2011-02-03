@@ -34,7 +34,7 @@ odd(n) = not even(n)
 abs(n) = if n < 0 then -n else n
 
 # prime
-prime(n) = if n < 1 then false
+prime(n) = if n < 2 then false
            else len(take 1 from divisors'(n)) == 0
 divisors'(n) = [for i in (2 + [3 .. int(sqrt(n)+1), 2]), i, n mod i == 0, n > 2]
 divisors(n) = [for i in ([1 .. n-1]), i, n mod i == 0, n > 0]
