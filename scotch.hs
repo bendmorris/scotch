@@ -125,7 +125,7 @@ loop verbose bindings state =
                                     else return ()
                          -- determine whether any definitions were made
                          newBindings <- case parsed of
-                                          Def id x s -> do return [(localId id, ([], x))]
+                                          Def id x Skip -> do return [(localId id, ([], x))]
                                           EagerDef id x Skip -> do evaluated <- ieval x bindings
                                                                    case evaluated of
                                                                      Exception e -> do putStrLn $ show $ Exception e
