@@ -199,7 +199,15 @@ eval exp vars = case exp of
   Defproc f p x y ->    eval y (addBinding (f, (p, Val (Proc x)))
                                 (addBinding (f, ([], Val (HFunc f)))
                                  vars))
-  Var x ->              eval (snd ((varBinding x (vars !! varHash x) vars) !! 0)) vars
+  Var x ->              case snd ((varBinding x (vars !! varHash x) vars) !! 0) of
+                          Exception e -> HashExpr qualDict
+                                         where allDefs = [binding | i <- vars, binding <- i]
+                                               qualDict = [(Val (Str ([(stripName (fst def)) !! n | n <- [length (stripName x) + 1 .. length (stripName (fst def)) - 1]])), 
+                                                            snd (snd def))
+                                                           | def <- allDefs,
+                                                             length (fst (snd def)) == 0,
+                                                             isPrefixOf ((stripName x) ++ ".") (stripName (fst def))]
+                          otherwise -> eval otherwise vars
   Func f args ->        case validList evalArgs of
                           Exception e -> Exception e
                           otherwise -> if computableList evalArgs

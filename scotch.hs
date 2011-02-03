@@ -59,9 +59,8 @@ main = do args <- getArgs
                                                                  display = binding,
                                                                  isFinished = False }
                                                     | i <- snd bindings, binding <- sort (nub [stripName (fst a) | a <- i]), nameMatch str binding]
-          state <- initializeInput (Settings { complete = (completeWord Nothing " " (completionFunction)),
-                                               historyFile = Nothing,
-                                               autoAddHistory = True })
+
+          state <- initializeInput (setComplete (completeWord Nothing " " (completionFunction)) defaultSettings)
           bindings' <- case bindings of
                          (False, _) -> do putStrLn "Failed to import std.lib."
                                           return emptyHash
