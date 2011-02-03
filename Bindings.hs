@@ -151,4 +151,6 @@ permanentDefs id p x s a = case s of
                              otherwise -> []
                            where newDef = [(localId id, (p, x)), (localId id, ([], Val (HFunc (localId id))))]                                 
 newDefs (Defun id p x s) = permanentDefs id p x s []
-localId id = (Name ("local." ++ stripName id))
+
+localId id = (Name ("local." ++ stripLocal (stripName id)))
+stripLocal s = if isPrefixOf "local." s then [s !! n | n <- [length "local." .. (length s) - 1]] else s
