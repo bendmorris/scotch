@@ -204,11 +204,12 @@ eval exp vars = case exp of
   Var x ->              case snd ((varBinding x (vars !! varHash x) vars) !! 0) of
                           Exception e -> if length qualDict > 0 then HashExpr qualDict else Exception e
                                          where allDefs = [binding | i <- vars, binding <- i]
-                                               qualDict = [(Val (Str ([(stripLocal (stripName (fst def))) !! n | n <- [length (stripLocal (stripName x)) + 1 .. length (stripLocal (stripName (fst def))) - 1]])), 
+                                               qualDict = [(Val (Str ([(qualName (stripName (fst def))) !! n | n <- [length (qualName (stripName x)) + 1 .. length (qualName (stripName (fst def))) - 1]])), 
                                                             snd (snd def))
                                                            | def <- allDefs,
                                                              length (fst (snd def)) == 0,
-                                                             isPrefixOf ((stripName x) ++ ".") (stripLocal (stripName (fst def)))]
+                                                             isPrefixOf ((stripName x) ++ ".") (qualName (stripName (fst def)))]
+                                               qualName n = if isPrefixOf "local" (stripName x) then n else stripLocal n
                           otherwise -> eval otherwise vars
   Func f args ->        case validList evalArgs of
                           Exception e -> Exception e
