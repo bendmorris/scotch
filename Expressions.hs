@@ -437,12 +437,17 @@ varcallStmt col =
 
 -- statements
 stmt col = 
+  try (semicolon) <|>
   try (assignment col) <|>
   try (fileStmt col) <|>
   try (printStmt col) <|>
   try (importStmt col) <|>
   try (writeStmt col) <|>
   try (appendStmt col)
+  
+semicolon =
+  do reserved ";"
+     return $ Skip
   
 
 printStmt col =
