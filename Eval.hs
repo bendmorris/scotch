@@ -122,24 +122,21 @@ eval exp vars = case exp of
                           otherwise -> ToList (eval otherwise vars)
   Subs n x ->           case x of
                           Val (List l) -> case (eval n vars) of
-                                            Val (NumInt n) -> if n >= 0 {-&& 
-                                                                 n < (fromIntegral (length l))-}
+                                            Val (NumInt n) -> if n >= 0
                                                               then Val (l !! (fromIntegral n))
-                                                              else exNotInList n
+                                                              else Val (l !! ((length l) + (fromIntegral n)))
                                             Val (List l') ->  ListExpr [Subs (Val i) (Val (List l)) | i <- l']
                                             otherwise ->      exNonNumSubs otherwise
                           ListExpr l ->   case (eval n vars) of
-                                            Val (NumInt n) -> if n >= 0 {-&& 
-                                                                 n < (fromIntegral (length l))-}
+                                            Val (NumInt n) -> if n >= 0
                                                               then l !! (fromIntegral n)
-                                                              else exNotInList n
+                                                              else l !! ((length l) + (fromIntegral n))
                                             Val (List l') ->  ListExpr [Subs (Val i) (ListExpr l) | i <- l']
                                             otherwise ->      exNonNumSubs otherwise
                           Val (Str s) ->  case (eval n vars) of
-                                            Val (NumInt n) -> if n >= 0 {-&& 
-                                                                 n < (fromIntegral (length s))-}
+                                            Val (NumInt n) -> if n >= 0
                                                               then Val (Str ([s !! (fromIntegral n)]))
-                                                              else exNotInList n
+                                                              else Val (Str ([s !! ((length s) + (fromIntegral n))]))
                                             Val (List l') ->  ListExpr [Subs (Val i) (Val (Str s)) | i <- l']
                                             otherwise ->      exNonNumSubs otherwise
                           Val (Hash l) -> case eval n vars of
