@@ -187,6 +187,7 @@ eval exp vars = case exp of
                           Val r -> case r of
                                      Bit b -> Val (Bit (not b))
                                      otherwise -> exNotBool otherwise
+                          otherwise -> Not otherwise
   Def f x y ->          eval (substitute y [(f, x)]) vars
   EagerDef f x y ->     case eval x vars of
                           Exception e -> Exception e
