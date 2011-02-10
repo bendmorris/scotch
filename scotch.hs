@@ -24,14 +24,14 @@ import Data.List
 import System.Console.Haskeline
 import System.Console.Haskeline.IO
 import System.Console.Haskeline.Completion
-import ReadFile
-import Types
-import Exceptions
-import Bindings
-import Parse
-import Eval
-import Substitute
-import Hash
+import Scotch.Parse.Parse as Parse
+import Scotch.Eval.ReadFile
+import Scotch.Types.Types
+import Scotch.Types.Exceptions
+import Scotch.Types.Bindings
+import Scotch.Types.Hash
+import Scotch.Eval.Eval
+import Scotch.Eval.Substitute
 
 
 -- check for -v or -i flags
