@@ -384,7 +384,7 @@ keyValue col =
                oneOf [quote]
                return chars
      whiteSpace >> symbol ":"
-     val <- whiteSpace >> value col
+     val <- whiteSpace >> expression col
      return (key, val)
      
 keyExpr col = try (
