@@ -107,6 +107,7 @@ pattern_match (a:b) (c:d) =
   case a of
     Name n -> pattern_match b d
     Split x y -> case c of
+                   ListExpr l -> pattern_match b d
                    Val (List l) -> pattern_match b d
                    Val (Str l) -> pattern_match b d
                    otherwise -> False
@@ -131,6 +132,10 @@ funcall (h:t) =
   case param of
      Name n -> h : funcall t
      Split x y -> case arg of
+                    ListExpr l -> if length l > 0 then (Name x, head l) :
+                                                       (Name y, ListExpr (tail l)) :
+                                                       funcall t
+                                                  else [(Name x, Exception "Can't split empty list")]
                     Val (List l) -> if length l > 0 then (Name x, Val (head l)) :
                                                          (Name y, Val (List (tail l))) :
                                                          funcall t

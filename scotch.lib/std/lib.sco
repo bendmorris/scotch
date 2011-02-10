@@ -31,7 +31,7 @@ join(h+t, s) = h + (if len(t) > 0 then s + join(t, s) else "")
 all(h+t) = case h of true: all(t), otherwise: false
 all([]) = true
 # Returns true if any of the members in a list are true.
-any(h+t) = if h then true else any(t)
+any(l) = foldr((|), l, false)
 any([]) = false
 
 # Checks whether string/list \c+d is a prefix of \a+b.
@@ -93,15 +93,15 @@ foldr(f, h+t, z) = f(h, foldr(f, t, z))
 foldr(f, [], z) = z
 reduce = foldl
 
-filter(f, h+t) = [for i in h+t, i, f(i)]
+filter(f, l) = [for i in l, i, f(i)]
 filter(f, []) = []
 map(f, h+t) = [for i in h+t, f(i)]
 
 show(a) = str(a)
 
-sum(h+t, s) = foldl(x, y -> x + y, h+t, s)
+sum(h+t, s) = foldr(x, y -> x + y, h+t, s)
 sum(l) = sum(l, 0)
-prod(h+t) = foldl(x, y -> x * y, h+t, 1)
+prod(h+t) = foldr(x, y -> x * y, h+t, 1)
 
 sort(h+t) = qsort(h+t)
 qsort(h+t, n) = case (len(h+t) < n) of
@@ -125,5 +125,16 @@ repeat(f, r, 0) = r
 zip(a+b, c+d) = [[a,c]] + zip(b, d)
 zip([], c+d) = []
 zip(a+b, []) = []
+zip(a+b, c+d, f) = [f(a, c)] + zip(b, d, f)
+zip([], c+d, f) = []
+zip(a+b, [], f) = []
 
+(a) + (b) = a + b
+a - b = a - b
+a * b = a * b
+a / b = a / b
+a ^ b = a ^ b
+a & b = a & b
+a | b = a | b
+a != b = true
 a == b = false

@@ -42,17 +42,27 @@ eval exp vars = case exp of
   Import s t ->         Import s t
   Take n x ->           case n of
                           Val (NumInt i) -> case x of
-                                              Val (List l) -> Val (List (take (fromIntegral i) l))
-                                              ListExpr l -> eval (ListExpr (take (fromIntegral i) l)) vars
+                                              Val (List l) -> Val (List (take i' l))
+                                              ListExpr l -> eval (ListExpr (take i' l)) vars
                                               Range from to step -> case eval (Range from to step) vars of
-                                                                      Val (List l) -> Val (List (take (fromIntegral i) l))
-                                                                      ListExpr l -> eval (ListExpr (take (fromIntegral i) l)) vars
+                                                                      Val (List l) -> Val (List (take i' l))
+                                                                      ListExpr l -> eval (ListExpr (take i' l)) vars
                                                                       Exception e -> Exception e
                                                                       otherwise -> otherwise
-                                              Val (Str s) -> Val $ Str $ take (fromIntegral i) s
+                                              Val (Str s) -> Val $ Str $ take i' s
                                               For id x y conds -> TakeFor id x y conds i
                                               Exception e -> Exception e
-                                              otherwise -> Take (Val (NumInt i)) (eval otherwise vars)
+                                              Add (ListExpr l) (y) -> if length t == i'
+                                                                      then ListExpr t
+                                                                      else Take n (eval x vars)
+                                                                      where t = take i' l
+                                              Add (Val (List l)) (y) -> if length t == i'
+                                                                        then Val $ List t
+                                                                        else Take n (eval x vars)
+                                                                        where t = take i' l
+
+                                              otherwise -> Take n (eval x vars)
+                                            where i' = fromIntegral i
                           Exception e -> Exception e
                           otherwise -> Take (eval otherwise vars) x
   ListExpr l ->         case (validList l) of
@@ -98,7 +108,7 @@ eval exp vars = case exp of
                           Exception e -> Exception e
                           otherwise -> ToInt otherwise
   ToFloat x ->          case (eval x vars) of
-                          Val (NumInt i) -> Val $ NumFloat (fromIntegral i)
+                          Val (NumInt i) -> Val $ NumFloat $ fromIntegral i
                           Val (NumFloat f) -> Val $ NumFloat f
                           Val (Str s) -> Val $ NumFloat (Prelude.read s :: Double)
                           Exception e -> Exception e
@@ -152,6 +162,7 @@ eval exp vars = case exp of
                                               Exception e -> Exception e
                                               ListExpr l' -> ListExpr (l ++ l')
                                               Val v -> Add (eval x vars) y
+                                              Add a b -> Add (Add x a) b
                                               otherwise -> Add x (eval y vars)
                           Val v ->          case y of
                                               Exception e -> Exception e
@@ -208,7 +219,7 @@ eval exp vars = case exp of
                                                              length (fst (snd def)) == 0,
                                                              isPrefixOf ((stripName x) ++ ".") (qualName (stripName (fst def)))]
                                                qualName n = if isPrefixOf "local" (stripName x) then n else stripLocal n
-                          otherwise -> eval otherwise vars
+                          otherwise -> otherwise
   Func f args ->        case validList evalArgs of
                           Exception e -> Exception e
                           otherwise -> if computableList evalArgs
@@ -326,7 +337,7 @@ functionCall f args [] vars = Func f args
 functionCall f args (h:t) vars =
   case vardef of
     Val (HFunc (h)) -> if length params > 0 
-                       then checkTailRecursion fp args definition newcall vars
+                       then newcall
                        else case snd $ (varBinding fp (vars !! varHash fp) vars) !! 0 of
                               Func f' args' -> Func f' [eval arg vars | arg <- (args' ++ args)]
                               otherwise -> functionCall f args t vars
@@ -345,23 +356,6 @@ functionCall f args (h:t) vars =
         params = fst definition
         expr = snd definition
         newcall = substitute expr (funcall (zip params args))
-
-tailcall definition f args args' vars = 
-  if definition' == definition 
-  then tailcall definition f [eval (substitute (args' !! n) (funcall (zip params args))) vars
-                              | n <- [0 .. (length args') - 1]] 
-                              args' vars
-  else eval (substitute (snd definition') (funcall (zip (fst definition') args))) vars
-  where definition' = funcBinding f args (vars !! varHash f) vars
-        params = fst definition
-
-checkTailRecursion :: Id -> [Expr] -> Call -> Expr -> VarDict -> Expr
-checkTailRecursion f args definition newcall vars =
-  case snd definition of
-    Func f' args' -> if f == f' 
-                     then tailcall definition f args args' vars
-                     else newcall
-    otherwise -> newcall
 
 
 iolist :: [IO Expr] -> IO [Expr]
