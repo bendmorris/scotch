@@ -59,7 +59,7 @@ data Value = NumInt Integer
            | Str String
            | Bit Bool
            | List [Value]
-           | Hash [[(String, Value)]]
+           | Hash [[(String, Expr)]]
            | Null
            | HFunc Id
            | Lambda [Id] Expr

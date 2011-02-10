@@ -28,20 +28,20 @@ hashLoc s = mod (hashKey s) hashSize
 
 emptyHash = [[] | n <- [1..hashSize]]
 
-bucketMember :: String -> [(String, Value)] -> Value
-bucketMember s [] = Undefined $ "Key " ++ s ++ " not found in hash"
+bucketMember :: String -> [(String, Expr)] -> Expr
+bucketMember s [] = Exception $ "Key " ++ s ++ " not found in hash"
 bucketMember s (h:t) = if fst h == s then snd h else bucketMember s t
 
-hashMember :: String -> [[(String, Value)]] -> Value
+hashMember :: String -> [[(String, Expr)]] -> Expr
 hashMember s h = bucketMember s (h !! (hashLoc s))
 
-removeFromBucket :: (String, Value) -> [(String, Value)] -> [(String, Value)]
+removeFromBucket :: (String, Expr) -> [(String, Expr)] -> [(String, Expr)]
 removeFromBucket a [] = []
 removeFromBucket a (h:t) = if (fst h) == (fst a)
                            then removeFromBucket a t
                            else h : removeFromBucket a t
 
-makeHash' :: [(String, Value)] -> [[(String, Value)]] -> [[(String, Value)]]
+makeHash' :: [(String, Expr)] -> [[(String, Expr)]] -> [[(String, Expr)]]
 makeHash' [] r = r
 makeHash' (h:t) r = makeHash' t 
                     [(if hashLoc (fst h) == i
@@ -49,5 +49,5 @@ makeHash' (h:t) r = makeHash' t
                       else [])
                      ++ (removeFromBucket h (r !! i))
                      | i <- [0..(hashSize-1)]]
-makeHash :: [(String, Value)] -> [[(String, Value)]]
+makeHash :: [(String, Expr)] -> [[(String, Expr)]]
 makeHash s = makeHash' s emptyHash

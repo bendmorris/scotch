@@ -1,6 +1,6 @@
 tests = []
 
-assert_equal(a, b) = [if a == b then "pass" else (a + " != " + b)]
+assert_equal(a, b) = [if a == b then "pass" else (str(a) + " != " + str(b))]
 
 run_tests(tests) =
   do print if all([for test in tests, test == "pass"])

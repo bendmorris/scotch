@@ -116,6 +116,8 @@ a = 1
 thread do a = 2
 tests += assert_equal(a, 1)
 
+tests += assert_equal(take 10 from evens, [2..20,2])
+
 print "Running tests..."
 
 run_tests(tests)

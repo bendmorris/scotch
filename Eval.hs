@@ -78,26 +78,11 @@ eval exp vars = case exp of
                                                | item <- l]
                                          l'' = [Val item | item <- l']
                           Exception e -> Exception e
-  HashExpr l ->         case (validList [snd e | e <- l]) of
-                          Val _ -> case validList [Val item | item <- l'] of
-                                     Exception e -> Exception e
-                                     otherwise -> case validList [Val item | item <- m'] of
-                                                    Val _ -> Val $ Hash (makeHash (zip [case eval (fst i) vars of
-                                                                                          Val (Str s) -> s
-                                                                                          otherwise -> show otherwise
-                                                                                        | i <- l] l'))
-                                                    Exception e -> Exception e
-                                   where l' = [case eval (snd item) vars of
-                                                 Val r -> r
-                                                 Exception e -> Undefined e
-                                                 otherwise -> Undefined (show otherwise)
-                                               | item <- l]
-                                         m' = [case eval (fst item) vars of
-                                                 Val r -> r
-                                                 Exception e -> Undefined e
-                                                 otherwise -> Undefined (show otherwise)
-                                               | item <- l]
-                          Exception e -> Exception e
+  HashExpr l ->         Val $ Hash $ makeHash [(case eval (fst i) vars of
+                                                  Val (Str s) -> s
+                                                  otherwise -> show otherwise,
+                                                snd i)
+                                                | i <- l]
   Val x ->              case x of
                           Undefined s -> Exception s
                           otherwise -> Val x
@@ -124,7 +109,7 @@ eval exp vars = case exp of
                           Val (List l) -> Val $ List l
                           ListExpr l -> ListExpr l
                           Val (Str s) -> Val $ List [Str [c] | c <- s]
-                          Val (Hash h) -> ListExpr [ListExpr [Val (Str (fst l)), Val (snd l)] | e <- h, l <- e]
+                          Val (Hash h) -> ListExpr [ListExpr [Val (Str (fst l)), snd l] | e <- h, l <- e]
                           Val (File f) -> Func (Name "std.lib.split") [FileRead (Val (File f)), Val (Str "\n")]
                           FileObj f -> Func (Name "std.lib.split") [FileRead (f), Val (Str "\n")]
                           Exception e -> Exception e
@@ -152,7 +137,7 @@ eval exp vars = case exp of
                           Val (Hash l) -> case eval n vars of
                                             Exception e -> Exception e
                                             otherwise -> case (eval (ToStr otherwise) vars) of
-                                                           Val (Str s) ->    eval (Val $ hashMember s l) vars
+                                                           Val (Str s) ->    hashMember s l
                                                            Exception e ->    Exception e
                                                            otherwise ->      Subs otherwise (Val (Hash l))
                           otherwise ->    Subs n (eval otherwise vars)
@@ -162,7 +147,7 @@ eval exp vars = case exp of
                                               Exception e -> Exception e
                                               ListExpr l' -> ListExpr (l ++ l')
                                               Val v -> Add (eval x vars) y
-                                              Add a b -> Add (Add x a) b
+                                              Add a b -> Add (eval (Add x a) vars) b
                                               otherwise -> Add x (eval y vars)
                           Val v ->          case y of
                                               Exception e -> Exception e
