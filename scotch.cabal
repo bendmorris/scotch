@@ -7,7 +7,6 @@ Maintainer:         ben@bendmorris.com
 Category:           Language
 Cabal-version:      >= 1.2
 Build-type:         Simple
---BINDIR:           $prefix
   
 Executable scotch
   Ghc-options:      -O2
