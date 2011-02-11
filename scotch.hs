@@ -41,6 +41,13 @@ iFlag [] = False
 iFlag (h:t) = if h == "-i" then True else iFlag t
 eFlag [] = False
 eFlag (h:t) = if h == "-e" then True else eFlag t
+getFlags (h:t) (v, i, s, e) = case h of
+                                "-v" -> getFlags t (True, i, s, e)
+                                "-i" -> getFlags t (v, True, s, e)
+                                "-s" -> getFlags t (v, i, True, e)
+                                "-e" -> getFlags t (v, i, s, True)
+                                otherwise -> getFlags t (v, i, s, e)
+getFlags [] a = a
 
 nextQName [] = []
 nextQName (h:t) = if h == '.' then t else nextQName t
@@ -50,11 +57,9 @@ nameMatch str name = if isPrefixOf str name then True
                      else nameMatch str (nextQName name)
 
 main = do args <- getArgs          
-          let verbose = vFlag args
-          let interpret = iFlag args
-          let evaluate = eFlag args
+          let (verbose, interpret, strict, evaluate) = getFlags args (False, False, False, False)
           -- import std.lib
-          bindings <- importFile verbose ["std", "lib"] ["std", "lib"]
+          bindings <- importFile (verbose, strict) ["std", "lib"] ["std", "lib"]
           let completionFunction str = do return $ [Completion { replacement = binding,
                                                                  display = binding,
                                                                  isFinished = False }
@@ -69,24 +74,26 @@ main = do args <- getArgs
           if (length args) > 0 && not (isPrefixOf "-" (args !! 0))
             -- if a .sco filename is given as the first argument, interpret that file
             then if evaluate
-                 then do statement <- wexecute (verbose, True) (Parse.read "" (args !! 0)) (snd bindings)
-                         if interpret then loop verbose statement state
+                 then do statement <- wexecute (verbose, True, strict) 
+                                               (Parse.read "" (args !! 0)) 
+                                               (snd bindings)
+                         if interpret then loop (verbose, strict) statement state
                                       else return ()
                  else do let filename = case isSuffixOf ".sco" (args !! 0) of
                                          True -> [(args !! 0) !! n| n <- [0..length (args !! 0) - 5]]
                                          False -> args !! 0
-                         newbindings <- execute verbose filename bindings'
+                         newbindings <- execute (verbose, strict) filename bindings'
                          -- if the -i flag is set, start the interpreter
-                         if interpret then loop verbose newbindings state
+                         if interpret then loop (verbose, strict) newbindings state
                                       else return ()
             -- otherwise, start the interpreter
-            else do wexecute (False, False) [(Nothing, (Var (Name "startup")))] bindings'
-                    loop verbose bindings' state
+            else do wexecute (False, False, True) [(Nothing, (Var (Name "startup")))] bindings'
+                    loop (verbose, strict) bindings' state
 
 -- the interpreter's main REPL loop
-loop :: Bool -> VarDict -> InputState -> IO ()
-loop verbose [] state = loop verbose emptyHash state
-loop verbose bindings state = 
+loop :: (Bool, Bool) -> VarDict -> InputState -> IO ()
+loop (verbose, strict) [] state = loop (verbose, strict) emptyHash state
+loop (verbose, strict) bindings state = 
   do line <- queryInput state (getInputLine ">> ")
      case line of
         Nothing -> return ()
@@ -94,13 +101,16 @@ loop verbose bindings state =
         Just "restart" -> main
         Just "vars" -> do putStrLn (foldl (++) "" 
                                    ["** " ++ show binding ++ "\n" | e <- bindings, binding <- e])
-                          loop verbose bindings state
-        Just "-v" -> loop (not verbose) bindings state
+                          loop (verbose, strict) bindings state
+        Just "-v" -> loop (not verbose, strict) bindings state
+        Just "-s" -> loop (verbose, not strict) bindings state
         Just input -> do -- parse input
                          let parsed = Parse.read "Interpreter" input
                          newBindings <- case length parsed of
                                           0 -> do return []
-                                          1 -> wexecute (verbose, True) parsed bindings
+                                          1 -> wexecute (verbose, True, strict) parsed bindings
                                           otherwise -> do putStrLn (show exEvalMultiple)
                                                           return []
-                         loop verbose (newBindingHash [i | j <- newBindings, i <- j] bindings) state
+                         loop (verbose, strict) 
+                              (newBindingHash [i | j <- newBindings, i <- j] bindings) 
+                              state

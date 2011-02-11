@@ -31,12 +31,12 @@ import Scotch.Eval.Eval
 
 
 -- interpret a list of code lines using a list of scoped bindings
-wexecute :: (Bool, Bool) -> [PosExpr] -> VarDict -> IO VarDict
+wexecute :: (Bool, Bool, Bool) -> [PosExpr] -> VarDict -> IO VarDict
 wexecute _ [] bindings = do return bindings
-wexecute (verbose, interpret) (h:t) bindings = 
+wexecute (verbose, interpret, strict) (h:t) bindings = 
   do parsed <- subfile (snd h) bindings
      -- evaluate the parsed code
-     result <- do r <- ieval parsed bindings
+     result <- do r <- ieval parsed bindings strict
                   case r of
                     Func f args -> return $ exNoMatch f args
                     LambdaCall x args -> return $ exNoMatch x args
@@ -46,7 +46,7 @@ wexecute (verbose, interpret) (h:t) bindings =
      -- get new bindings if any definitions/imports were made
      newBindings <- case parsed of
                       Def id x Skip -> do return [(localId id, ([], x))]
-                      EagerDef id x Skip -> do evaluated <- ieval x bindings
+                      EagerDef id x Skip -> do evaluated <- ieval x bindings strict
                                                case evaluated of
                                                  Exception e -> do putStrLn $ show $ Exception e
                                                                    return []
@@ -54,7 +54,7 @@ wexecute (verbose, interpret) (h:t) bindings =
                                                return [(localId id, ([], evaluated))]
                       Defun id p x s -> do return $ newDefs $ Defun id p x s
                       Defproc id params x Skip -> do return [(localId id, (params, Val (Proc x))), (localId id, ([], Val (HFunc (localId id))))]
-                      Import s t -> do i <- importFile verbose s t
+                      Import s t -> do i <- importFile (verbose, strict) s t
                                        b <- case i of 
                                               (False, _) -> do putStrLn ("Failed to import module " ++ show s)
                                                                return []
@@ -62,9 +62,9 @@ wexecute (verbose, interpret) (h:t) bindings =
                                        return b
                                      
                       otherwise -> case result of
-                                     Val (Proc p) -> do e <- wexecute (verbose, interpret) [(position, e) | e <- p] bindings
+                                     Val (Proc p) -> do e <- wexecute (verbose, interpret, strict) [(position, e) | e <- p] bindings
                                                         return [i | j <- e, i <- j]
-                                     Import s t -> do i <- importFile verbose s t
+                                     Import s t -> do i <- importFile (verbose, strict) s t
                                                       b <- case i of
                                                              (False, _) -> do putStrLn ("Failed to import module " ++ show s)
                                                                               return []
@@ -77,7 +77,7 @@ wexecute (verbose, interpret) (h:t) bindings =
                          return []
        Output x -> do case x of
                         Val (Str s) -> putStrLn s
-                        Val (Atom s l) -> do result <- ieval (Func (Name "show") [x]) bindings
+                        Val (Atom s l) -> do result <- ieval (Func (Name "show") [x]) bindings strict
                                              case result of
                                                Val (Str s) -> putStrLn s
                                                Func f args -> putStrLn $ show $ exNoMatch f args
@@ -89,7 +89,7 @@ wexecute (verbose, interpret) (h:t) bindings =
                                                     nextline newBindings
        FileAppend (Val (File f)) (Val (Str x)) -> do appendFile f x
                                                      nextline newBindings
-       Val (Thread th) -> do forkIO (do wexecute (verbose, interpret) [(Nothing, th)] bindings
+       Val (Thread th) -> do forkIO (do wexecute (verbose, interpret, strict) [(Nothing, th)] bindings
                                         return ())
                              nextline newBindings
        Val (Proc p) -> nextline newBindings
@@ -109,7 +109,7 @@ wexecute (verbose, interpret) (h:t) bindings =
                      Nothing -> 1
            showPosition = name ++ ": Line " ++ show line ++ ", column " ++ show column
            position = fst h
-           nextline newBindings = wexecute (verbose, interpret) t (addBindings newBindings bindings)
+           nextline newBindings = wexecute (verbose, interpret, strict) t (addBindings newBindings bindings)
 
 -- returns a qualified file name from a list of identifiers provided by an import statement        
 importName [] = ""
@@ -121,8 +121,8 @@ searchPathMatch (h:t) = do exists <- doesFileExist (h ++ ".sco")
                              True -> return h
                              False -> searchPathMatch t
 -- returns (was the import successful?, VarDict of imported bindings)
-importFile :: Bool -> [String] -> [String] -> IO (Bool, VarDict)
-importFile verbose s t = 
+importFile :: (Bool, Bool) -> [String] -> [String] -> IO (Bool, VarDict)
+importFile (verbose, strict) s t = 
   do currDir <- getCurrentDirectory
      fullPath <- splitExecutablePath
      let libDir = (fst fullPath) ++ "scotch.lib"
@@ -133,13 +133,13 @@ importFile verbose s t =
                        libDir ++ moduleName]
      path <- searchPathMatch searchPath
      stdlib <- if s == ["std", "lib"] then do return (False, []) 
-                                      else importFile False ["std", "lib"] ["std", "lib"]
+                                      else importFile (False, strict) ["std", "lib"] ["std", "lib"]
      let builtin = case stdlib of
                     (True, b) -> b
                     (False, _) -> emptyHash
      val <- case path of 
               "" -> do return []
-              otherwise -> do e <- execute verbose path builtin
+              otherwise -> do e <- execute (verbose, strict) path builtin
                               return [i | j <- e, i <- j]
      let success = case path of
                      "" -> False
@@ -157,18 +157,19 @@ importFile verbose s t =
      return (success, newBindingHash newval emptyHash)
 
 -- interpret the contents of a file
-execute :: Bool -> String -> VarDict -> IO VarDict
-execute verbose file bindings = do optimized <- doesFileExist (file ++ ".osc")
-                                   input <- Prelude.readFile (file ++ ".sco")
-                                   parsed <- case optimized of
-                                               True -> do t1 <- getModificationTime (file ++ ".sco")
-                                                          t2 <- getModificationTime (file ++ ".osc")
-                                                          if t1 > t2 then do let exprs = (Parse.read (file ++ ".sco") input)
-                                                                             serialize (file ++ ".osc") exprs
-                                                                     else do return ()
-                                                          bytes <- Data.ByteString.Lazy.readFile (file ++ ".osc")
-                                                          return $ Parse.readBinary (bytes)
-                                               False -> do let exprs = (Parse.read (file ++ ".sco") input)
-                                                           serialize (file ++ ".osc") exprs
-                                                           return exprs
-                                   wexecute (verbose, False) parsed bindings
+execute :: (Bool, Bool) -> String -> VarDict -> IO VarDict
+execute (verbose, strict) file bindings = 
+  do optimized <- doesFileExist (file ++ ".osc")
+     input <- Prelude.readFile (file ++ ".sco")
+     parsed <- case optimized of
+                 True -> do t1 <- getModificationTime (file ++ ".sco")
+                            t2 <- getModificationTime (file ++ ".osc")
+                            if t1 > t2 then do let exprs = (Parse.read (file ++ ".sco") input)
+                                               serialize (file ++ ".osc") exprs
+                                       else do return ()
+                            bytes <- Data.ByteString.Lazy.readFile (file ++ ".osc")
+                            return $ Parse.readBinary (bytes)
+                 False -> do let exprs = (Parse.read (file ++ ".sco") input)
+                             serialize (file ++ ".osc") exprs
+                             return exprs
+     wexecute (verbose, False, strict) parsed bindings
