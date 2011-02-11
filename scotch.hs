@@ -34,13 +34,7 @@ import Scotch.Eval.Eval
 import Scotch.Eval.Substitute
 
 
--- check for -v or -i flags
-vFlag [] = False
-vFlag (h:t) = if h == "-v" then True else vFlag t
-iFlag [] = False
-iFlag (h:t) = if h == "-i" then True else iFlag t
-eFlag [] = False
-eFlag (h:t) = if h == "-e" then True else eFlag t
+-- check for flags
 getFlags (h:t) (v, i, s, e) = case h of
                                 "-v" ->             getFlags t (True, i, s, e)
                                 "--verbose" ->      getFlags t (True, i, s, e)
