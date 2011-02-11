@@ -44,8 +44,8 @@ vadd False (Val (NumFloat a)) (Val (Str b)) = Val (Str ((show a) ++ b))
 vadd _ (Val (List a)) (Val (List b)) = Val (List (a ++ b))
 vadd _ (Val (Str a)) (Val (List [])) = Val (Str a)
 vadd _ (Val (List [])) (Val (Str b)) = Val (Str b)
+vadd _ (Val v) (Val (List b)) = Val (List (v : b))
 vadd False (Val (List a)) (Val v) = Val (List (a ++ [v]))
-vadd False (Val v) (Val (List b)) = Val (List ([v] ++ b))
 vadd _ (Val (Hash a)) (Val (Hash b)) = Val $ Hash $ makeHash' [i | c <- b, i <- c] a
 vadd _ a b = Func (Name "+") [a, b]
 -- subtraction
