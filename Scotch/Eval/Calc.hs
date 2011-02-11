@@ -18,9 +18,7 @@ module Scotch.Eval.Calc where
 
 import Scotch.Types.Types
 import Scotch.Types.Hash
-
-type_mismatch f a b = Exception $ "Type mismatch: " ++ 
-                                  show a ++ " " ++ f ++ " " ++ show b
+import Scotch.Types.Exceptions
                                   
 -- calc: calls a function on the value of two Calculations, resulting in an exception if
 --       either Calculation previously resulted in an exception
@@ -47,13 +45,17 @@ vadd _ (Val (List [])) (Val (Str b)) = Val (Str b)
 vadd _ (Val v) (Val (List b)) = Val (List (v : b))
 vadd False (Val (List a)) (Val v) = Val (List (a ++ [v]))
 vadd _ (Val (Hash a)) (Val (Hash b)) = Val $ Hash $ makeHash' [i | c <- b, i <- c] a
-vadd _ a b = Func (Name "+") [a, b]
+vadd _ (Val (Atom a b)) c = Func (Name "+") [Val (Atom a b), c]
+vadd _ c (Val (Atom a b)) = Func (Name "+") [c, Val (Atom a b)]
+vadd _ a b = exTypeMismatch a b "+"
 -- subtraction
 vsub _ (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (a - b))
 vsub _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a - b))
 vsub _ (Val (NumInt a)) (Val (NumFloat b)) = Val (NumFloat ((realToFrac a) - b))
 vsub _ (Val (NumFloat a)) (Val (NumInt b)) = Val (NumFloat (a - (realToFrac b)))
-vsub _ a b = Func (Name "-") [a, b]
+vsub _ (Val (Atom a b)) c = Func (Name "-") [Val (Atom a b), c]
+vsub _ c (Val (Atom a b)) = Func (Name "-") [c, Val (Atom a b)]
+vsub _ a b = exTypeMismatch a b "-"
 -- multiplication
 vprod _ (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (a * b))
 vprod _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a * b))
@@ -65,7 +67,9 @@ vprod _ (Val (List l)) (Val (NumInt b)) = Val (List (foldr (++) [] (take (fromIn
 vprod _ (Val (NumInt b)) (Val (List l)) = Val (List (foldr (++) [] (take (fromIntegral b) (repeat l))))
 vprod _ (Val (Bit a)) (Val (NumInt (-1))) = Val (Bit (not a))
 vprod _ (Val (NumInt (-1))) (Val (Bit a)) = Val (Bit (not a))
-vprod _ a b = Func (Name "*") [a, b]
+vprod _ (Val (Atom a b)) c = Func (Name "*") [Val (Atom a b), c]
+vprod _ c (Val (Atom a b)) = Func (Name "*") [c, Val (Atom a b)]
+vprod _ a b = exTypeMismatch a b "*"
 -- division
 div_by_zero = Exception "Division by zero"
 vdiv _ (Val (NumInt a)) (Val (NumInt 0)) = div_by_zero
@@ -76,7 +80,9 @@ vdiv _ (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (a `div` b))
 vdiv _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a / b))
 vdiv _ (Val (NumInt a)) (Val (NumFloat b)) = Val (NumFloat ((realToFrac a) / b))
 vdiv _ (Val (NumFloat a)) (Val (NumInt b)) = Val (NumFloat (a / (realToFrac b)))
-vdiv _ a b = Func (Name "/") [a, b]
+vdiv _ (Val (Atom a b)) c = Func (Name "/") [Val (Atom a b), c]
+vdiv _ c (Val (Atom a b)) = Func (Name "/") [c, Val (Atom a b)]
+vdiv _ a b = exTypeMismatch a b "/"
 -- remainder
 vmod _ (Val (NumInt a)) (Val (NumInt 0)) = div_by_zero
 vmod _ (Val (NumInt a)) (Val (NumFloat 0)) = div_by_zero
@@ -86,14 +92,18 @@ vmod _ (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (mod a b))
 vmod _ (Val (NumInt a)) (Val (NumFloat b)) = Val (NumInt (mod a (truncate b)))
 vmod _ (Val (NumFloat a)) (Val (NumInt b)) = Val (NumInt (mod (truncate a) b))
 vmod _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumInt (mod (truncate a) (truncate b)))
-vmod _ a b = Func (Name "%") [a, b]
+vmod _ (Val (Atom a b)) c = Func (Name "%") [Val (Atom a b), c]
+vmod _ c (Val (Atom a b)) = Func (Name "%") [c, Val (Atom a b)]
+vmod _ a b = exTypeMismatch a b "%"
 -- exponent
 vexp _ (Val (NumInt a)) (Val (NumInt b)) = if b > 0 then Val (NumInt (a ^ b)) 
                                            else Val (NumFloat ((realToFrac a) ** (realToFrac b)))
 vexp _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a ** b))
 vexp _ (Val (NumInt a)) (Val (NumFloat b)) = Val (NumFloat ((realToFrac a) ** b))
 vexp _ (Val (NumFloat a)) (Val (NumInt b)) = Val (NumFloat (a ** (realToFrac b)))
-vexp _ a b = Func (Name "^") [a, b]
+vexp _ (Val (Atom a b)) c = Func (Name "^") [Val (Atom a b), c]
+vexp _ c (Val (Atom a b)) = Func (Name "^") [c, Val (Atom a b)]
+vexp _ a b = exTypeMismatch a b "^"
 -- equality
 veq _ (Val (NumInt a)) (Val (NumInt b)) = Val (Bit (a == b))
 veq _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (Bit (a == b))
@@ -111,19 +121,27 @@ veq _ (Val (Atom a b)) (Val (Atom c d)) = if (a == c) && (b == d)
                                           else Func (Name "==") [Val (Atom a b), Val (Atom c d)]
 veq _ a b = case a == b of
               True -> Val (Bit True)
-              False -> Func (Name "==") [a, b]
+              False -> case a of
+                         Val (Atom a' b') -> Func (Name "==") [a, b]
+                         otherwise -> case b of
+                                        Val (Atom a' b') -> Func (Name "==") [a, b]
+                                        otherwise -> Val (Bit False)
 -- greater than
 vgt _ (Val (NumInt a)) (Val (NumInt b)) = Val (Bit (a > b))
 vgt _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (Bit (a > b))
 vgt _ (Val (NumInt a)) (Val (NumFloat b)) = Val (Bit ((realToFrac a) > b))
 vgt _ (Val (NumFloat a)) (Val (NumInt b)) = Val (Bit (a > (realToFrac b)))
-vgt _ a b = Func (Name ">") [a, b]
+vgt _ (Val (Atom a b)) c = Func (Name ">") [Val (Atom a b), c]
+vgt _ c (Val (Atom a b)) = Func (Name ">") [c, Val (Atom a b)]
+vgt _ a b = exTypeMismatch a b ">"
 -- less than
 vlt _ (Val (NumInt a)) (Val (NumInt b)) = Val (Bit (a < b))
 vlt _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (Bit (a < b))
 vlt _ (Val (NumInt a)) (Val (NumFloat b)) = Val (Bit ((realToFrac a) < b))
 vlt _ (Val (NumFloat a)) (Val (NumInt b)) = Val (Bit (a < (realToFrac b)))
-vlt _ a b = Func (Name "<") [a, b]
+vlt _ (Val (Atom a b)) c = Func (Name "<") [Val (Atom a b), c]
+vlt _ c (Val (Atom a b)) = Func (Name "<") [c, Val (Atom a b)]
+vlt _ a b = exTypeMismatch a b "<"
 
 
 -- validList: checks a list for exceptions
