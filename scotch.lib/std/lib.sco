@@ -21,7 +21,7 @@ tail([]) = []
 last(h+t) = (l) @ (len(l) - 1)
             where l := h + t
 # Returns a list or string in reverse order.
-reverse(h+t) = reverse(t) + h
+reverse(h+t) = reverse(t) + [h]
 reverse([]) = []
 
 # Joins the members of a list, separating them by string \s.
@@ -106,7 +106,7 @@ prod(h+t) = foldr(x, y -> x * y, h+t, 1)
 sort(h+t) = qsort(h+t)
 qsort(h+t, n) = case (len(h+t) < n) of
                   true: h+t, 
-                  false: (qsort(less) + h + qsort(more))
+                  false: (qsort(less) + [h] + qsort(more))
                 where less = filter(x -> h > x, t), more = filter(x -> h < x, t)
 qsort([], n) = []
 qsort(l) = qsort(l, 1)
