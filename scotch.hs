@@ -42,10 +42,14 @@ iFlag (h:t) = if h == "-i" then True else iFlag t
 eFlag [] = False
 eFlag (h:t) = if h == "-e" then True else eFlag t
 getFlags (h:t) (v, i, s, e) = case h of
-                                "-v" -> getFlags t (True, i, s, e)
-                                "-i" -> getFlags t (v, True, s, e)
-                                "-s" -> getFlags t (v, i, True, e)
-                                "-e" -> getFlags t (v, i, s, True)
+                                "-v" ->             getFlags t (True, i, s, e)
+                                "--verbose" ->      getFlags t (True, i, s, e)
+                                "-i" ->             getFlags t (v, True, s, e)
+                                "--interpret" ->    getFlags t (v, True, s, e)
+                                "-s" ->             getFlags t (v, i, True, e)
+                                "--strict" ->       getFlags t (v, i, True, e)
+                                "-e" ->             getFlags t (v, i, s, True)
+                                "--eval" ->         getFlags t (v, i, s, True)
                                 otherwise -> getFlags t (v, i, s, e)
 getFlags [] a = a
 
