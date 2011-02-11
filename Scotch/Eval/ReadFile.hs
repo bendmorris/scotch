@@ -31,9 +31,9 @@ import Scotch.Eval.Eval
 
 
 -- interpret a list of code lines using a list of scoped bindings
-wexecute :: Bool -> [PosExpr] -> VarDict -> IO VarDict
+wexecute :: (Bool, Bool) -> [PosExpr] -> VarDict -> IO VarDict
 wexecute _ [] bindings = do return bindings
-wexecute verbose (h:t) bindings = 
+wexecute (verbose, interpret) (h:t) bindings = 
   do parsed <- subfile (snd h) bindings
      -- evaluate the parsed code
      result <- do r <- ieval parsed bindings
@@ -42,34 +42,36 @@ wexecute verbose (h:t) bindings =
                     LambdaCall x args -> return $ exNoMatch x args
                     otherwise -> return otherwise
      if verbose then putStrLn (show parsed)
-                else return ()        
-     let newBindings = case parsed of
-                         Def id x Skip -> do return [(localId id, ([], x))]
-                         EagerDef id x Skip -> do evaluated <- ieval x bindings
-                                                  case evaluated of
-                                                    Exception e -> do putStrLn $ show $ Exception e
-                                                                      return []
-                                                    otherwise -> return [(localId id, ([], evaluated))]
-                                                  return [(localId id, ([], evaluated))]
-                         Defun id p x s -> do return $ newDefs $ Defun id p x s
-                         Defproc id params x Skip -> do return [(localId id, (params, Val (Proc x))), (localId id, ([], Val (HFunc (localId id))))]
-                         Import s t -> do i <- importFile verbose s t
-                                          b <- case i of 
-                                                 (False, _) -> do putStrLn ("Failed to import module " ++ show s)
-                                                                  return []
-                                                 (True, i) -> do return [e | j <- i, e <- j]
-                                          return b
-                                        
-                         otherwise -> case result of
-                                        Val (Proc p) -> do e <- wexecute verbose [(position, e) | e <- p] bindings
-                                                           return [i | j <- e, i <- j]
-                                        Import s t -> do i <- importFile verbose s t
-                                                         b <- case i of
-                                                                (False, _) -> do putStrLn ("Failed to import module " ++ show s)
-                                                                                 return []
-                                                                (True, i) -> do return [e | j <- i, e <- j]
-                                                         return b
-                                        otherwise -> do return []
+                else return ()
+     -- get new bindings if any definitions/imports were made
+     newBindings <- case parsed of
+                      Def id x Skip -> do return [(localId id, ([], x))]
+                      EagerDef id x Skip -> do evaluated <- ieval x bindings
+                                               case evaluated of
+                                                 Exception e -> do putStrLn $ show $ Exception e
+                                                                   return []
+                                                 otherwise -> return [(localId id, ([], evaluated))]
+                                               return [(localId id, ([], evaluated))]
+                      Defun id p x s -> do return $ newDefs $ Defun id p x s
+                      Defproc id params x Skip -> do return [(localId id, (params, Val (Proc x))), (localId id, ([], Val (HFunc (localId id))))]
+                      Import s t -> do i <- importFile verbose s t
+                                       b <- case i of 
+                                              (False, _) -> do putStrLn ("Failed to import module " ++ show s)
+                                                               return []
+                                              (True, i) -> do return [e | j <- i, e <- j]
+                                       return b
+                                     
+                      otherwise -> case result of
+                                     Val (Proc p) -> do e <- wexecute (verbose, interpret) [(position, e) | e <- p] bindings
+                                                        return [i | j <- e, i <- j]
+                                     Import s t -> do i <- importFile verbose s t
+                                                      b <- case i of
+                                                             (False, _) -> do putStrLn ("Failed to import module " ++ show s)
+                                                                              return []
+                                                             (True, i) -> do return [e | j <- i, e <- j]
+                                                      return b
+                                     otherwise -> do return []
+     -- output, if necessary
      case result of
        Exception e -> do putStrLn ("\nException in " ++ (showPosition) ++ "\n" ++ e ++ "\n")
                          return []
@@ -82,16 +84,20 @@ wexecute verbose (h:t) bindings =
                                                otherwise -> putStrLn $ show otherwise
                         Func f args -> putStrLn $ show $ exNoMatch f args
                         otherwise -> putStrLn (show x)
-                      wexecute verbose t bindings
+                      nextline newBindings
        FileWrite (Val (File f)) (Val (Str x)) -> do writeFile f x
-                                                    wexecute verbose t bindings
+                                                    nextline newBindings
        FileAppend (Val (File f)) (Val (Str x)) -> do appendFile f x
-                                                     wexecute verbose t bindings
-       Val (Thread th) -> do forkIO (do wexecute verbose [(Nothing, th)] bindings
+                                                     nextline newBindings
+       Val (Thread th) -> do forkIO (do wexecute (verbose, interpret) [(Nothing, th)] bindings
                                         return ())
-                             wexecute verbose t bindings
-       otherwise -> do new <- newBindings
-                       wexecute verbose t (addBindings new bindings)
+                             nextline newBindings
+       Val (Proc p) -> nextline newBindings
+       Val v -> if interpret 
+                then do putStrLn $ show v
+                        nextline newBindings
+                else nextline newBindings
+       otherwise -> nextline newBindings
      where name = case position of
                     Just p -> fst p
                     Nothing -> ""
@@ -103,6 +109,7 @@ wexecute verbose (h:t) bindings =
                      Nothing -> 1
            showPosition = name ++ ": Line " ++ show line ++ ", column " ++ show column
            position = fst h
+           nextline newBindings = wexecute (verbose, interpret) t (addBindings newBindings bindings)
 
 -- returns a qualified file name from a list of identifiers provided by an import statement        
 importName [] = ""
@@ -164,4 +171,4 @@ execute verbose file bindings = do optimized <- doesFileExist (file ++ ".osc")
                                                False -> do let exprs = (Parse.read (file ++ ".sco") input)
                                                            serialize (file ++ ".osc") exprs
                                                            return exprs
-                                   wexecute verbose parsed bindings
+                                   wexecute (verbose, False) parsed bindings
