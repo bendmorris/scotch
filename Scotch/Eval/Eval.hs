@@ -207,8 +207,11 @@ eval exp vars strict = case exp of
   Func f args ->        case validList evalArgs of
                           Exception e -> Exception e
                           otherwise -> if computableList evalArgs
-                                       then functionCall f evalArgs (varBinding f (vars !! varHash f) vars) vars
+                                       then if call == Func f args
+                                            then exNonTerminatingFunction f args
+                                            else call
                                        else Func f evalArgs
+                                       where call = functionCall f evalArgs (varBinding f (vars !! varHash f) vars) vars
                         where evalArgs = [eval' arg | arg <- args]
   LambdaCall x args ->  case validList evalArgs of
                           Exception e -> Exception e
