@@ -214,8 +214,8 @@ eval exp vars strict = case exp of
   LambdaCall x args ->  case validList args of
                           Exception e -> Exception e
                           otherwise -> case x of
-                                         Var f -> Func f args
                                          Exception e -> Exception e
+                                         Var f -> Func f args
                                          Val (HFunc f) -> eval' (Func f args)
                                          Func f args' -> eval' (Func f (args' ++ args))
                                          Val (Lambda params f) -> if length params == length args
@@ -318,11 +318,11 @@ eval exp vars strict = case exp of
                                     
 
 functionCall f args [] vars = Func f args
-functionCall f args (h:t) vars = 
+functionCall f args (h:t) vars =
   case vardef of
     Val (HFunc (h)) -> if length params > 0 
                        then newcall
-                       else case snd $ (varBinding f (vars !! varHash f) vars) !! 0 of
+                       else case snd $ (varBinding fp (vars !! varHash fp) vars) !! 0 of
                               Func f' args' -> Func f' args'
                               otherwise -> functionCall f args t vars
     Val (Lambda ids func) -> substitute func (funcall (zip ids args))
@@ -332,12 +332,14 @@ functionCall f args (h:t) vars =
                                          | arg <- args]))
     AtomExpr s l -> AtomExpr s (l ++ args)
     otherwise -> functionCall f args t vars
-  where vardef = snd h
-        definition = funcBinding f args (vars !! varHash f) vars
+  where fp = case vardef of
+               Val (HFunc (f')) -> f'
+               otherwise -> f
+        vardef = snd h
+        definition = funcBinding fp args (vars !! varHash fp) vars
         params = fst definition
         expr = snd definition
         newcall = substitute expr (funcall (zip params args))
-
 
 iolist :: [IO Expr] -> IO [Expr]
 iolist [] = do return []
