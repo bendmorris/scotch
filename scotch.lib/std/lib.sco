@@ -138,3 +138,6 @@ a & b = a & b
 a | b = a | b
 a != b = true
 a == b = false
+a > b = a > b
+a < b = a < b
+a % b = a % b
