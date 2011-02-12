@@ -207,9 +207,7 @@ eval exp vars strict = case exp of
   Func f args ->        case validList evalArgs of
                           Exception e -> Exception e
                           otherwise -> if computableList evalArgs
-                                       then if call == Func f args
-                                            then exNonTerminatingFunction f args
-                                            else call
+                                       then call
                                        else Func f evalArgs
                                        where call = functionCall f evalArgs (varBinding f (vars !! varHash f) vars) vars
                         where evalArgs = [eval' arg | arg <- args]
@@ -353,37 +351,39 @@ iolist (h:t) = do item <- h
                   return (item:rest)
 
 -- ieval: evaluates an expression completely, replacing I/O operations as necessary
-ieval :: Expr -> VarDict -> Bool -> IO Expr
-ieval expr vars strict =
+ieval :: Expr -> VarDict -> Bool -> Maybe Expr -> IO Expr
+ieval expr vars strict last =
   do result <- subfile (eval expr vars strict) vars
-     case result of
-       Val v -> return result
-       Exception e -> return result
-       Skip -> return result
-       Import s t -> return result
-       Output p -> do p' <- ieval' p
-                      return $ Output p'
-       FileWrite f p -> do p' <- ieval' p
-                           return $ FileWrite f p'
-       FileAppend f p -> do p' <- ieval' p
-                            return $ FileAppend f p'
-       Func f args -> do args' <- iolist [ieval' arg | arg <- args]
-                         if expr == Func f args' 
-                          then return $ Func f args'
-                          else ieval' (Func f args')
-       LambdaCall x args -> do args' <- iolist [ieval' arg | arg <- args]
-                               if args == args' 
-                                then return $ LambdaCall x args'
-                                else ieval' (LambdaCall x args')
-       otherwise -> do if expr == result
-                        then return $ exUnableToEval result
-                        else do vars' <- case expr of
-                                           Def id x y -> do return $ addBinding (id, ([], x)) vars
-                                           EagerDef id x y -> do x' <- ieval' x
-                                                                 return $ addBinding (id, ([], x')) vars
-                                           otherwise -> do return vars
-                                ieval result vars' strict
-     where ieval' expr = ieval expr vars strict
+     if (Just result) == last
+      then do return $ exUnableToEval result
+      else case result of
+             Val v -> return result
+             Exception e -> return result
+             Skip -> return result
+             Import s t -> return result
+             Output p -> do p' <- ieval' p
+                            return $ Output p'
+             FileWrite f p -> do p' <- ieval' p
+                                 return $ FileWrite f p'
+             FileAppend f p -> do p' <- ieval' p
+                                  return $ FileAppend f p'
+             Func f args -> do args' <- iolist [ieval' arg | arg <- args]
+                               if expr == Func f args' 
+                                then return $ Func f args'
+                                else ieval' (Func f args')
+             LambdaCall x args -> do args' <- iolist [ieval' arg | arg <- args]
+                                     if args == args' 
+                                      then return $ LambdaCall x args'
+                                      else ieval' (LambdaCall x args')
+             otherwise -> do if expr == result
+                              then return $ exUnableToEval result
+                              else do vars' <- case expr of
+                                                 Def id x y -> do return $ addBinding (id, ([], x)) vars
+                                                 EagerDef id x y -> do x' <- ieval' x
+                                                                       return $ addBinding (id, ([], x')) vars
+                                                 otherwise -> do return vars
+                                      ieval result vars' strict (Just expr)
+           where ieval' expr' = ieval expr' vars strict (Just expr)
 
 -- subfile: substitutes values for delayed I/O operations
 subfile :: Expr -> VarDict -> IO Expr

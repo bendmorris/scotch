@@ -36,7 +36,7 @@ wexecute _ [] bindings = do return bindings
 wexecute (verbose, interpret, strict) (h:t) bindings = 
   do parsed <- subfile (snd h) bindings
      -- evaluate the parsed code
-     result <- do r <- ieval parsed bindings strict
+     result <- do r <- ieval parsed bindings strict Nothing
                   case r of
                     Func f args -> return $ exNoMatch f args
                     LambdaCall x args -> return $ exNoMatch x args
@@ -46,7 +46,7 @@ wexecute (verbose, interpret, strict) (h:t) bindings =
      -- get new bindings if any definitions/imports were made
      newBindings <- case parsed of
                       Def id x Skip -> do return [(localId id, ([], x))]
-                      EagerDef id x Skip -> do evaluated <- ieval x bindings strict
+                      EagerDef id x Skip -> do evaluated <- ieval x bindings strict Nothing
                                                case evaluated of
                                                  Exception e -> do putStrLn $ show $ Exception e
                                                                    return []
@@ -77,7 +77,7 @@ wexecute (verbose, interpret, strict) (h:t) bindings =
                          return []
        Output x -> do case x of
                         Val (Str s) -> putStrLn s
-                        Val (Atom s l) -> do result <- ieval (Func (Name "show") [x]) bindings strict
+                        Val (Atom s l) -> do result <- ieval (Func (Name "show") [x]) bindings strict Nothing
                                              case result of
                                                Val (Str s) -> putStrLn s
                                                Func f args -> putStrLn $ show $ exNoMatch f args
