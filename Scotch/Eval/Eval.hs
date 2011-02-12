@@ -211,21 +211,19 @@ eval exp vars strict = case exp of
                                        else Func f evalArgs
                                        where call = functionCall f evalArgs (varBinding f (vars !! varHash f) vars) vars
                         where evalArgs = [eval' arg | arg <- args]
-  LambdaCall x args ->  case validList evalArgs of
+  LambdaCall x args ->  case validList args of
                           Exception e -> Exception e
-                          otherwise -> if computableList evalArgs
-                                       then case eval' x of
-                                              Exception e -> Exception e
-                                              Val (HFunc f) -> eval' (Func f evalArgs)
-                                              Func f args' -> eval' (Func f (args' ++ evalArgs))
-                                              Val (Lambda params f) -> if length params == length evalArgs
-                                                                       then substitute f (zip params evalArgs)
-                                                                       else LambdaCall (Val (Lambda params f)) evalArgs
-                                              Val v -> exImproperCall v
-                                              LambdaCall x' args' -> eval' (LambdaCall x' (args' ++ evalArgs))
-                                              otherwise -> eval' (LambdaCall (eval' otherwise) evalArgs)
-                                       else LambdaCall x evalArgs
-                        where evalArgs = [eval' arg | arg <- args]
+                          otherwise -> case x of
+                                         Var f -> Func f args
+                                         Exception e -> Exception e
+                                         Val (HFunc f) -> eval' (Func f args)
+                                         Func f args' -> eval' (Func f (args' ++ args))
+                                         Val (Lambda params f) -> if length params == length args
+                                                                  then substitute f (zip params args)
+                                                                  else LambdaCall (Val (Lambda params f)) args
+                                         Val v -> exImproperCall v
+                                         LambdaCall x' args' -> eval' (LambdaCall x' (args' ++ args))
+                                         otherwise -> eval' (LambdaCall (eval' x) args)
   If cond x y ->        case eval' cond of
                           Val (Bit True) -> x
                           Val (Bit False) -> y
@@ -320,11 +318,11 @@ eval exp vars strict = case exp of
                                     
 
 functionCall f args [] vars = Func f args
-functionCall f args (h:t) vars =
+functionCall f args (h:t) vars = 
   case vardef of
     Val (HFunc (h)) -> if length params > 0 
                        then newcall
-                       else case snd $ (varBinding fp (vars !! varHash fp) vars) !! 0 of
+                       else case snd $ (varBinding f (vars !! varHash f) vars) !! 0 of
                               Func f' args' -> Func f' args'
                               otherwise -> functionCall f args t vars
     Val (Lambda ids func) -> substitute func (funcall (zip ids args))
@@ -334,11 +332,8 @@ functionCall f args (h:t) vars =
                                          | arg <- args]))
     AtomExpr s l -> AtomExpr s (l ++ args)
     otherwise -> functionCall f args t vars
-  where fp = case vardef of
-               Val (HFunc (f')) -> f'
-               otherwise -> f
-        vardef = snd h
-        definition = funcBinding fp args (vars !! varHash fp) vars
+  where vardef = snd h
+        definition = funcBinding f args (vars !! varHash f) vars
         params = fst definition
         expr = snd definition
         newcall = substitute expr (funcall (zip params args))
@@ -354,36 +349,36 @@ iolist (h:t) = do item <- h
 ieval :: Expr -> VarDict -> Bool -> Maybe Expr -> IO Expr
 ieval expr vars strict last =
   do result <- subfile (eval expr vars strict) vars
-     if (Just result) == last
-      then do return $ exUnableToEval result
-      else case result of
-             Val v -> return result
-             Exception e -> return result
-             Skip -> return result
-             Import s t -> return result
-             Output p -> do p' <- ieval' p
-                            return $ Output p'
-             FileWrite f p -> do p' <- ieval' p
-                                 return $ FileWrite f p'
-             FileAppend f p -> do p' <- ieval' p
-                                  return $ FileAppend f p'
-             Func f args -> do args' <- iolist [ieval' arg | arg <- args]
+     case result of
+       Val v -> return result
+       Exception e -> return result
+       Skip -> return result
+       Import s t -> return result
+       Output p -> do p' <- ieval' p
+                      return $ Output p'
+       FileWrite f p -> do p' <- ieval' p
+                           return $ FileWrite f p'
+       FileAppend f p -> do p' <- ieval' p
+                            return $ FileAppend f p'
+       Func f args -> if Just result == last
+                       then do return $ exUnableToEval result
+                       else do args' <- iolist [ieval' arg | arg <- args]
                                if expr == Func f args' 
                                 then return $ Func f args'
                                 else ieval' (Func f args')
-             LambdaCall x args -> do args' <- iolist [ieval' arg | arg <- args]
-                                     if args == args' 
-                                      then return $ LambdaCall x args'
-                                      else ieval' (LambdaCall x args')
-             otherwise -> do if expr == result
-                              then return $ exUnableToEval result
-                              else do vars' <- case expr of
-                                                 Def id x y -> do return $ addBinding (id, ([], x)) vars
-                                                 EagerDef id x y -> do x' <- ieval' x
-                                                                       return $ addBinding (id, ([], x')) vars
-                                                 otherwise -> do return vars
-                                      ieval result vars' strict (Just expr)
-           where ieval' expr' = ieval expr' vars strict (Just expr)
+       LambdaCall x args -> do args' <- iolist [ieval' arg | arg <- args]
+                               if args == args' 
+                                then return $ LambdaCall x args'
+                                else ieval' (LambdaCall x args')
+       otherwise -> do if Just expr == last
+                        then return $ exUnableToEval result
+                        else do vars' <- case expr of
+                                           Def id x y -> do return $ addBinding (id, ([], x)) vars
+                                           EagerDef id x y -> do x' <- ieval' x
+                                                                 return $ addBinding (id, ([], x')) vars
+                                           otherwise -> do return vars
+                                ieval result vars' strict (Just expr)
+     where ieval' expr' = ieval expr' vars strict (Just expr)
 
 -- subfile: substitutes values for delayed I/O operations
 subfile :: Expr -> VarDict -> IO Expr

@@ -20,6 +20,7 @@ import Data.List
 import Scotch.Eval.Calc
 import Scotch.Types.Types
 import Scotch.Types.Hash
+import Scotch.Types.Exceptions
 
 -- a list of identifiers (empty list for variables) and an expression containing them
 type Call = ([Id], Expr)
@@ -89,7 +90,7 @@ varBinding x (h:t) vars = if ((fst h) == x || isSuffixOf ("." ++ nameSplit x) ("
                            else varBinding x t vars
                                                       
 funcBinding :: Id -> [Expr] -> [Binding] -> VarDict -> Call
-funcBinding x args [] vars = ([], Exception ("Function " ++ (show x) ++ " " ++ show args ++ " doesn't match any existing pattern."))
+funcBinding x args [] vars = ([], exNoMatch x args)
 funcBinding x args (h:t) vars = 
   if (id == x || isSuffixOf ("." ++ nameSplit x) ("." ++ nameSplit id)) &&
      length args == length params &&
