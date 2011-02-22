@@ -40,9 +40,11 @@ prefix([], c) = false
 prefix(a, []) = true
 # Checks whether string/list \c is a prefix of \a.
 suffix(a, c) = prefix(reverse(a), reverse(c))
+infix(a+b, c+d) = if prefix(a+b, c+d) then true else prefix(b, c+d)
+infix([], c+d) = false
 
 # Returns true if \h+t contains element/sequence \s.
-contains(h+t, s) = if prefix(h+t, s) then true else contains(t, s)
+contains(h+t, s) = if (h == s) then true else contains(t, s)
 contains([], s) = false
 
 # Returns the number of times \s appears in \h+t.
@@ -95,7 +97,7 @@ reduce = foldl
 
 filter(f, l) = [for i in l, i, f(i)]
 filter(f, []) = []
-map(f, h+t) = [for i in h+t, f(i)]
+map(f, l) = [for i in l, f(i)]
 
 show(a) = str(a)
 
