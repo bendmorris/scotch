@@ -233,26 +233,26 @@ instance Show(Expr) where
     show (And x y) = show x ++ " & " ++ show y
     show (Or x y) = show x ++ " | " ++ show y
     show (Not x) = "not " ++ show x
-    show (Def a b c) = "(def " ++ show a ++ " as " ++ show b ++ ", " ++ show c ++ ")"
-    show (EagerDef a b c) = "(eager def " ++ show a ++ " as " ++ show b ++ ", " ++ show c ++ ")"
-    show (Defun a b c d) = "(defun " ++ (show a) ++ " " ++ (show b) ++ " as " ++ show c ++ ", " ++ show d ++ ")"
-    show (Defproc a b c d) = "(defproc " ++ (show a) ++ " " ++ (show b) ++ " as {" ++ (show c) ++ "}, " ++ (show d) ++ ")"
+    show (Def a b c) = show a ++ " = " ++ show b ++ "; " ++ show c
+    show (EagerDef a b c) = show a ++ " := " ++ show b ++ "; " ++ show c ++ ")"
+    show (Defun a b c d) = show a ++ " " ++ show b ++ " = " ++ show c ++ "; " ++ show d
+    show (Defproc a b c d) = show a ++ " " ++ show b ++ " = do " ++ show c ++ "; " ++ show d
     show (Var v) = show v
-    show (Func f p) = "(func " ++ (show f) ++ " " ++ (show p) ++ ")"
-    show (If cond x y) = "(if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y ++ ")"
-    show (Case c o) = "(case " ++ show c ++ " " ++ show o ++ ")"
+    show (Func f p) = show f ++ " " ++ show p
+    show (If cond x y) = "if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y
+    show (Case c o) = "case " ++ show c ++ " of " ++ show o
     show (For x y z w) = "[for " ++ show x ++ " in " ++ show y ++ " " ++ show z ++ " " ++ show w ++ "]"
-    show (Range x y z) = "[" ++ (show x) ++ ".." ++ (show y) ++ "," ++ (show z) ++ "]"
+    show (Range x y z) = "[" ++ show x ++ ".." ++ show y ++ (if z == (Val (NumInt 1)) then "" else "," ++ show z) ++ "]"
     show (Output x) = "print " ++ show x
     show Input = "input"
     show (Import s t) = "import " ++ (show s) ++ (if s == t then "" 
                                                   else " as " ++ show t)
     show (FileObj f) = "<" ++ show f ++ ">"
-    show (FileRead f) = "read " ++ show f
-    show (FileWrite f x) = "write " ++ show f ++ " " ++ show x
-    show (FileAppend f x) = "append " ++ show f ++ " " ++ show x
-    show (AtomExpr s x) = "(" ++ s ++ " " ++ show x ++ ")"
-    show (LambdaCall v e) = "(lambda " ++ show v ++ " " ++ show e ++ ")"
+    show (FileRead f) = "read(" ++ show f ++ ")"
+    show (FileWrite f x) = "write(" ++ show f ++ ", " ++ show x ++ ")"
+    show (FileAppend f x) = "append(" ++ show f ++ ", " ++ show x ++ ")"
+    show (AtomExpr s x) = s ++ " " ++ show x
+    show (LambdaCall v e) = show v ++ " <- " ++ show e
     show (EvalExpr e) = "eval(" ++ show e ++ ")"
 instance Binary(Expr) where
     put (Exception s) =     do put (18 :: Word8)
