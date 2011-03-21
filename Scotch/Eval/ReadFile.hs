@@ -93,6 +93,13 @@ wexecute (verbose, interpret, strict) (h:t) bindings =
                                         return ())
                              nextline newBindings
        Val (Proc p) -> nextline newBindings
+       Val (Atom a b) -> if interpret 
+                         then do v' <- ieval (Func (Name "show") [Val (Atom a b)]) bindings strict Nothing
+                                 putStrLn $ case v' of
+                                              Val (Str s) -> s
+                                              otherwise -> show otherwise
+                                 nextline newBindings
+                         else nextline newBindings
        Val v -> if interpret 
                 then do putStrLn $ show v
                         nextline newBindings
