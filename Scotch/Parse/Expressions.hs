@@ -271,7 +271,7 @@ idList col =
 
 lambdaStmt col =
   do sws col
-     ids <- idList col
+     ids <- parens (idList col)
      reservedOp "->"
      expr <- expression col
      return $ Val $ Lambda ids expr
