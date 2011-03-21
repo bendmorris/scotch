@@ -85,7 +85,7 @@ varBinding x (h:t) vars = if ((fst h) == x || isSuffixOf ("." ++ nameSplit x) ("
                            then case snd (snd h) of
                                   Var v -> if v == x 
                                            then varBinding x t vars
-                                           else varBinding v (vars !! varHash v) vars
+                                           else ([], Var v) : varBinding v (vars !! varHash v) vars
                                   otherwise -> snd h : varBinding x t vars
                            else varBinding x t vars
                                                       
