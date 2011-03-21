@@ -637,6 +637,7 @@ operators col =
    [Infix  (rsvdOp col "+"   >> return (Add             )) AssocLeft,
     Infix  (rsvdOp col "-"   >> return (Sub             )) AssocLeft],
    [Infix  (rsvdOp col "=="  >> return (Eq              )) AssocLeft,
+    Infix  (rsvdOp col "is"  >> return (Eq              )) AssocLeft,
     Infix  (rsvdOp col "<="  >> return (ltEq            )) AssocLeft,
     Infix  (rsvdOp col ">="  >> return (gtEq            )) AssocLeft,
     Infix  (rsvdOp col "not" >> return (InEq            )) AssocLeft,
