@@ -107,6 +107,15 @@ ifStmt col =
      reserved "else"
      expr2 <- expression col3
      return $ If cond expr1 expr2
+  <|>
+  do sws col
+     reserved "if"
+     cond <- expression col
+     pos2 <- getPosition
+     let col2 = sourceColumn pos2
+     reserved "then"
+     expr <- expression col2
+     return $ If cond expr Skip
      
 caseStmt col =
   do sws col
