@@ -20,10 +20,10 @@ tests += assert_equal(join(["a","b","c"], "."), "a.b.c")
 
 eval("import std.math")
 tests += assert_equal(filter(even, [1..10]), [2,4,6,8,10])
-tests += assert_equal(reduce(x, y -> x + y, [1..100], 0), 5050)
+tests += assert_equal(reduce((x, y) -> x + y, [1..100], 0), 5050)
 tests += assert_equal(std.math @ 'pi', 3.141592654)
 
-apply(f, x, n) = f(x) + apply(f, x, n-1)
+apply(f, x, n) = f(x) + apply(f, x, n - 1)
 apply(f, x, 0) = 0
 tests += assert_equal(apply(f, 1, 3), 3)
 tests += assert_equal(apply(g, 1, 3), 6)
@@ -48,9 +48,9 @@ tests += assert_equal(mean([5,3,2,4,1]), 3)
 tests += assert_equal(sort([5,4,3,2,1]), [1,2,3,4,5])
 
 file_name = "test.sco"
-file = (<file_name>)
-tests += assert_equal(split(read(file) + "abcdefg", "\n") @ 0, "# Tests")
-r = read(file)
+this_file = file(file_name)
+tests += assert_equal(split(read(this_file) + "abcdefg", "\n") @ 0, "# Tests")
+r = read(this_file)
 tests += assert_equal(split(r, "\n") @ 0, "# Tests")
 
 f(n) = n
@@ -63,7 +63,7 @@ f(Apple(Banana(a,b,c))) = [a,b,c]
 tests += assert_equal(f(a), "apple")
 tests += assert_equal(f(Apple(Banana(1,2,3))), [1,2,3])
 
-tests += assert_equal(apply(a -> a * 10, 10), 100)
+tests += assert_equal(apply((a) -> a * 10, 10), 100)
 
 b = 2
 dict = {'a':1,'b':b, c=5}
@@ -76,7 +76,7 @@ apple(n) = Apple n
 tests += assert_equal(apple([1,2,3]), Apple [1,2,3])
 tests += assert_equal(apple("abc"), Apple "abc")
 
-dict = {'add': a, b -> a + b, 'multiply': a, b -> a * b}
+dict = {'add': (a, b) -> a + b, 'multiply': (a, b) -> a * b}
 apply(f, a, b) = f(a, b)
 tests += assert_equal(apply(dict @ 'add', 1, 2), 3)
 tests += assert_equal(apply(dict @ 'multiply', 10, 2), 20)
@@ -105,7 +105,7 @@ tests += assert_equal(convert_unit(Kilo 1000, to_mega), Mega 1.0)
 tests += assert_equal(take 5 from [1..], [1,2,3,4,5])
 tests += assert_equal(take 5 from [1..,2], [1,3,5,7,9])
 
-tests += assert_equal((take 1 from [for i in <'test.sco'>, i]) @ 0, "# Tests")
+tests += assert_equal((take 1 from [for i in file('test.sco'), i]) @ 0, "# Tests")
 
 b = a where a = 1
 tests += assert_equal(b, 1)

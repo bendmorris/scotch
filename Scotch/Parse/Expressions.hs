@@ -278,9 +278,8 @@ lambdaStmt col =
 
 fileStmt col =
   do sws col
-     symbol "<"
-     expr <- expression col
-     symbol ">"
+     symbol "file"
+     expr <- parens (expression col)
      return $ FileObj expr
 
 strValue col = 
