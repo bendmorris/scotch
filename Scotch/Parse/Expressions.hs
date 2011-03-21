@@ -95,27 +95,28 @@ valueExpr col =
 
 
 ifStmt col =
-  do sws col
-     reserved "if"
-     cond  <- expression col
-     pos2 <- getPosition
-     let col2 = sourceColumn pos2
-     reserved "then"
-     expr1 <- expression col2
-     pos3 <- getPosition
-     let col3 = sourceColumn pos3
-     reserved "else"
-     expr2 <- expression col3
-     return $ If cond expr1 expr2
+  try
+  (do sws col
+      reserved "if"
+      cond <- expression col
+      pos2 <- getPosition
+      let col2 = sourceColumn pos2
+      reserved "then"
+      expr1 <- expression col2
+      pos3 <- getPosition
+      let col3 = sourceColumn pos3
+      reserved "else"
+      expr2 <- expression col3
+      return $ If cond expr1 expr2)
   <|>
-  do sws col
-     reserved "if"
-     cond <- expression col
-     pos2 <- getPosition
-     let col2 = sourceColumn pos2
-     reserved "then"
-     expr <- expression col2
-     return $ If cond expr Skip
+  (do sws col
+      reserved "if"
+      cond <- expression col
+      pos2 <- getPosition
+      let col2 = sourceColumn pos2
+      reserved "then"
+      expr <- expression col2
+      return $ If cond expr Skip)
      
 caseStmt col =
   do sws col
