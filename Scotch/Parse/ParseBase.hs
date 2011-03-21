@@ -22,6 +22,7 @@ import Text.Parsec.ByteString
 import Text.Parsec.Expr
 import Text.Parsec.Char
 import Text.Parsec.Language
+import Text.Parsec.Prim
 import qualified Text.Parsec.Token as Token
 
 
@@ -29,7 +30,7 @@ upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 lowerCase = "abcdefghijklmnopqrstuvwxyz"
 numeric = "0123456789"
 idSymbol = "_!'."
-operatorSymbol = "!@#$%^&*+-*/=<>?|`:"
+operatorSymbol = "!@#$%^&*+-*/=<>?|`"
 forbiddenOps = ["=", ":=", ":", "->", "<-"]
 
 languageDef =

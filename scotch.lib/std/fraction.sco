@@ -3,9 +3,9 @@
 
 show(Fraction(a,b)) = a + "/" + b
 
-read_fraction(h+t, a) = case h of
-                          "/": Fraction(int(a), int(t)),
-                          otherwise: read_fraction(t, a + h)
+read_fraction(h + t, a) = case h of
+                            "/": Fraction(int(a), int(t)),
+                            otherwise: read_fraction(t, a + h)
 read_fraction([], a) = Fraction(int(a), 1)
 fraction(s) = read_fraction(s, "0")
 
