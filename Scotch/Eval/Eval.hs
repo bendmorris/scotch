@@ -144,6 +144,9 @@ eval exp vars strict = case exp of
                                             Val (NumInt n) -> if n >= 0
                                                               then eval' $ Subs (Val (NumInt n)) (eval' (Take (Val (NumInt ((fromIntegral n) + 1))) (Func f args)))
                                                               else Subs (Val (NumInt n)) (eval' x)
+                                            Val (List l') ->  ListExpr [Subs (Val i) f' | i <- l']
+                                                              where f' = (Func f args)
+                                            otherwise ->      Subs otherwise (eval' x)
                           otherwise ->    Subs n (eval' otherwise)
   Add x y ->            case x of
                           Exception e ->    Exception e
