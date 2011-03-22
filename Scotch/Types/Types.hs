@@ -244,13 +244,13 @@ instance Show(Expr) where
     show (Func f p) = show f ++ " " ++ removeBrackets (show p)
     show (If cond x y) = "if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y
     show (Case c o) = "case " ++ show c ++ " of " ++ show o
-    show (For x y z w) = "[for " ++ show x ++ " in " ++ show y ++ " " ++ show z ++ " " ++ show w ++ "]"
+    show (For x y z w) = "[for " ++ show x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
     show (Range x y z) = "[" ++ show x ++ ".." ++ show y ++ (if z == (Val (NumInt 1)) then "" else "," ++ show z) ++ "]"
     show (Output x) = "print " ++ show x
     show Input = "input"
     show (Import s t) = "import " ++ (show s) ++ (if s == t then "" 
                                                   else " as " ++ show t)
-    show (FileObj f) = "<" ++ show f ++ ">"
+    show (FileObj f) = "file(" ++ show f ++ ")"
     show (FileRead f) = "read(" ++ show f ++ ")"
     show (FileWrite f x) = "write(" ++ show f ++ ", " ++ show x ++ ")"
     show (FileAppend f x) = "append(" ++ show f ++ ", " ++ show x ++ ")"
