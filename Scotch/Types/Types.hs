@@ -90,8 +90,7 @@ instance Show (Value) where
     show (File f) = "<" ++ show f ++ ">"
     show (Atom s v) = s ++ (case length v of
                               0 -> ""
-                              1 -> " " ++ show (v !! 0)
-                              otherwise -> " " ++ show v)
+                              otherwise -> " " ++ removeBrackets (show v))
     show InvalidValue = "**invalid value**"
 instance Binary(Value) where
     put (Str s) =           do put (4 :: Word8)
@@ -237,12 +236,12 @@ instance Show(Expr) where
     show (Def a b c) = show a ++ " = " ++ show b ++ "; " ++ show c
     show (EagerDef a b Skip) = show a ++ " := " ++ show b
     show (EagerDef a b c) = show a ++ " := " ++ show b ++ "; " ++ show c ++ ")"
-    show (Defun a b c Skip) = show a ++ " " ++ show b ++ " = " ++ show c
-    show (Defun a b c d) = show a ++ " " ++ show b ++ " = " ++ show c ++ "; " ++ show d
-    show (Defproc a b c Skip) = show a ++ " " ++ show b ++ " = do " ++ show c
-    show (Defproc a b c d) = show a ++ " " ++ show b ++ " = do " ++ show c ++ "; " ++ show d
+    show (Defun a b c Skip) = show a ++ " " ++ removeBrackets (show b) ++ " = " ++ show c
+    show (Defun a b c d) = show a ++ " " ++ removeBrackets (show b) ++ " = " ++ show c ++ "; " ++ show d
+    show (Defproc a b c Skip) = show a ++ " " ++ removeBrackets (show b) ++ " = do " ++ show c
+    show (Defproc a b c d) = show a ++ " " ++ removeBrackets (show b) ++ " = do " ++ show c ++ "; " ++ show d
     show (Var v) = show v
-    show (Func f p) = show f ++ " " ++ show p
+    show (Func f p) = show f ++ " " ++ removeBrackets (show p)
     show (If cond x y) = "if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y
     show (Case c o) = "case " ++ show c ++ " of " ++ show o
     show (For x y z w) = "[for " ++ show x ++ " in " ++ show y ++ " " ++ show z ++ " " ++ show w ++ "]"
@@ -511,3 +510,8 @@ instance Binary(Expr) where
                            return $ EvalExpr a
 type ExprPosition = (String, (Int, Int))
 type PosExpr = (Maybe ExprPosition, Expr)
+
+removeBrackets s = if (s !! 0) == '[' && (s !! (l-1)) == ']'
+                   then "(" ++ [s !! n | n <- [1..l-2]] ++ ")"
+                   else s
+                   where l = length s
