@@ -349,8 +349,6 @@ atomValue col =
      initial <- oneOf upperCase
      chars <- many $ oneOf $ upperCase ++ lowerCase
      val <- try (whiteSpace >> parens (sepBy (whiteSpace >> value col) (oneOf ","))) <|> 
-            try (do val' <- whiteSpace >> value col
-                    return [val']) <|>
             do return []
      return $ Atom (initial : chars) val
 atomStmt col =
@@ -358,8 +356,6 @@ atomStmt col =
      initial <- oneOf upperCase
      chars <- many $ oneOf $ upperCase ++ lowerCase
      expr <- try (whiteSpace >> parens (sepBy (whiteSpace >> expression col) (oneOf ","))) <|> 
-             try (do expr <- whiteSpace >> expression col
-                     return [expr]) <|>
              do return []
      return $ AtomExpr (initial : chars) expr
      

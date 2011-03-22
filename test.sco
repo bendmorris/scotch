@@ -57,8 +57,8 @@ f(n) = n
 tests += assert_equal([for i in [1..2], f(i)], [1, 2])
 tests += assert_equal([for i in [1..10], fib(i)], [1,1,2,3,5,8,13,21,34,55])
 
-f(Apple(Banana "abc")) = "apple"
-a = (Apple(Banana "abc"))
+f(Apple(Banana("abc"))) = "apple"
+a = (Apple(Banana("abc")))
 f(Apple(Banana(a,b,c))) = [a,b,c]
 tests += assert_equal(f(a), "apple")
 tests += assert_equal(f(Apple(Banana(1,2,3))), [1,2,3])
@@ -72,9 +72,9 @@ tests += assert_equal([for i in "abc", dict @ i], [1,2,5])
 tests += assert_equal({} + {'a':1}, {'a':1})
 tests += assert_equal(std.math.pi, pi)
 
-apple(n) = Apple n
-tests += assert_equal(apple([1,2,3]), Apple [1,2,3])
-tests += assert_equal(apple("abc"), Apple "abc")
+apple(n) = Apple(n)
+tests += assert_equal(apple([1,2,3]), Apple([1,2,3]))
+tests += assert_equal(apple("abc"), Apple("abc"))
 
 dict = {'add': (a, b) -> a + b, 'multiply': (a, b) -> a * b}
 apply(f, a, b) = f(a, b)
@@ -90,17 +90,17 @@ tests += assert_equal(decimal("0.1") - decimal("0.05"), decimal("0.05"))
 import std.fraction
 tests += assert_equal(fraction("1/3") + fraction("1/2"), fraction("5/6"))
 
-(Apple a) + (Banana b) <=> a + b
-tests += assert_equal((Banana 10) + (Apple 12), 22)
+Apple(a) + Banana(b) <=> a + b
+tests += assert_equal(Banana(10) + Apple(12), 22)
 
 a ** b = a ^ b
 tests += assert_equal(2 ** 2, 4)
 
-Apple a ** Apple b = a ^ b
-tests += assert_equal((Apple 3) ** (Apple 2), 9)
+Apple(a) ** Apple(b) = a ^ b
+tests += assert_equal(Apple(3) ** Apple(2), 9)
 
 import std.units
-tests += assert_equal(convert_unit(Kilo 1000, to_mega), Mega 1.0)
+tests += assert_equal(convert_unit(Kilo(1000), to_mega), Mega(1.0))
 
 tests += assert_equal(take 5 from [1..], [1,2,3,4,5])
 tests += assert_equal(take 5 from [1..,2], [1,3,5,7,9])
