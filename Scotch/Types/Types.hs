@@ -233,9 +233,13 @@ instance Show(Expr) where
     show (And x y) = show x ++ " & " ++ show y
     show (Or x y) = show x ++ " | " ++ show y
     show (Not x) = "not " ++ show x
+    show (Def a b Skip) = show a ++ " = " ++ show b
     show (Def a b c) = show a ++ " = " ++ show b ++ "; " ++ show c
+    show (EagerDef a b Skip) = show a ++ " := " ++ show b
     show (EagerDef a b c) = show a ++ " := " ++ show b ++ "; " ++ show c ++ ")"
+    show (Defun a b c Skip) = show a ++ " " ++ show b ++ " = " ++ show c
     show (Defun a b c d) = show a ++ " " ++ show b ++ " = " ++ show c ++ "; " ++ show d
+    show (Defproc a b c Skip) = show a ++ " " ++ show b ++ " = do " ++ show c
     show (Defproc a b c d) = show a ++ " " ++ show b ++ " = do " ++ show c ++ "; " ++ show d
     show (Var v) = show v
     show (Func f p) = show f ++ " " ++ show p

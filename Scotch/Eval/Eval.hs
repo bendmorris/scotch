@@ -139,6 +139,10 @@ eval exp vars strict = case exp of
                                                            Val (Str s) ->    hashMember s l
                                                            Exception e ->    Exception e
                                                            otherwise ->      Subs otherwise (Val (Hash l))
+                          Func f args ->  case eval' n of
+                                            Val (NumInt n) -> if n >= 0
+                                                              then eval' $ Subs (Val (NumInt n)) (eval' (Take (Val (NumInt ((fromIntegral n) + 1))) (Func f args)))
+                                                              else Subs (Val (NumInt n)) (eval' x)
                           otherwise ->    Subs n (eval' otherwise)
   Add x y ->            case x of
                           Exception e ->    Exception e
