@@ -82,12 +82,12 @@ instance Show (Value) where
                             else "") ++ "}"
                            where items = ["," ++ fst i ++ ":" ++ show (snd i) | j <- h, i <- j]
     show (HFunc f) = "func " ++ show f
-    show (Lambda ids expr) = show ids ++ " -> " ++ show expr
+    show (Lambda ids expr) = removeBrackets (show ids) ++ " -> " ++ show expr
     show (Proc p) = "proc " ++ show p
     show (Thread th) = "thread " ++ show th
     show (Null) = "null"
     show (Undefined s) = show s
-    show (File f) = "<" ++ show f ++ ">"
+    show (File f) = "file(" ++ show f ++ ")"
     show (Atom s v) = s ++ (case length v of
                               0 -> ""
                               otherwise -> " " ++ removeBrackets (show v))
