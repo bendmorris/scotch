@@ -22,15 +22,17 @@ import Scotch.Types.Types
 import Scotch.Types.Hash
 import Scotch.Types.Exceptions
 
--- a list of identifiers (empty list for variables) and an expression containing them
-type Call = ([Id], Expr)
--- binds an ID to a Call
-type Binding = (Id, Call)
+-- binds a left term to a right term
+type Binding = (Expr, Expr)
 type VarDict = [[Binding]]
 
-stripName :: Id -> String
-stripName (Name n) = n
-stripName n = ""
+split :: String -> Char -> [String]
+split [] delim = [""]
+split (c:cs) delim
+   | c == delim = "" : rest
+   | otherwise = (c : head rest) : tail rest
+   where
+       rest = split cs delim
 
 varName' :: String -> Int -> String
 varName' s 0 = s
@@ -40,123 +42,39 @@ varName' s n = if s !! n == '.'
 varName "" = ""
 varName s = varName' s ((length s) - 1)
 
-varHash :: Id -> Int
-varHash b = case b of
-              Name n -> hashLoc $ varName n
-              otherwise -> hashLoc $ show $ b
+exprHash :: Expr -> Int
+exprHash (Add _ _) = 1
+exprHash (Val (List _)) = 1
+exprHash (ListExpr _) = 1
+exprHash (Sub _ _) = 2
+exprHash (Prod _ _) = 3
+exprHash (Div _ _) = 4
+exprHash (Exp _ _) = 5
+exprHash (Mod _ _) = 6
+exprHash (Eq _ _) = 7
+exprHash (InEq _ _) = 7
+exprHash (Gt _ _) = 8
+exprHash (Lt _ _) = 9
+exprHash (And _ _) = 10
+exprHash (Or _ _) = 11
+exprHash (Not _) = 12
+exprHash (Subs _ _) = 13
+exprHash (Take _ _) = 14
+exprHash (Var v _) = hashLoc $ last (split v '.')
+exprHash _ = 0
 
-newBindingHash :: [Binding] -> VarDict -> VarDict
-newBindingHash [] hash = hash
-newBindingHash (h:t) hash = addBinding (h) (newBindingHash t hash)
--- adds a Binding to a VarDict, removing bindings that are now irrelevant
-addBinding :: Binding -> VarDict -> VarDict
-addBinding binding vars = [vars !! n | n <- [0 .. (hash - 1)]]
-                          ++ [binding : (removeBindingFrom binding (vars !! hash))] ++
-                          [vars !! n | n <- [(hash + 1) .. (hashSize - 1)]]
-                          where hash = varHash (fst binding)
-                    
-samePattern [] [] = True
-samePattern (h:t) (h':t') = case (h, h') of
-                              (Name a, Name b) -> samePattern t t'
-                              (Split a b, Split c d) -> samePattern t t'
-                              (Pattern a, Pattern b) -> if a == b 
-                                                        then samePattern t t'
-                                                        else False
-                              otherwise -> False
-removeBindingFrom :: Binding -> [Binding] -> [Binding]
-removeBindingFrom _ [] = []
-removeBindingFrom binding (h:t) = if fst h == fst binding &&
-                                     length (fst (snd h)) ==
-                                     length (fst (snd binding)) &&
-                                     samePattern (fst (snd h)) (fst (snd binding))
-                                  then removeBindingFrom binding t
-                                  else h: (removeBindingFrom binding t)
-addBindings (h:t) vars = addBinding h (addBindings t vars)
-addBindings [] vars = vars
-
-
-nameSplit (Name n) = n
-
-varBinding :: Id -> [Binding] -> VarDict -> [Call]
-varBinding x [] vars = [([], Exception ("Undefined variable " ++ show x))]
-varBinding x (h:t) vars = if ((fst h) == x || isSuffixOf ("." ++ nameSplit x) ("." ++ nameSplit (fst h))) && 
-                              length (fst (snd h)) == 0 && 
-                              snd (snd h) /= Var (fst h)
-                           then case snd (snd h) of
-                                  Var v -> if v == x 
-                                           then varBinding x t vars
-                                           else ([], Var v) : varBinding v (vars !! varHash v) vars
-                                  otherwise -> snd h : varBinding x t vars
-                           else varBinding x t vars
-                                                      
-funcBinding :: Id -> [Expr] -> [Binding] -> VarDict -> Call
-funcBinding x args [] vars = ([], exNoMatch x args)
-funcBinding x args (h:t) vars = 
-  if (id == x || isSuffixOf ("." ++ nameSplit x) ("." ++ nameSplit id)) &&
-     length args == length params &&
-     pattern_match params args
-  then case validList args of
-         Val _ -> binding
-         Exception e -> ([], Exception e)
-  else funcBinding x args t vars
-  where (id, params, expr) = (fst h, fst binding, snd binding)
-        binding = snd h
-
-pattern_match :: [Id] -> [Expr] -> Bool
-pattern_match [] [] = True
-pattern_match (a:b) (c:d) = 
-  case a of
-    Name n -> pattern_match b d
-    Split x y -> case c of
-                   ListExpr l -> pattern_match b d
-                   Val (List l) -> pattern_match b d
-                   Val (Str l) -> pattern_match b d
-                   otherwise -> False
-    AtomMatch x y -> case c of
-                       Val (Atom x' y') -> if length y == length y' 
-                                           then if x' == x 
-                                                then pattern_match (y ++ b) ([Val i | i <- y'] ++ d)
-                                                else False
-                                           else False
-                       otherwise -> False
-    Pattern v -> if c == Val v 
-                 then pattern_match b d
-                 else case (c, v) of 
-                        (Val (List []), Str "") -> pattern_match b d
-                        (Val (Str ""), List []) -> pattern_match b d
-                        otherwise -> False
-                        
--- funcall: list of (ID parameter, expression argument)
-funcall :: [(Id, Expr)] -> [(Id, Expr)]
-funcall [] = []
-funcall (h:t) = 
-  case param of
-     Name n -> h : funcall t
-     Split x y -> case arg of
-                    ListExpr l -> if length l > 0 then (Name x, head l) :
-                                                       (Name y, ListExpr (tail l)) :
-                                                       funcall t
-                                                  else [(Name x, Exception "Can't split empty list")]
-                    Val (List l) -> if length l > 0 then (Name x, Val (head l)) :
-                                                         (Name y, Val (List (tail l))) :
-                                                         funcall t
-                                                    else [(Name x, Exception "Can't split empty list")]
-                    Val (Str l) -> if length l > 0 then (Name x, Val (Str [head l])) :
-                                                        (Name y, Val (Str (tail l))) :
-                                                        funcall t
-                                                   else [(Name x, Exception "Can't split empty string")]
-     AtomMatch x y -> case arg of 
-                        Val (Atom x' y') -> funcall ((zip y [Val i | i <- y']) ++ t)
-     Pattern _ -> funcall t
-     where param = fst h
-           arg = snd h
-
-permanentDefs id p x s a = case s of
-                             Defun id' p' x' s' -> permanentDefs id' p' x' s' (newDef ++ a)
-                             Skip -> newDef ++ a
-                             otherwise -> []
-                           where newDef = [(localId id, (p, x)), (localId id, ([], Val (HFunc (localId id))))]                                 
-newDefs (Defun id p x s) = permanentDefs id p x s []
-
-localId id = (Name ("local." ++ stripLocal (stripName id)))
+localId id = ("local." ++ stripLocal id)
 stripLocal s = if isPrefixOf "local." s then [s !! n | n <- [length "local." .. (length s) - 1]] else s
+
+emptyVarDict = [[] | n <- [1..hashSize]]
+
+makeVarDict' :: [(Expr, Expr)] -> [[(Expr, Expr)]] -> [[(Expr, Expr)]]
+makeVarDict' [] r = r
+makeVarDict' (h:t) r = makeVarDict' t 
+                        [(if exprHash (fst h) == i
+                          then [h]
+                          else [])
+                         ++ (removeFromBucket h (r !! i))
+                         | i <- [0..(hashSize-1)]]
+makeVarDict :: [(Expr, Expr)] -> [[(Expr, Expr)]]
+makeVarDict s = makeVarDict' s emptyVarDict

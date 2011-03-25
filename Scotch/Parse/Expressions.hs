@@ -33,7 +33,9 @@ import Scotch.Parse.ParseBase
 sws col = do pos <- getPosition
              if (sourceColumn pos) < col then fail "" else return ()
 
-expression col = try (stmt col) <|> try (operation col) <|> try (term col)
+expression col = try (stmt col) <|> 
+                 try (operation col) <|> 
+                 try (term col)
            
 operation col = buildExpressionParser (operators col) ((term col) <|> parens (term col))
 
@@ -58,7 +60,6 @@ reservedExpr col =
 
 value col = 
   try (reservedWord col) <|>
-  try (atomValue col) <|>
   try (hashValue col) <|>
   try (listValue col) <|> 
   try (strValue col) <|> 
@@ -66,7 +67,6 @@ value col =
   try (intValue col)
 valueStmt col =
   try (reservedExpr col) <|>
-  try (atomStmt col) <|>
   try (evalStmt col) <|>
   try (procStmt col) <|>
   try (hashStmt col) <|>
@@ -89,7 +89,6 @@ valueExpr col =
   try (notStmt col) <|>
   try (conversionStmt col) <|>
   try (valueStmt col) <|>
-  try (funcallStmt col) <|>
   try (varcallStmt col)
 
 
@@ -123,7 +122,7 @@ caseStmt col =
      reserved "case"
      check <- whiteSpace >> expression col
      reserved "of"
-     cases <- sepBy (do cond <- whiteSpace >> identifierOrValue col
+     cases <- sepBy (do cond <- whiteSpace >> expression col
                         reservedOp ":"
                         pos <- getPosition
                         expr <- whiteSpace >> expression (sourceColumn pos)
@@ -187,7 +186,7 @@ takeStmt col =
      expr2 <- expression col
      return $ Take expr1 expr2
      
-nestedListComp (h:t) expr conds = For (Name (fst h)) (snd h) (nestedListComp t expr conds)
+nestedListComp (h:t) expr conds = For (fst h) (snd h) (nestedListComp t expr conds)
                                     (if t == [] then conds else [])
 nestedListComp [] expr conds = expr
 
@@ -242,42 +241,9 @@ toListStmt col =
 -- value parsers
 
 exprList col = sepBy (whiteSpace >> expression col) (oneOf ",")
-
-identifierOrValue col = 
-  try (idAtom col) <|> 
-  try (idSplit col) <|> 
-  try (idName col) <|> 
-  try (idPattern col) <|> 
-  parens (identifierOrValue col)
-idAtom col =
-  do sws col
-     initial <- oneOf upperCase
-     chars <- many $ oneOf $ upperCase ++ lowerCase
-     id <- try (whiteSpace >> parens (sepBy (whiteSpace >> identifierOrValue col) (oneOf ","))) <|> 
-           try (do id <- whiteSpace >> identifierOrValue col
-                   return [id]) <|>
-           do return []
-     return $ AtomMatch (initial : chars) id
-idSplit col = 
-  do sws col
-     id1 <- identifier
-     reservedOp "+"
-     id2 <- identifier
-     return $ Split id1 id2
-idName col =
-  do sws col
-     id <- identifier
-     return $ Name id 
-idPattern col =
-  do sws col
-     val <- value col
-     return $ Pattern val
-       
-
-idList col = 
-  do sws col
-     id <- sepBy (whiteSpace >> identifierOrValue col) (oneOf ",")
-     return $ id
+idList col = sepBy (do sws col
+                       id <- whiteSpace >> identifier
+                       return $ id) (oneOf ",")
 
 lambdaStmt col =
   do sws col
@@ -343,21 +309,6 @@ floatStmt col =
   do sws col
      val <- floatValue col
      return $ Val val
-
-atomValue col =
-  do sws col
-     initial <- oneOf upperCase
-     chars <- many $ oneOf $ upperCase ++ lowerCase
-     val <- try (whiteSpace >> parens (sepBy (whiteSpace >> value col) (oneOf ","))) <|> 
-            do return []
-     return $ Atom (initial : chars) val
-atomStmt col =
-  do sws col
-     initial <- oneOf upperCase
-     chars <- many $ oneOf $ upperCase ++ lowerCase
-     expr <- try (whiteSpace >> parens (sepBy (whiteSpace >> expression col) (oneOf ","))) <|> 
-             do return []
-     return $ AtomExpr (initial : chars) expr
      
 evalStmt col =
   do sws col
@@ -414,36 +365,22 @@ hashStmt col =
      keysValues <- braces (sepBy (whiteSpace >> keyExpr col) (oneOf ","))
      return $ HashExpr keysValues
 
-funcallStmt col =
-  try (
-  do sws col
-     var <- identifier
-     params <- parens (exprList col)
-     return $ Func (Name var) params
-  ) <|> try (
-  do sws col
-     var <- parens (customOp col)
-     params <- parens (exprList col)
-     return $ Func (Name var) params
-  )
-     
 varcallStmt col =
   try (
   do sws col
      var <- identifier
-     return $ Var (Name var) 
-  ) <|> try (
+     params <- try (parens (exprList col)) <|> do return []
+     return $ Var var params
+  ) <|> (
   do sws col
      var <- parens (customOp col)
-     return $ Var (Name var)
+     return $ Var var []
   )
-
-
+     
 
 -- statements
 stmt col = 
   try (semicolon) <|>
-  try (assignment col) <|>
   try (fileStmt col) <|>
   try (printStmt col) <|>
   try (importStmt col) <|>
@@ -478,98 +415,6 @@ importStmt col =
           mod <- moduleName col
           return $ Import mod mod)
 
-defOpStmt col =
-  do sws col
-     param1 <- whiteSpace >> identifierOrValue col
-     operator <- whiteSpace >> many1 (oneOf operatorSymbol)
-     param2 <- whiteSpace >> identifierOrValue col
-     reservedOp "="
-     pos <- getPosition
-     let col' = sourceColumn pos
-     expr <- expression col'
-     return $ Defun (Name operator) [param1, param2] expr Skip
-     
-commutativeDefOpStmt col =
-  do sws col
-     param1 <- whiteSpace >> identifierOrValue col
-     operator <- whiteSpace >> many1 (oneOf operatorSymbol)
-     param2 <- whiteSpace >> identifierOrValue col
-     reservedOp "<=>"
-     pos <- getPosition
-     let col' = sourceColumn pos
-     expr <- expression col'
-     return $ Defun (Name operator) [param2, param1] expr 
-             (Defun (Name operator) [param1, param2] expr (Skip))
-
-defprocStmt col = try (defprocFun col) <|> try (defprocVar col)
-
-defprocVar col =
-  do sws col
-     var <- identifier
-     reservedOp "="
-     reserved "do"
-     pos <- getPosition
-     let col' = sourceColumn pos
-     exprs <- many $ expression col'
-     return $ Defproc (Name var) [] exprs Skip
-
-defprocFun col =
-  do sws col
-     var <- identifier
-     params <- parens (idList col)
-     reservedOp "="
-     reserved "do"
-     pos <- getPosition
-     let col' = sourceColumn pos
-     exprs <- many $ expression col'
-     return $ Defproc (Name var) params exprs Skip
-
-defunStmt col =
-  do sws col
-     var <- identifier
-     params <- parens (idList col)
-     reservedOp "="
-     pos <- getPosition
-     let col' = sourceColumn pos
-     expr <- expression col'
-     return $ Defun (Name var) params expr Skip
-
-eagerStmt col =
-  do sws col
-     var <- identifier
-     reservedOp ":="
-     pos <- getPosition
-     let col' = sourceColumn pos
-     expr <- expression col'
-     return $ EagerDef (Name var) expr Skip
-     
-accumulateStmt col =
-  do sws col
-     var <- identifier
-     reservedOp "+="
-     pos <- getPosition
-     let col' = sourceColumn pos
-     expr <- expression col'
-     return $ EagerDef (Name var) (Add (Var (Name var)) (expr)) Skip
-     
-assignStmt col =
-  do sws col
-     var <- identifier
-     symbol "="
-     pos <- getPosition
-     let col' = sourceColumn pos
-     expr1 <- expression col'
-     return $ Def (Name var) expr1 Skip
-
-assignment col = 
-  try (defprocStmt col) <|>              
-  try (defunStmt col) <|> 
-  try (accumulateStmt col) <|> 
-  try (eagerStmt col) <|> 
-  try (assignStmt col) <|>
-  try (commutativeDefOpStmt col) <|>
-  try (defOpStmt col)
-     
 writeStmt col =
   do sws col
      reserved "write"
@@ -599,7 +444,6 @@ subs x y = Subs y x
 
 nestwhere [] wexpr = wexpr
 nestwhere (h:t) wexpr = case h of
-                          Defun a b c Skip -> Defun a b c (nestwhere t wexpr)
                           EagerDef a b Skip -> EagerDef a b (nestwhere t wexpr)
                           Def a b Skip -> Def a b (nestwhere t wexpr)
                           otherwise -> nestwhere t wexpr
@@ -608,16 +452,14 @@ whereStmt col =
   do whiteSpace
      sws col
      reserved "where"
-     assignment <- sepBy1 (whiteSpace >> assignment col) (oneOf ",")
+     assignment <- sepBy1 (whiteSpace >> buildExpressionParser [assignments col] ((term col) <|> parens (term col))) (oneOf ",")
      return $ nestwhere assignment
      
-lambdaCallStmt col =
+{-lambdaCallStmt col =
   do whiteSpace
      reservedOp "<-"
      args <- sepBy1 (whiteSpace >> expression col) (oneOf ",")
-     return $ lambdaCall args
-     
-lambdaCall args expr = LambdaCall expr args
+     return $ lambdaCall args-}
 
 customOp col = 
   do whiteSpace
@@ -628,10 +470,19 @@ customOp col =
       then fail op
       else return op
 
-opCall op expr1 expr2 = Func (Name op) [expr1, expr2]
+opCall op expr1 expr2 = Var op [expr1, expr2]
 
 rsvdOp col op = do sws col
                    reservedOp op
+                   
+assignment a b = Def a b Skip
+eagerAssign a b = EagerDef a b Skip
+accumulate a b = EagerDef a (Add a b) Skip
+
+assignments col = 
+   [Infix  (rsvdOp col "="   >> return (assignment      )) AssocNone,
+    Infix  (rsvdOp col ":="  >> return (eagerAssign     )) AssocNone,
+    Infix  (rsvdOp col "+="  >> return (accumulate      )) AssocNone]
 
 operators col = 
   [[Infix  (rsvdOp col "@"   >> return (subs            )) AssocLeft],
@@ -655,7 +506,8 @@ operators col =
     Infix  (rsvdOp col "&"   >> return (And             )) AssocLeft,
     Infix  (rsvdOp col "|"   >> return (Or              )) AssocLeft],
    [Prefix (rsvdOp col "-"   >> return (Prod (Val (NumInt (-1)))))],
-   [Postfix(do { l <- lambdaCallStmt col; return (l     )})          ],
+   --[Postfix(do { l <- lambdaCallStmt col; return (l     )})          ],
+   assignments col,
    [Infix  (do { op <- customOp col;return (opCall op   )}) AssocLeft],
    [Postfix(do { w <- whereStmt col;return (w           )})          ]
    ]

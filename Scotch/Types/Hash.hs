@@ -35,7 +35,7 @@ bucketMember s (h:t) = if fst h == s then snd h else bucketMember s t
 hashMember :: String -> [[(String, Expr)]] -> Expr
 hashMember s h = bucketMember s (h !! (hashLoc s))
 
-removeFromBucket :: (String, Expr) -> [(String, Expr)] -> [(String, Expr)]
+removeFromBucket :: (Eq a, Eq b) => (a, b) -> [(a, b)] -> [(a, b)]
 removeFromBucket a [] = []
 removeFromBucket a (h:t) = if (fst h) == (fst a)
                            then removeFromBucket a t

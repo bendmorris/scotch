@@ -20,39 +20,7 @@ import Data.Binary
 import Numeric
 
 -- a bindable identifier
-data Id = Name String 
-        | Pattern Value 
-        | Split String String 
-        | AtomMatch String [Id]
-        deriving Eq
-instance Show(Id) where
-    show (Name s) = s
-    show (Pattern v) = show v
-    show (Split a b) = "(" ++ show a ++ " : " ++ show b ++ ")"
-    show (AtomMatch a b) = show a ++ " " ++ show b
-instance Binary(Id) where
-    put (Name s)    =       do put (0 :: Word8)
-                               put s
-    put (Pattern v) =       do put (1 :: Word8)
-                               put v
-    put (Split a b) =       do put (2 :: Word8)
-                               put a
-                               put b
-    put (AtomMatch a b) =   do put (3 :: Word8)
-                               put a
-                               put b
-    get = do t <- get :: Get Word8
-             case t of 
-               0 ->     do s <- get
-                           return $ Name s
-               1 ->     do v <- get
-                           return $ Pattern v
-               2 ->     do a <- get
-                           b <- get
-                           return $ Split a b
-               3 ->     do a <- get
-                           b <- get
-                           return $ AtomMatch a b
+type Id = String
 -- a value with its corresponding type
 data Value = NumInt Integer
            | NumFloat Double
@@ -61,13 +29,11 @@ data Value = NumInt Integer
            | List [Value]
            | Hash [[(String, Expr)]]
            | Null
-           | HFunc Id
            | Lambda [Id] Expr
            | Proc [Expr]
            | Thread Expr
            | Undefined String
            | File String
-           | Atom String [Value]
            | InvalidValue
            deriving Eq
 instance Show (Value) where
@@ -81,16 +47,12 @@ instance Show (Value) where
                             then tail (foldl (++) "" items)
                             else "") ++ "}"
                            where items = ["," ++ fst i ++ ":" ++ show (snd i) | j <- h, i <- j]
-    show (HFunc f) = "func " ++ show f
     show (Lambda ids expr) = removeBrackets (show ids) ++ " -> " ++ show expr
-    show (Proc p) = "proc " ++ show p
+    show (Proc p) = "do " ++ foldl (++) "" [show i ++ ";" | i <- p]
     show (Thread th) = "thread " ++ show th
     show (Null) = "null"
     show (Undefined s) = show s
     show (File f) = "file(" ++ show f ++ ")"
-    show (Atom s v) = s ++ (case length v of
-                              0 -> ""
-                              otherwise -> " " ++ removeBrackets (show v))
     show InvalidValue = "**invalid value**"
 instance Binary(Value) where
     put (Str s) =           do put (4 :: Word8)
@@ -105,8 +67,6 @@ instance Binary(Value) where
                                put l
     put (Hash h) =          do put (9 :: Word8)
                                put h
-    put (HFunc f) =         do put (10 :: Word8)
-                               put f
     put (Lambda i e) =      do put (11 :: Word8)
                                put i
                                put e
@@ -119,9 +79,6 @@ instance Binary(Value) where
                                put s
     put (File f) =          do put (16 :: Word8)
                                put f
-    put (Atom s v) =        do put (17 :: Word8)
-                               put s
-                               put v
     get = do t <- get :: Get Word8
              case t of 
                4 ->     do s <- get
@@ -136,8 +93,6 @@ instance Binary(Value) where
                            return $ List l
                9 ->     do h <- get
                            return $ Hash h
-               10 ->    do f <- get
-                           return $ HFunc f
                11 ->    do i <- get
                            e <- get
                            return $ Lambda i e
@@ -150,9 +105,6 @@ instance Binary(Value) where
                            return $ Undefined s
                16 ->    do f <- get
                            return $ File f
-               17 ->    do s <- get
-                           v <- get
-                           return $ Atom s v
 
 -- represents an arithmetic expression
 data Expr = Exception String                -- undefined
@@ -180,15 +132,11 @@ data Expr = Exception String                -- undefined
           | And Expr Expr                   -- boolean and
           | Or Expr Expr                    -- boolean or
           | Not Expr                        -- boolean not
-          | Def Id Expr Expr                -- identifier assignment
-          | EagerDef Id Expr Expr           -- identifier assignment
-          | Defun Id [Id] Expr Expr         -- function definition
-          | Defproc Id [Id] [Expr] Expr     -- procedure definition
-          | Var Id                          -- identifier
-          | Func Id [Expr]                  -- function call
-          | LambdaCall Expr [Expr]          -- lambda function call
+          | Def Expr Expr Expr              -- rewriting rule assignment
+          | EagerDef Expr Expr Expr         -- eager assignment
+          | Var Id [Expr]                   -- identifier with optional list of values
           | If Expr Expr Expr               -- conditional
-          | Case Expr [(Id, Expr)]          -- case expression
+          | Case Expr [(Expr, Expr)]        -- case expression
           | For Id (Expr) (Expr) [Expr]     -- iteration
           | TakeFor Id (Expr) (Expr) [Expr] Integer
                                             -- take from list comprehension
@@ -200,8 +148,7 @@ data Expr = Exception String                -- undefined
           | FileRead Expr                   -- read file
           | FileWrite Expr Expr             -- write to file
           | FileAppend Expr Expr            -- append to file
-          | AtomExpr String [Expr]          -- evaluates to an atom value
-          | EvalExpr Expr                 -- eval for metaprogramming
+          | EvalExpr Expr                   -- eval for metaprogramming
           deriving Eq
 instance Show(Expr) where
     show (Exception s) = "Exception: " ++ s
@@ -219,29 +166,24 @@ instance Show(Expr) where
     show (ToStr s) = "str(" ++ show s ++ ")"
     show (ToList l) = "list(" ++ show l ++ ")"
     show (Subs n s) = show s ++ " @" ++ show n
-    show (Add x y) = show x ++ " + " ++ show y
-    show (Sub x y) = show x ++ " - " ++ show y
-    show (Prod x y) = show x ++ " * " ++ show y
-    show (Div x y) = show x ++ " / " ++ show y
-    show (Mod x y) = show x ++ " mod " ++ show y
-    show (Exp x y) = show x ++ " ^ " ++ show y
-    show (Eq x y) = show x ++ " == " ++ show y
-    show (InEq x y) = show x ++ " != " ++ show y
-    show (Gt x y) = show x ++ " > " ++ show y
-    show (Lt x y) = show x ++ " < " ++ show y
-    show (And x y) = show x ++ " & " ++ show y
-    show (Or x y) = show x ++ " | " ++ show y
+    show (Add x y) = "(" ++ show x ++ " + " ++ show y ++ ")"
+    show (Sub x y) = "(" ++ show x ++ " - " ++ show y ++ ")"
+    show (Prod x y) = "(" ++ show x ++ " * " ++ show y ++ ")"
+    show (Div x y) = "(" ++ show x ++ " / " ++ show y ++ ")"
+    show (Mod x y) = "(" ++ show x ++ " mod " ++ show y ++ ")"
+    show (Exp x y) = "(" ++ show x ++ " ^ " ++ show y ++ ")"
+    show (Eq x y) = "(" ++ show x ++ " == " ++ show y ++ ")"
+    show (InEq x y) = "(" ++ show x ++ " != " ++ show y ++ ")"
+    show (Gt x y) = "(" ++ show x ++ " > " ++ show y ++ ")"
+    show (Lt x y) = "(" ++ show x ++ " < " ++ show y ++ ")"
+    show (And x y) = "(" ++ show x ++ " & " ++ show y ++ ")"
+    show (Or x y) = "(" ++ show x ++ " | " ++ show y ++ ")"
     show (Not x) = "not " ++ show x
     show (Def a b Skip) = show a ++ " = " ++ show b
-    show (Def a b c) = show a ++ " = " ++ show b ++ "; " ++ show c
+    show (Def a b c) = show c ++ " where " ++ show a ++ " = " ++ show b
     show (EagerDef a b Skip) = show a ++ " := " ++ show b
-    show (EagerDef a b c) = show a ++ " := " ++ show b ++ "; " ++ show c ++ ")"
-    show (Defun a b c Skip) = show a ++ " " ++ removeBrackets (show b) ++ " = " ++ show c
-    show (Defun a b c d) = show a ++ " " ++ removeBrackets (show b) ++ " = " ++ show c ++ "; " ++ show d
-    show (Defproc a b c Skip) = show a ++ " " ++ removeBrackets (show b) ++ " = do " ++ show c
-    show (Defproc a b c d) = show a ++ " " ++ removeBrackets (show b) ++ " = do " ++ show c ++ "; " ++ show d
-    show (Var v) = show v
-    show (Func f p) = show f ++ " " ++ removeBrackets (show p)
+    show (EagerDef a b c) = show c ++ " where " ++ show a ++ " := " ++ show b
+    show (Var f p) = f ++ (if length p > 0 then removeBrackets (show p) else "")
     show (If cond x y) = "if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y
     show (Case c o) = "case " ++ show c ++ " of " ++ show o
     show (For x y z w) = "[for " ++ show x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
@@ -254,8 +196,6 @@ instance Show(Expr) where
     show (FileRead f) = "read(" ++ show f ++ ")"
     show (FileWrite f x) = "write(" ++ show f ++ ", " ++ show x ++ ")"
     show (FileAppend f x) = "append(" ++ show f ++ ", " ++ show x ++ ")"
-    show (AtomExpr s x) = s ++ " " ++ show x
-    show (LambdaCall v e) = show v ++ " <- " ++ show e
     show (EvalExpr e) = "eval(" ++ show e ++ ")"
 instance Binary(Expr) where
     put (Exception s) =     do put (18 :: Word8)
@@ -327,19 +267,7 @@ instance Binary(Expr) where
                                put a
                                put b
                                put c
-    put (Defun a b c d) =   do put (44 :: Word8)
-                               put a
-                               put b
-                               put c
-                               put d
-    put (Defproc a b c d) = do put (45 :: Word8)
-                               put a
-                               put b
-                               put c
-                               put d
-    put (Var v) =           do put (46 :: Word8)
-                               put v
-    put (Func f p) =        do put (47 :: Word8)
+    put (Var f p) =         do put (47 :: Word8)
                                put f
                                put p
     put (If a b c) =        do put (48 :: Word8)
@@ -372,12 +300,6 @@ instance Binary(Expr) where
                                put a
                                put b
     put (FileAppend a b) =  do put (58 :: Word8)
-                               put a
-                               put b
-    put (AtomExpr a b) =    do put (59 :: Word8)
-                               put a
-                               put b
-    put (LambdaCall a b) =  do put (60 :: Word8)
                                put a
                                put b
     put (EvalExpr a) =      do put (61 :: Word8)
@@ -453,21 +375,9 @@ instance Binary(Expr) where
                            b <- get
                            c <- get
                            return $ EagerDef a b c
-               44 ->    do a <- get
-                           b <- get
-                           c <- get
-                           d <- get
-                           return $ Defun a b c d
-               45 ->    do a <- get
-                           b <- get
-                           c <- get
-                           d <- get
-                           return $ Defproc a b c d
-               46 ->    do a <- get
-                           return $ Var a
                47 ->    do a <- get
                            b <- get
-                           return $ Func a b
+                           return $ Var a b
                48 ->    do a <- get
                            b <- get
                            c <- get
@@ -500,12 +410,6 @@ instance Binary(Expr) where
                58 ->    do a <- get
                            b <- get
                            return $ FileAppend a b
-               59 ->    do a <- get
-                           b <- get
-                           return $ AtomExpr a b
-               60 ->    do a <- get
-                           b <- get
-                           return $ LambdaCall a b
                61 ->    do a <- get
                            return $ EvalExpr a
 type ExprPosition = (String, (Int, Int))

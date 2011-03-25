@@ -1,10 +1,10 @@
 # these functions will be imported by the Scotch interpreter automatically
 
-version = do import std.version
-copyright = do import std.copyright
-license = do import std.license
-startup = do import std.startup
-about = do import std.about
+version = do import std.version;
+copyright = do import std.copyright;
+license = do import std.license;
+startup = do import std.startup;
+about = do import std.about;
 
 # Returns the length of a string or list.
 len(h + t, a) = len(t, a + 1)
@@ -18,8 +18,8 @@ head([]) = []
 tail(h + t) = t
 tail([]) = []
 # Returns the last element in a list
-last(h + t) = (l) @ (len(l) - 1)
-              where l := h + t
+{-last(h + t) = (l) @ (len(l) - 1)
+              where (l := h + t)-}
 # Returns a list or string in reverse order.
 reverse(h + t) = reverse(t) + [h]
 reverse([]) = []
@@ -31,7 +31,7 @@ join(h + t, s) = h + (if len(t) > 0 then s + join(t, s) else "")
 all(h + t) = case h of true: all(t), otherwise: false
 all([]) = true
 # Returns true if any of the members in a list are true.
-any(l) = foldr((|), l, false)
+any(l) = foldr( (|) , l, false)
 any([]) = false
 
 # Checks whether string/list \c+d is a prefix of \a+b.
@@ -104,7 +104,7 @@ show(a) = str(a)
 sum(h + t, s) = foldr((x, y) -> x + y, h + t, s)
 sum(l) = sum(l, 0)
 prod(h + t) = foldr((x, y) -> x * y, h + t, 1)
-
+{-
 sort(h + t) = qsort(h + t)
 qsort(h + t, n) = case (len(h + t) < n) of
                     true: h + t, 
@@ -116,7 +116,7 @@ insert(x, h + t, a) = if x > h then h + insert(x, t) else ([x] + [h] + t)
 insert(x, [], a) = a + x
 insort(h + t) = insert(h, (insort(t)))
 insort([]) = []
-
+-}
 execute(h + t) = do h
                     execute(t)
 execute([]) = []
@@ -130,17 +130,3 @@ zip(a + b, []) = []
 zip(a + b, c + d, f) = [f(a, c)] + zip(b, d, f)
 zip([], c + d, f) = []
 zip(a + b, [], f) = []
-
-(a) + (b) = a + b
-a - b = a - b
-a * b = a * b
-a / b = a / b
-a ^ b = a ^ b
-a & b = a & b
-a | b = a | b
-a != b = true
-a == b = false
-a > b = a > b
-a < b = a < b
-a % b = a % b
-a @ b = a @ b

@@ -36,24 +36,18 @@ wexecute _ [] bindings = do return bindings
 wexecute (verbose, interpret, strict) (h:t) bindings = 
   do parsed <- subfile (snd h) bindings
      -- evaluate the parsed code
-     result <- do r <- ieval parsed bindings strict Nothing
-                  case r of
-                    Func f args -> return $ exNoMatch f args
-                    LambdaCall x args -> return $ exNoMatch x args
-                    otherwise -> return otherwise
+     result <- do ieval parsed bindings strict Nothing
      if verbose then putStrLn (show parsed)
                 else return ()
      -- get new bindings if any definitions/imports were made
      newBindings <- case parsed of
-                      Def id x Skip -> do return [(localId id, ([], x))]
+                      Def id x Skip -> do return [(id, x)]
                       EagerDef id x Skip -> do evaluated <- ieval x bindings strict Nothing
                                                case evaluated of
                                                  Exception e -> do putStrLn $ show $ Exception e
                                                                    return []
-                                                 otherwise -> return [(localId id, ([], evaluated))]
-                                               return [(localId id, ([], evaluated))]
-                      Defun id p x s -> do return $ newDefs $ Defun id p x s
-                      Defproc id params x Skip -> do return [(localId id, (params, Val (Proc x))), (localId id, ([], Val (HFunc (localId id))))]
+                                                 otherwise -> return [(id, evaluated)]
+                                               return [(id, evaluated)]
                       Import s t -> do i <- importFile (verbose, strict) s t
                                        b <- case i of 
                                               (False, _) -> do putStrLn ("Failed to import module " ++ show s)
@@ -77,12 +71,6 @@ wexecute (verbose, interpret, strict) (h:t) bindings =
                          return []
        Output x -> do case x of
                         Val (Str s) -> putStrLn s
-                        Val (Atom s l) -> do result <- ieval (Func (Name "show") [x]) bindings strict Nothing
-                                             case result of
-                                               Val (Str s) -> putStrLn s
-                                               Func f args -> putStrLn $ show $ exNoMatch f args
-                                               otherwise -> putStrLn $ show otherwise
-                        Func f args -> putStrLn $ show $ exNoMatch f args
                         otherwise -> putStrLn (show x)
                       nextline newBindings
        FileWrite (Val (File f)) (Val (Str x)) -> do writeFile f x
@@ -93,18 +81,14 @@ wexecute (verbose, interpret, strict) (h:t) bindings =
                                         return ())
                              nextline newBindings
        Val (Proc p) -> nextline newBindings
-       Val (Atom a b) -> if interpret 
-                         then do v' <- ieval (Func (Name "show") [Val (Atom a b)]) bindings strict Nothing
-                                 putStrLn $ case v' of
-                                              Val (Str s) -> s
-                                              otherwise -> show otherwise
-                                 nextline newBindings
-                         else nextline newBindings
-       Val v -> if interpret 
-                then do putStrLn $ show v
-                        nextline newBindings
-                else nextline newBindings
-       otherwise -> nextline newBindings
+       Skip -> nextline newBindings
+       Import a b -> nextline newBindings
+       Def a b c -> nextline newBindings
+       EagerDef a b c -> nextline newBindings
+       otherwise -> if interpret 
+                    then do putStrLn $ show otherwise
+                            nextline newBindings
+                    else nextline newBindings
      where name = case position of
                     Just p -> fst p
                     Nothing -> ""
@@ -116,7 +100,7 @@ wexecute (verbose, interpret, strict) (h:t) bindings =
                      Nothing -> 1
            showPosition = name ++ ": Line " ++ show line ++ ", column " ++ show column
            position = fst h
-           nextline newBindings = wexecute (verbose, interpret, strict) t (addBindings newBindings bindings)
+           nextline newBindings = wexecute (verbose, interpret, strict) t (makeVarDict' newBindings bindings)
 
 -- returns a qualified file name from a list of identifiers provided by an import statement        
 importName [] = ""
@@ -151,17 +135,16 @@ importFile (verbose, strict) s t =
      let success = case path of
                      "" -> False
                      otherwise -> True
-     let newval = [(Name (qualifier ++ stripLocal (stripName (fst binding))),
-                      case snd binding of
-                        ([], Val (HFunc (Name n))) -> if fst binding == Name n 
-                                                      then ([], Val (HFunc (Name (qualifier ++ (stripLocal n)))))
-                                                      else snd binding
-                        otherwise -> otherwise) 
-                   | binding <- val,
-                     isPrefixOf "local." (stripName (fst binding))]
+     let newval = [(case fst binding of
+                      Var v a -> Var (qualifier ++ stripLocal v) a
+                      otherwise -> otherwise,--stripLocal (stripName (fst binding))),
+                    snd binding) 
+                   | binding <- val--,
+                     --isPrefixOf "local." (stripName (fst binding))
+                     ]
                    where qualifier = (foldl (++) [] [i ++ "." | i <- t])
                          stripLocal s = if isPrefixOf "local." s then [s !! n | n <- [length "local." .. (length s) - 1]] else s
-     return (success, newBindingHash newval emptyHash)
+     return (success, makeVarDict newval)
 
 -- interpret the contents of a file
 execute :: (Bool, Bool) -> String -> VarDict -> IO VarDict

@@ -37,7 +37,7 @@ languageDef =
   emptyDef { Token.commentStart    = "{-",
              Token.commentEnd      = "-}",
              Token.commentLine     = "#",
-             Token.identStart      = oneOf ("_" ++ lowerCase),
+             Token.identStart      = oneOf ("_" ++ lowerCase ++ upperCase),
              Token.identLetter     = oneOf (lowerCase ++ upperCase ++ numeric ++ idSymbol ++ operatorSymbol),
              Token.reservedNames   = ["if", "then", "else",
                                       "for", "in",
@@ -67,7 +67,7 @@ identifier = Token.identifier       lexer -- parses an identifier
 symbol     = Token.symbol           lexer -- parses a symbol
 reserved   = Token.reserved         lexer -- parses a reserved name
 reservedOp = Token.reservedOp       lexer -- parses an operator
-parens     = Token.parens           lexer -- parses [ ]
+parens     = Token.parens           lexer -- parses ( )
 brackets   = Token.brackets         lexer -- parses [ ]
 braces     = Token.braces           lexer -- parses { }
 angles     = Token.angles           lexer -- parses < >

@@ -50,9 +50,9 @@ getFlags [] a = a
 nextQName [] = []
 nextQName (h:t) = if h == '.' then t else nextQName t
 
-nameMatch str [] = False
-nameMatch str name = if isPrefixOf str name then True 
-                     else nameMatch str (nextQName name)
+modNameMatch str [] = False
+modNameMatch str name = if isPrefixOf str name then True 
+                        else modNameMatch str (nextQName name)
 
 main = do args <- getArgs          
           let (verbose, interpret, strict, evaluate) = getFlags args (False, False, False, False)
@@ -61,7 +61,7 @@ main = do args <- getArgs
           let completionFunction str = do return $ [Completion { replacement = binding,
                                                                  display = binding,
                                                                  isFinished = False }
-                                                    | i <- snd bindings, binding <- sort (nub [stripName (fst a) | a <- i]), nameMatch str binding]
+                                                    | i <- snd bindings, binding <- sort (nub [show (fst a) | a <- i]), modNameMatch str binding]
 
           state <- initializeInput (setComplete (completeWord Nothing " " (completionFunction)) defaultSettings)
           bindings' <- case bindings of
@@ -85,7 +85,7 @@ main = do args <- getArgs
                          if interpret then loop (verbose, strict) newbindings state
                                       else return ()
             -- otherwise, start the interpreter
-            else do wexecute (False, False, True) [(Nothing, (Var (Name "startup")))] bindings'
+            else do wexecute (False, False, True) [(Nothing, (Var "startup" []))] bindings'
                     loop (verbose, strict) bindings' state
 
 -- the interpreter's main REPL loop
@@ -110,5 +110,5 @@ loop (verbose, strict) bindings state =
                                           otherwise -> do putStrLn (show exEvalMultiple)
                                                           return []
                          loop (verbose, strict) 
-                              (newBindingHash [i | j <- newBindings, i <- j] bindings) 
+                              (makeVarDict' [i | j <- newBindings, i <- j] bindings) 
                               state

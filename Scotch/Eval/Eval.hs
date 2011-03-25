@@ -31,7 +31,8 @@ import Scotch.Parse.Parse as Parse
 -- eval: computes the value of an expression as far as possible
 eval :: Expr -> VarDict -> Bool -> Expr
 eval exp [] strict = eval exp emptyHash strict
-eval exp vars strict = case exp of
+eval oexp vars strict = case exp of
+  Var id args ->        Var id [eval' arg | arg <- args]
   EvalExpr x ->         case eval' x of
                           Val (Str s) -> case length evaled of
                                            0 -> Skip
@@ -109,8 +110,8 @@ eval exp vars strict = case exp of
                           ListExpr l -> ListExpr l
                           Val (Str s) -> Val $ List [Str [c] | c <- s]
                           Val (Hash h) -> ListExpr [ListExpr [Val (Str (fst l)), snd l] | e <- h, l <- e]
-                          Val (File f) -> Func (Name "std.lib.split") [FileRead (Val (File f)), Val (Str "\n")]
-                          FileObj f -> Func (Name "std.lib.split") [FileRead (f), Val (Str "\n")]
+                          Val (File f) -> Var "std.lib.split" [FileRead (Val (File f)), Val (Str "\n")]
+                          FileObj f -> Var "std.lib.split" [FileRead (f), Val (Str "\n")]
                           Exception e -> Exception e
                           Val v -> Val (List [v])
                           otherwise -> ToList $ eval' otherwise
@@ -139,14 +140,13 @@ eval exp vars strict = case exp of
                                                            Val (Str s) ->    hashMember s l
                                                            Exception e ->    Exception e
                                                            otherwise ->      Subs otherwise (Val (Hash l))
-                          Val (Atom a b) -> Func (Name "@") [x, n]
-                          Func f args ->  case eval' n of
-                                            Val (NumInt n) -> if n >= 0
-                                                              then eval' $ Subs (Val (NumInt n)) (eval' (Take (Val (NumInt ((fromIntegral n) + 1))) (Func f args)))
-                                                              else Subs (Val (NumInt n)) (eval' x)
-                                            Val (List l') ->  ListExpr [Subs (Val i) f' | i <- l']
-                                                              where f' = (Func f args)
-                                            otherwise ->      Subs otherwise (eval' x)
+                          Var f args ->  case eval' n of
+                                           Val (NumInt n) -> if n >= 0
+                                                             then eval' $ Subs (Val (NumInt n)) (eval' (Take (Val (NumInt ((fromIntegral n) + 1))) (Var f args)))
+                                                             else Subs (Val (NumInt n)) (eval' x)
+                                           Val (List l') ->  ListExpr [Subs (Val i) f' | i <- l']
+                                                             where f' = (Var f args)
+                                           otherwise ->      Subs otherwise (eval' x)
                           otherwise ->    Subs n (eval' otherwise)
   Add x y ->            case x of
                           Exception e ->    Exception e
@@ -191,47 +191,11 @@ eval exp vars strict = case exp of
                                      Bit b -> Val (Bit (not b))
                                      otherwise -> exNotBool otherwise
                           otherwise -> Not otherwise
-  Def f x y ->          eval' (substitute y [(f, x)])
+  Def f x y ->          eval' (subDefs y [(f, x)])
   EagerDef f x y ->     case eval' x of
                           Exception e -> Exception e
-                          Val v -> eval' (substitute y [(f, Val v)])
+                          Val v -> eval' (subDefs y [(f, Val v)])
                           otherwise -> EagerDef f (eval' otherwise) y
-  Defun f p x y ->      eval y (addBinding (f, (p, x)) 
-                                (addBinding(f, ([], Val (HFunc f)))  
-                                 vars)) strict
-  Defproc f p x y ->    eval y (addBinding (f, (p, Val (Proc x)))
-                                (addBinding (f, ([], Val (HFunc f)))
-                                 vars)) strict
-  Var x ->              case snd ((varBinding x (vars !! varHash x) vars) !! 0) of
-                          Exception e -> if length qualDict > 0 then HashExpr qualDict else Exception e
-                                         where allDefs = [binding | i <- vars, binding <- i]
-                                               qualDict = [(Val (Str ([(qualName (stripName (fst def))) !! n | n <- [length (qualName (stripName x)) + 1 .. length (qualName (stripName (fst def))) - 1]])), 
-                                                            snd (snd def))
-                                                           | def <- allDefs,
-                                                             length (fst (snd def)) == 0,
-                                                             isPrefixOf ((stripName x) ++ ".") (qualName (stripName (fst def)))]
-                                               qualName n = if isPrefixOf "local" (stripName x) then n else stripLocal n
-                          otherwise -> otherwise
-  Func f args ->        case validList evalArgs of
-                          Exception e -> Exception e
-                          otherwise -> if computableList evalArgs
-                                       then call
-                                       else Func f evalArgs
-                                       where call = functionCall f evalArgs (varBinding f (vars !! varHash f) vars) vars
-                        where evalArgs = [eval' arg | arg <- args]
-  LambdaCall x args ->  case validList args of
-                          Exception e -> Exception e
-                          otherwise -> case x of
-                                         Exception e -> Exception e
-                                         Var f -> Func f args
-                                         Val (HFunc f) -> eval' (Func f args)
-                                         Func f args' -> eval' (Func f (args' ++ args))
-                                         Val (Lambda params f) -> if length params == length args
-                                                                  then substitute f (zip params args)
-                                                                  else LambdaCall (Val (Lambda params f)) args
-                                         Val v -> exImproperCall v
-                                         LambdaCall x' args' -> eval' (LambdaCall x' (args' ++ args))
-                                         otherwise -> eval' (LambdaCall (eval' x) args)
   If cond x y ->        case eval' cond of
                           Val (Bit True) -> x
                           Val (Bit False) -> y
@@ -242,22 +206,22 @@ eval exp vars strict = case exp of
                           Val v -> caseExpr (Val v) (h:t)
                           otherwise -> Case otherwise (h:t)
   For id x y conds ->   case eval' x of
-                          Val (List l) ->   ListExpr [substitute y [(id, Val item)] | item <- l,
-                                                      allTrue [substitute cond [(id, Val item)] | cond <- conds]
+                          Val (List l) ->   ListExpr [subDefs y [(Var id [], Val item)] | item <- l,
+                                                      allTrue [subDefs cond [(Var id [], Val item)] | cond <- conds]
                                                       ]
-                          ListExpr l ->     ListExpr [substitute y [(id, item)] | item <- l,
-                                                      allTrue [substitute cond [(id, item)] | cond <- conds]
+                          ListExpr l ->     ListExpr [subDefs y [(Var id [], item)] | item <- l,
+                                                      allTrue [subDefs cond [(Var id [], item)] | cond <- conds]
                                                       ]
                           Exception e ->    Exception e
                           otherwise ->      For id otherwise y conds
   TakeFor id x y conds n -> case eval' x of
                           Val (List l) ->   ListExpr (take (fromIntegral n)
-                                                     [substitute y [(id, Val item)] | item <- l,
-                                                      allTrue [substitute cond [(id, Val item)] | cond <- conds]
+                                                     [subDefs y [(Var id [], Val item)] | item <- l,
+                                                      allTrue [subDefs cond [(Var id [], Val item)] | cond <- conds]
                                                       ])
                           ListExpr l ->     ListExpr (take (fromIntegral n)
-                                                     [substitute y [(id, item)] | item <- l,
-                                                      allTrue [substitute cond [(id, item)] | cond <- conds]
+                                                     [subDefs y [(Var id [], item)] | item <- l,
+                                                      allTrue [subDefs cond [(Var id [], item)] | cond <- conds]
                                                       ])
                           Exception e ->    Exception e
                           otherwise ->      TakeFor id otherwise y conds n
@@ -278,7 +242,7 @@ eval exp vars strict = case exp of
   FileObj f ->          case eval' f of
                           Val (Str s) -> Val $ File s
                           otherwise -> FileObj otherwise
-  Output x ->           Output (eval' (Func (Name "show") [x]))
+  Output x ->           Output (eval' (Var "show" [x]))
   FileRead f ->         FileRead (eval' f)
   FileWrite f x ->      case eval' f of
                           Val (File f) -> case eval' x of
@@ -290,10 +254,6 @@ eval exp vars strict = case exp of
                                             Val (Str s) -> FileAppend (Val (File f)) (Val (Str s))
                                             otherwise -> FileAppend (Val (File f)) otherwise
                           otherwise -> FileAppend otherwise x
-  AtomExpr s v ->       case eval' (ListExpr v) of
-                          Exception e -> Exception e
-                          Val (List l) -> Val $ Atom s l
-                          otherwise -> AtomExpr s [eval' i | i <- v]
   otherwise ->          otherwise
  where operation x y f g = case x of
                              Val v -> case y of
@@ -315,39 +275,15 @@ eval exp vars strict = case exp of
                          Val v -> False
                          otherwise -> if otherwise == h then False else allTrue (otherwise : t)
        
-       caseExpr :: Expr -> [(Id, Expr)] -> Expr
+       caseExpr :: Expr -> [(Expr, Expr)] -> Expr
        caseExpr check [] = exNoCaseMatch check
-       caseExpr check (h:t) = if pattern_match [param] [check]
-                              then substitute expr (funcall (zip [param] [check]))
+       caseExpr check (h:t) = if fst match
+                              then subDefs (snd h) (snd match)
                               else caseExpr check t
-                              where param = fst h
-                                    expr = snd h
+                              where match = patternMatch check (fst h)
+       exp = substitute oexp vars
        eval' expr = eval expr vars strict
                                     
-
-functionCall f args [] vars = Func f args
-functionCall f args (h:t) vars =
-  case vardef of
-    Val (HFunc (h)) -> if length params > 0 
-                       then newcall
-                       else case snd $ (varBinding fp (vars !! varHash fp) vars) !! 0 of
-                              Func f' args' -> Func f' args'
-                              otherwise -> functionCall f args t vars
-    Val (Lambda ids func) -> substitute func (funcall (zip ids args))
-    Func f' args' -> Func f' (args' ++ args)
-    Val (Atom s l) -> Val (Atom s (l ++ [case arg of
-                                           Val v -> v
-                                         | arg <- args]))
-    AtomExpr s l -> AtomExpr s (l ++ args)
-    otherwise -> functionCall f args t vars
-  where fp = case vardef of
-               Val (HFunc (f')) -> f'
-               otherwise -> f
-        vardef = snd h
-        definition = funcBinding fp args (vars !! varHash fp) vars
-        params = fst definition
-        expr = snd definition
-        newcall = substitute expr (funcall (zip params args))
 
 iolist :: [IO Expr] -> IO [Expr]
 iolist [] = do return []
@@ -359,36 +295,15 @@ iolist (h:t) = do item <- h
 ieval :: Expr -> VarDict -> Bool -> Maybe Expr -> IO Expr
 ieval expr vars strict last =
   do result <- subfile (eval expr vars strict) vars
-     case result of
-       Val v -> return result
-       Exception e -> return result
-       Skip -> return result
-       Import s t -> return result
-       Output p -> do p' <- ieval' p
-                      return $ Output p'
-       FileWrite f p -> do p' <- ieval' p
-                           return $ FileWrite f p'
-       FileAppend f p -> do p' <- ieval' p
-                            return $ FileAppend f p'
-       Func f args -> if Just result == last
-                       then do return $ exUnableToEval result
-                       else do args' <- iolist [ieval' arg | arg <- args]
-                               if expr == Func f args' 
-                                then return $ Func f args'
-                                else ieval' (Func f args')
-       LambdaCall x args -> do args' <- iolist [ieval' arg | arg <- args]
-                               if args == args' 
-                                then return $ LambdaCall x args'
-                                else ieval' (LambdaCall x args')
-       otherwise -> do if Just expr == last
-                        then return $ exUnableToEval result
-                        else do vars' <- case expr of
-                                           Def id x y -> do return $ addBinding (id, ([], x)) vars
-                                           EagerDef id x y -> do x' <- ieval' x
-                                                                 return $ addBinding (id, ([], x')) vars
-                                           otherwise -> do return vars
-                                ieval result vars' strict (Just expr)
-     where ieval' expr' = ieval expr' vars strict (Just expr)
+     if Just result == last
+      then return result
+      else do putStrLn (show expr)
+              vars' <- case expr of
+                         Def id x y -> do return $ makeVarDict' [(id, x)] vars
+                         EagerDef id x y -> do x' <- ieval x vars strict (Just expr)
+                                               return $ makeVarDict' [(id, x')] vars
+                         otherwise -> do return vars
+              ieval result vars' strict (Just expr)
 
 -- subfile: substitutes values for delayed I/O operations
 subfile :: Expr -> VarDict -> IO Expr
@@ -460,11 +375,6 @@ subfile exp vars =
                           return $ EagerDef id x' y'
     Def id x y -> do y' <- subfile y vars
                      return $ Def id x y'
-    Defun id p x y -> do y' <- subfile y vars
-                         return $ Defun id p x y'
-                         where vars' = addBinding (id, (p, x))  
-                                       (addBinding (id, ([], Val (HFunc id))) 
-                                        vars)
     If x y z -> do x' <- subfile x vars
                    y' <- subfile y vars
                    z' <- subfile z vars
@@ -487,8 +397,4 @@ subfile exp vars =
                                                        return $ Val $ Str contents
                                             False -> return $ exFileDNE
                        otherwise -> return $ FileRead f
-    Func f args -> do args' <- iolist [subfile arg vars | arg <- args]
-                      return $ Func f args'
-    LambdaCall x args -> do args' <- iolist [subfile arg vars | arg <- args]
-                            return $ LambdaCall x args'
     otherwise -> do return otherwise
