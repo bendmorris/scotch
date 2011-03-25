@@ -60,7 +60,8 @@ exprHash (Or _ _) = 11
 exprHash (Not _) = 12
 exprHash (Subs _ _) = 13
 exprHash (Take _ _) = 14
-exprHash (Var v _) = hashLoc $ last (split v '.')
+exprHash (Var v) = hashLoc $ last (split v '.')
+exprHash (Call (Var v) args) = hashLoc $ last (split v '.')
 exprHash _ = 0
 
 localId id = ("local." ++ stripLocal id)

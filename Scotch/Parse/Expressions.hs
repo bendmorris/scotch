@@ -369,12 +369,16 @@ varcallStmt col =
   try (
   do sws col
      var <- identifier
-     params <- try (parens (exprList col)) <|> do return []
-     return $ Var var params
+     params <- parens (exprList col)
+     return $ Call (Var var) params
+  ) <|> (
+  do sws col
+     var <- identifier
+     return $ Var var
   ) <|> (
   do sws col
      var <- parens (customOp col)
-     return $ Var var []
+     return $ Var var
   )
      
 
@@ -470,7 +474,7 @@ customOp col =
       then fail op
       else return op
 
-opCall op expr1 expr2 = Var op [expr1, expr2]
+opCall op expr1 expr2 = Call (Var op) [expr1, expr2]
 
 rsvdOp col op = do sws col
                    reservedOp op

@@ -136,7 +136,8 @@ importFile (verbose, strict) s t =
                      "" -> False
                      otherwise -> True
      let newval = [(case fst binding of
-                      Var v a -> Var (qualifier ++ stripLocal v) a
+                      Var v -> Var (qualifier ++ stripLocal v)
+                      Call (Var v) a -> Call (Var (qualifier ++ stripLocal v)) a
                       otherwise -> otherwise,--stripLocal (stripName (fst binding))),
                     snd binding) 
                    | binding <- val--,

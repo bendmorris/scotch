@@ -134,7 +134,8 @@ data Expr = Exception String                -- undefined
           | Not Expr                        -- boolean not
           | Def Expr Expr Expr              -- rewriting rule assignment
           | EagerDef Expr Expr Expr         -- eager assignment
-          | Var Id [Expr]                   -- identifier with optional list of values
+          | Var Id                          -- identifier with optional list of values
+          | Call Expr [Expr]                -- call an expression representing a function
           | If Expr Expr Expr               -- conditional
           | Case Expr [(Expr, Expr)]        -- case expression
           | For Id (Expr) (Expr) [Expr]     -- iteration
@@ -183,7 +184,8 @@ instance Show(Expr) where
     show (Def a b c) = show c ++ " where " ++ show a ++ " = " ++ show b
     show (EagerDef a b Skip) = show a ++ " := " ++ show b
     show (EagerDef a b c) = show c ++ " where " ++ show a ++ " := " ++ show b
-    show (Var f p) = f ++ (if length p > 0 then removeBrackets (show p) else "")
+    show (Var f) = f
+    show (Call f args) = show f ++ show args-- "(" ++ tail (foldl (++) "" ["," ++ show arg | arg <- args])++ ")"
     show (If cond x y) = "if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y
     show (Case c o) = "case " ++ show c ++ " of " ++ show o
     show (For x y z w) = "[for " ++ show x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
@@ -267,9 +269,11 @@ instance Binary(Expr) where
                                put a
                                put b
                                put c
-    put (Var f p) =         do put (47 :: Word8)
+    put (Call f p) =        do put (46 :: Word8)
                                put f
                                put p
+    put (Var f) =           do put (47 :: Word8)
+                               put f
     put (If a b c) =        do put (48 :: Word8)
                                put a
                                put b
@@ -375,9 +379,11 @@ instance Binary(Expr) where
                            b <- get
                            c <- get
                            return $ EagerDef a b c
-               47 ->    do a <- get
+               46 ->    do a <- get
                            b <- get
-                           return $ Var a b
+                           return $ Call a b
+               47 ->    do a <- get
+                           return $ Var a
                48 ->    do a <- get
                            b <- get
                            c <- get

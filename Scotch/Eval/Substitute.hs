@@ -23,32 +23,34 @@ import Data.List
 
 -- if expression x should be rewritten, return the rewritten expression;
 -- otherwise, returns an InvalidValue
-inparams :: Expr -> [Binding] -> Expr
-inparams x [] = Val (InvalidValue)
-inparams x (h:t) = if fst match 
-                   then subDefs (snd h) (snd match)
-                   else inparams x t
-                   where match = case fst h of
-                                   Var id args -> case x of 
-                                                    Var id' args' -> if nameMatch id id' && 
-                                                                        length args <= length args'
-                                                                     then (True, zip args args')
-                                                                     else (False, [])
-                                                    otherwise -> (False, [])
-                                   otherwise -> patternMatch x (fst h)
+inparams :: Expr -> [Binding] -> Bool -> Expr
+inparams x [] fromDict = Val (InvalidValue)
+inparams x (h:t) fromDict = 
+  if fst match 
+  then subDefs (snd h) (snd match) False
+  else inparams x t fromDict
+  where match = patternMatch x (fst h) fromDict
 
 nameMatch x y = x == y || isSuffixOf ("." ++ y) ("." ++ x)
 
 -- check if expression x matches definition y
-patternMatch :: Expr -> Expr -> (Bool, [Binding])
-patternMatch x y =
+patternMatch :: Expr -> Expr -> Bool -> (Bool, [Binding])
+patternMatch x y fromDict =
   case (x, y) of
-    (_, Var v []) ->            (True, [(y, x)])
-    (Var v1 args1, Var v2 args2) -> if length args1 == length args2
-                                    then trySubs 
-                                         [patternMatch (args1 !! n) (args2 !! n)
-                                          | n <- [0 .. (length args1) - 1]]
-                                    else (False, [])
+    (_, Var v) ->               case fromDict of
+                                  True -> (True, if x == y 
+                                                 then []
+                                                 else [(y, x)])
+                                  False -> case x of
+                                             Var v2 -> (nameMatch v v2, [])
+                                             otherwise -> (False, [])
+    (Call (Var v1) args1, 
+     Call (Var v2) args2) -> 
+                                if length args1 == length args2
+                                then trySubs 
+                                     [patternMatch' (args1 !! n) (args2 !! n)
+                                      | n <- [0 .. (length args1) - 1]]
+                                else (False, [])
     {-(_, Add (Var v1 []) (Var v2 [])) ->
                                 case x of
                                   ListExpr l ->     if length l > 0 
@@ -60,62 +62,64 @@ patternMatch x y =
                                                                  (Var v2 [], Val (List (tail l)))])
                                                     else (False, [])
                                   otherwise -> (False, [])-}
-    (Add a b, Add c d) ->       trySubs [patternMatch a c, patternMatch b d]
-    (Sub a b, Sub c d) ->       trySubs [patternMatch a c, patternMatch b d]
-    (Prod a b, Prod c d) ->     trySubs [patternMatch a c, patternMatch b d]
-    (Div a b, Div c d) ->       trySubs [patternMatch a c, patternMatch b d]
-    (Exp a b, Exp c d) ->       trySubs [patternMatch a c, patternMatch b d]
+    (Add a b, Add c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
+    (Sub a b, Sub c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
+    (Prod a b, Prod c d) ->     trySubs [patternMatch' a c, patternMatch' b d]
+    (Div a b, Div c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
+    (Exp a b, Exp c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
     otherwise ->                if x == y then (True, []) else (False, [])
   where trySubs exprs = if all ((==) True) [fst expr | expr <- exprs]
                         then (True, foldl (++) [] [snd expr | expr <- exprs])
                         else (False, [])
+        patternMatch' a b = patternMatch a b fromDict
                  
-subDefs :: Expr -> [Binding] -> Expr
-subDefs exp [] = exp
-subDefs exp params = substitute exp (makeVarDict params)
+subDefs :: Expr -> [Binding] -> Bool -> Expr
+subDefs exp [] fromDict = exp
+subDefs exp params fromDict = substitute exp (makeVarDict params) fromDict
 
-substitute :: Expr -> VarDict -> Expr
-substitute exp [] = exp
-substitute exp params =
-  case inparams exp (params !! (exprHash exp)) of
+substitute :: Expr -> VarDict -> Bool -> Expr
+substitute exp [] fromDict = exp
+substitute exp params fromDict =
+  case inparams exp (params !! (exprHash exp)) fromDict of
     Val (InvalidValue) -> 
       case exp of
-        Var id args -> Var id [substitute arg params | arg <- args]
-        Val (Proc p) -> Val (Proc ([substitute e params | e <- p]))
-        Val (Lambda ids expr) -> Val (Lambda ids (substitute expr params))
-        Val (Thread e) -> Val (Thread (substitute e params))
-        Take n x -> Take (substitute n params) (substitute x params)
-        ToInt x -> ToInt (substitute x params)
-        ToFloat x -> ToFloat (substitute x params)
-        ToStr x -> ToStr (substitute x params)
-        ToList l -> ToList (substitute l params)
-        ListExpr l -> ListExpr [substitute e params | e <- l]    
-        HashExpr l -> HashExpr [(substitute (fst kv) params, substitute (snd kv) params) | kv <- l]
-        Subs n x -> Subs (substitute n params) (substitute x params)
-        Add x y -> Add (substitute x params) (substitute y params)
-        Sub x y -> Sub (substitute x params) (substitute y params)
-        Prod x y -> Prod (substitute x params) (substitute y params)
-        Div x y -> Div (substitute x params) (substitute y params)
-        Mod x y -> Mod (substitute x params) (substitute y params)
-        Exp x y -> Exp (substitute x params) (substitute y params)
-        Eq x y -> Eq (substitute x params) (substitute y params)
-        InEq x y -> InEq (substitute x params) (substitute y params)
-        Gt x y -> Gt (substitute x params) (substitute y params)
-        Lt x y -> Lt (substitute x params) (substitute y params)
-        And x y -> And (substitute x params) (substitute y params)
-        Or x y -> Or (substitute x params) (substitute y params)
-        Not x -> Not (substitute x params)
-        Def id x y -> Def id (substitute x params) (substitute y params)
-        EagerDef id x y -> EagerDef id (substitute x params) (substitute y params)
-        If x y z -> If (substitute x params) (substitute y params) (substitute z params)
-        Case c opts -> Case (substitute c params) [(fst opt, substitute (snd opt) params) | opt <- opts]
-        For id x y z -> For id (substitute x params) (substitute y params) [substitute i params | i <- z]
-        Range start stop step -> Range (substitute start params) (substitute stop params) (substitute step params)
-        Output x -> Output (substitute x params)
-        FileObj x -> FileObj (substitute x params)
-        FileRead x -> FileRead (substitute x params)
-        FileWrite f x -> FileWrite (substitute f params) (substitute x params)
-        FileAppend f x -> FileAppend (substitute f params) (substitute x params)
-        EvalExpr x -> EvalExpr (substitute x params)
+        Call id args -> Call (substitute' id) [substitute' arg | arg <- args]
+        Val (Proc p) -> Val (Proc ([substitute' e | e <- p]))
+        Val (Lambda ids expr) -> Val (Lambda ids (substitute' expr))
+        Val (Thread e) -> Val (Thread (substitute' e))
+        Take n x -> Take (substitute' n) (substitute' x)
+        ToInt x -> ToInt (substitute' x)
+        ToFloat x -> ToFloat (substitute' x)
+        ToStr x -> ToStr (substitute' x)
+        ToList l -> ToList (substitute' l)
+        ListExpr l -> ListExpr [substitute' e | e <- l]    
+        HashExpr l -> HashExpr [(substitute' (fst kv), substitute' (snd kv)) | kv <- l]
+        Subs n x -> Subs (substitute' n) (substitute' x)
+        Add x y -> Add (substitute' x) (substitute' y)
+        Sub x y -> Sub (substitute' x) (substitute' y)
+        Prod x y -> Prod (substitute' x) (substitute' y)
+        Div x y -> Div (substitute' x) (substitute' y)
+        Mod x y -> Mod (substitute' x) (substitute' y)
+        Exp x y -> Exp (substitute' x) (substitute' y)
+        Eq x y -> Eq (substitute' x) (substitute' y)
+        InEq x y -> InEq (substitute' x) (substitute' y)
+        Gt x y -> Gt (substitute' x) (substitute' y)
+        Lt x y -> Lt (substitute' x) (substitute' y)
+        And x y -> And (substitute' x) (substitute' y)
+        Or x y -> Or (substitute' x) (substitute' y)
+        Not x -> Not (substitute' x)
+        Def id x y -> Def id (substitute' x) (substitute' y)
+        EagerDef id x y -> EagerDef id (substitute' x) (substitute' y)
+        If x y z -> If (substitute' x) (substitute' y) (substitute' z)
+        Case c opts -> Case (substitute' c) [(fst opt, substitute' (snd opt)) | opt <- opts]
+        For id x y z -> For id (substitute' x) (substitute' y) [substitute' i | i <- z]
+        Range x y z -> Range (substitute' x) (substitute' y) (substitute' z)
+        Output x -> Output (substitute' x)
+        FileObj x -> FileObj (substitute' x)
+        FileRead x -> FileRead (substitute' x)
+        FileWrite f x -> FileWrite (substitute' f) (substitute' x)
+        FileAppend f x -> FileAppend (substitute' f) (substitute' x)
+        EvalExpr x -> EvalExpr (substitute' x)
         otherwise -> otherwise
+      where substitute' x = substitute x params fromDict
     otherwise -> otherwise

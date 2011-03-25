@@ -85,7 +85,7 @@ main = do args <- getArgs
                          if interpret then loop (verbose, strict) newbindings state
                                       else return ()
             -- otherwise, start the interpreter
-            else do wexecute (False, False, True) [(Nothing, (Var "startup" []))] bindings'
+            else do wexecute (False, False, True) [(Nothing, (Var "startup"))] bindings'
                     loop (verbose, strict) bindings' state
 
 -- the interpreter's main REPL loop
@@ -97,8 +97,8 @@ loop (verbose, strict) bindings state =
         Nothing -> return ()
         Just "quit" -> closeInput state
         Just "restart" -> main
-        Just "vars" -> do putStrLn (foldl (++) "" 
-                                   ["** " ++ show binding ++ "\n" | e <- bindings, binding <- e])
+        Just "vars" -> do putStrLn $ show bindings--(foldl (++) "" 
+                                   --["** " ++ show binding ++ "\n" | e <- bindings, binding <- e])
                           loop (verbose, strict) bindings state
         Just "-v" -> loop (not verbose, strict) bindings state
         Just "-s" -> loop (verbose, not strict) bindings state

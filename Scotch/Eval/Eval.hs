@@ -32,7 +32,9 @@ import Scotch.Parse.Parse as Parse
 eval :: Expr -> VarDict -> Bool -> Expr
 eval exp [] strict = eval exp emptyHash strict
 eval oexp vars strict = case exp of
-  Var id args ->        Var id [eval' arg | arg <- args]
+  Call (Call id args) args' -> Call id (args ++ args')
+  Call (Var id) args -> Call (Var id) [eval' arg | arg <- args]
+  Call x args ->        Call (eval' x) args
   EvalExpr x ->         case eval' x of
                           Val (Str s) -> case length evaled of
                                            0 -> Skip
@@ -110,8 +112,8 @@ eval oexp vars strict = case exp of
                           ListExpr l -> ListExpr l
                           Val (Str s) -> Val $ List [Str [c] | c <- s]
                           Val (Hash h) -> ListExpr [ListExpr [Val (Str (fst l)), snd l] | e <- h, l <- e]
-                          Val (File f) -> Var "std.lib.split" [FileRead (Val (File f)), Val (Str "\n")]
-                          FileObj f -> Var "std.lib.split" [FileRead (f), Val (Str "\n")]
+                          Val (File f) -> Call (Var "std.lib.split") [FileRead (Val (File f)), Val (Str "\n")]
+                          FileObj f -> Call (Var "std.lib.split") [FileRead (f), Val (Str "\n")]
                           Exception e -> Exception e
                           Val v -> Val (List [v])
                           otherwise -> ToList $ eval' otherwise
@@ -140,13 +142,13 @@ eval oexp vars strict = case exp of
                                                            Val (Str s) ->    hashMember s l
                                                            Exception e ->    Exception e
                                                            otherwise ->      Subs otherwise (Val (Hash l))
-                          Var f args ->  case eval' n of
-                                           Val (NumInt n) -> if n >= 0
-                                                             then eval' $ Subs (Val (NumInt n)) (eval' (Take (Val (NumInt ((fromIntegral n) + 1))) (Var f args)))
-                                                             else Subs (Val (NumInt n)) (eval' x)
-                                           Val (List l') ->  ListExpr [Subs (Val i) f' | i <- l']
-                                                             where f' = (Var f args)
-                                           otherwise ->      Subs otherwise (eval' x)
+                          Call (Var f) args ->  case eval' n of
+                                                  Val (NumInt n) -> if n >= 0
+                                                                    then eval' $ Subs (Val (NumInt n)) (eval' (Take (Val (NumInt ((fromIntegral n) + 1))) (Call (Var f) args)))
+                                                                    else Subs (Val (NumInt n)) (eval' x)
+                                                  Val (List l') ->  ListExpr [Subs (Val i) f' | i <- l']
+                                                                    where f' = (Call (Var f) args)
+                                                  otherwise ->      Subs otherwise (eval' x)
                           otherwise ->    Subs n (eval' otherwise)
   Add x y ->            case x of
                           Exception e ->    Exception e
@@ -191,10 +193,10 @@ eval oexp vars strict = case exp of
                                      Bit b -> Val (Bit (not b))
                                      otherwise -> exNotBool otherwise
                           otherwise -> Not otherwise
-  Def f x y ->          eval' (subDefs y [(f, x)])
+  Def f x y ->          eval' (subDefs y [(f, x)] True)
   EagerDef f x y ->     case eval' x of
                           Exception e -> Exception e
-                          Val v -> eval' (subDefs y [(f, Val v)])
+                          Val v -> eval' (subDefs y [(f, Val v)] True)
                           otherwise -> EagerDef f (eval' otherwise) y
   If cond x y ->        case eval' cond of
                           Val (Bit True) -> x
@@ -206,22 +208,22 @@ eval oexp vars strict = case exp of
                           Val v -> caseExpr (Val v) (h:t)
                           otherwise -> Case otherwise (h:t)
   For id x y conds ->   case eval' x of
-                          Val (List l) ->   ListExpr [subDefs y [(Var id [], Val item)] | item <- l,
-                                                      allTrue [subDefs cond [(Var id [], Val item)] | cond <- conds]
+                          Val (List l) ->   ListExpr [subDefs y [(Var id, Val item)] True | item <- l,
+                                                      allTrue [subDefs cond [(Var id, Val item)] True | cond <- conds]
                                                       ]
-                          ListExpr l ->     ListExpr [subDefs y [(Var id [], item)] | item <- l,
-                                                      allTrue [subDefs cond [(Var id [], item)] | cond <- conds]
+                          ListExpr l ->     ListExpr [subDefs y [(Var id, item)] True | item <- l,
+                                                      allTrue [subDefs cond [(Var id, item)] True | cond <- conds]
                                                       ]
                           Exception e ->    Exception e
                           otherwise ->      For id otherwise y conds
   TakeFor id x y conds n -> case eval' x of
                           Val (List l) ->   ListExpr (take (fromIntegral n)
-                                                     [subDefs y [(Var id [], Val item)] | item <- l,
-                                                      allTrue [subDefs cond [(Var id [], Val item)] | cond <- conds]
+                                                     [subDefs y [(Var id, Val item)] True | item <- l,
+                                                      allTrue [subDefs cond [(Var id, Val item)] True | cond <- conds]
                                                       ])
                           ListExpr l ->     ListExpr (take (fromIntegral n)
-                                                     [subDefs y [(Var id [], item)] | item <- l,
-                                                      allTrue [subDefs cond [(Var id [], item)] | cond <- conds]
+                                                     [subDefs y [(Var id, item)] True | item <- l,
+                                                      allTrue [subDefs cond [(Var id, item)] True | cond <- conds]
                                                       ])
                           Exception e ->    Exception e
                           otherwise ->      TakeFor id otherwise y conds n
@@ -242,7 +244,7 @@ eval oexp vars strict = case exp of
   FileObj f ->          case eval' f of
                           Val (Str s) -> Val $ File s
                           otherwise -> FileObj otherwise
-  Output x ->           Output (eval' (Var "show" [x]))
+  Output x ->           Output (eval' (Call (Var "show") [x]))
   FileRead f ->         FileRead (eval' f)
   FileWrite f x ->      case eval' f of
                           Val (File f) -> case eval' x of
@@ -278,10 +280,10 @@ eval oexp vars strict = case exp of
        caseExpr :: Expr -> [(Expr, Expr)] -> Expr
        caseExpr check [] = exNoCaseMatch check
        caseExpr check (h:t) = if fst match
-                              then subDefs (snd h) (snd match)
+                              then subDefs (snd h) (snd match) True
                               else caseExpr check t
-                              where match = patternMatch check (fst h)
-       exp = substitute oexp vars
+                              where match = patternMatch check (fst h) True
+       exp = substitute oexp vars True
        eval' expr = eval expr vars strict
                                     
 
@@ -297,7 +299,7 @@ ieval expr vars strict last =
   do result <- subfile (eval expr vars strict) vars
      if Just result == last
       then return result
-      else do putStrLn (show expr)
+      else do --putStrLn (show expr)
               vars' <- case expr of
                          Def id x y -> do return $ makeVarDict' [(id, x)] vars
                          EagerDef id x y -> do x' <- ieval x vars strict (Just expr)
