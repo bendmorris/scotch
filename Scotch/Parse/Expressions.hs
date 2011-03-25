@@ -123,7 +123,7 @@ caseStmt col =
      check <- whiteSpace >> expression col
      reserved "of"
      cases <- sepBy (do cond <- whiteSpace >> expression col
-                        reservedOp ":"
+                        reservedOp "->"
                         pos <- getPosition
                         expr <- whiteSpace >> expression (sourceColumn pos)
                         return $ (cond, expr)
@@ -497,6 +497,7 @@ operators col =
     Infix  (rsvdOp col "/"   >> return (Div             )) AssocLeft],
    [Infix  (rsvdOp col "+"   >> return (Add             )) AssocLeft,
     Infix  (rsvdOp col "-"   >> return (Sub             )) AssocLeft],
+   [Infix  (rsvdOp col ":"   >> return (Concat          )) AssocLeft],
    [Infix  (rsvdOp col "=="  >> return (Eq              )) AssocLeft,
     Infix  (rsvdOp col "is"  >> return (Eq              )) AssocLeft,
     Infix  (rsvdOp col "<="  >> return (ltEq            )) AssocLeft,

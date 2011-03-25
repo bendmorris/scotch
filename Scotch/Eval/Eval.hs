@@ -32,9 +32,13 @@ import Scotch.Parse.Parse as Parse
 eval :: Expr -> VarDict -> Bool -> Expr
 eval exp [] strict = eval exp emptyHash strict
 eval oexp vars strict = case exp of
-  Call (Call id args) args' -> Call id (args ++ args')
+  Call (Call id args) args' -> eval' $ Call id (args ++ args')
   Call (Var id) args -> Call (Var id) [eval' arg | arg <- args]
   Call x args ->        Call (eval' x) args
+  Call (Val (Lambda ids expr)) args ->
+                        if length ids == length args
+                        then subDefs expr (zip [Var id | id <- ids] args) False
+                        else exp
   EvalExpr x ->         case eval' x of
                           Val (Str s) -> case length evaled of
                                            0 -> Skip
@@ -150,6 +154,7 @@ eval oexp vars strict = case exp of
                                                                     where f' = (Call (Var f) args)
                                                   otherwise ->      Subs otherwise (eval' x)
                           otherwise ->    Subs n (eval' otherwise)
+  Concat x y ->         eval' (Add (ToList x) (ToList y))
   Add x y ->            case x of
                           Exception e ->    Exception e
                           ListExpr l ->     case y of
@@ -283,7 +288,10 @@ eval oexp vars strict = case exp of
                               then subDefs (snd h) (snd match) True
                               else caseExpr check t
                               where match = patternMatch check (fst h) True
-       exp = substitute oexp vars True
+       exp = if nexp == oexp
+             then oexp
+             else eval' nexp
+             where nexp = substitute oexp vars True
        eval' expr = eval expr vars strict
                                     
 

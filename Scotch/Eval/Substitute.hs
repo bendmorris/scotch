@@ -19,6 +19,7 @@ module Scotch.Eval.Substitute where
 import Scotch.Types.Types
 import Scotch.Types.Bindings
 import Scotch.Types.Hash
+import Scotch.Eval.Calc
 import Data.List
 
 -- if expression x should be rewritten, return the rewritten expression;
@@ -51,23 +52,28 @@ patternMatch x y fromDict =
                                      [patternMatch' (args1 !! n) (args2 !! n)
                                       | n <- [0 .. (length args1) - 1]]
                                 else (False, [])
-    {-(_, Add (Var v1 []) (Var v2 [])) ->
-                                case x of
+    (_, Concat (Var v1) 
+               (Var v2)) ->     case x of
                                   ListExpr l ->     if length l > 0 
-                                                    then (True, [(Var v1 [], head l),
-                                                                 (Var v2 [], ListExpr (tail l))])
+                                                    then (True, [(Var v1, head l),
+                                                                 (Var v2, ListExpr (tail l))])
                                                     else (False, [])
                                   Val (List l) ->   if length l > 0 
-                                                    then (True, [(Var v1 [], Val (head l)),
-                                                                 (Var v2 [], Val (List (tail l)))])
+                                                    then (True, [(Var v1, Val (head l)),
+                                                                 (Var v2, Val (List (tail l)))])
                                                     else (False, [])
-                                  otherwise -> (False, [])-}
+                                  Val (Str l) ->    if length l > 0 
+                                                    then (True, [(Var v1, Val (Str [head l])),
+                                                                 (Var v2, Val (Str (tail l)))])
+                                                    else (False, [])
+                                  otherwise -> (False, [])
     (Add a b, Add c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
     (Sub a b, Sub c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
     (Prod a b, Prod c d) ->     trySubs [patternMatch' a c, patternMatch' b d]
     (Div a b, Div c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
     (Exp a b, Exp c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
-    otherwise ->                if x == y then (True, []) else (False, [])
+    otherwise ->                if veq False x y == Val (Bit True)
+                                then (True, []) else (False, [])
   where trySubs exprs = if all ((==) True) [fst expr | expr <- exprs]
                         then (True, foldl (++) [] [snd expr | expr <- exprs])
                         else (False, [])
@@ -95,6 +101,7 @@ substitute exp params fromDict =
         ListExpr l -> ListExpr [substitute' e | e <- l]    
         HashExpr l -> HashExpr [(substitute' (fst kv), substitute' (snd kv)) | kv <- l]
         Subs n x -> Subs (substitute' n) (substitute' x)
+        Concat x y -> Concat (substitute' x) (substitute' y)
         Add x y -> Add (substitute' x) (substitute' y)
         Sub x y -> Sub (substitute' x) (substitute' y)
         Prod x y -> Prod (substitute' x) (substitute' y)

@@ -16,14 +16,14 @@ fib(n) = fib(0, 1, n)
 sqrt(n) = n ^ 0.5
 
 # mean, median
-mean(h + t) = sum(h + t) / len(h + t)
+mean(h:t) = sum(h:t) / len(h:t)
 mean([]) = 0
-median'(h + t) = case len(h + t) of 
-                   1: h, 
-                   2: (h + head(t)) / 2.0, 
-                   otherwise: median'(left(t, len(t) - 1))
+median'(h:t) = case len(h:t) of 
+                 1 -> h, 
+                 2 -> (h + head(t)) / 2.0, 
+                 otherwise -> median'(left(t, len(t) - 1))
 median'([]) = 0
-median(h + t) = median'(sort(h + t))
+median(h:t) = median'(sort(h:t))
 median([]) = 0
 
 # even, odd

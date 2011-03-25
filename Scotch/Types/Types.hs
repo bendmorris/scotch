@@ -47,7 +47,7 @@ instance Show (Value) where
                             then tail (foldl (++) "" items)
                             else "") ++ "}"
                            where items = ["," ++ fst i ++ ":" ++ show (snd i) | j <- h, i <- j]
-    show (Lambda ids expr) = removeBrackets (show ids) ++ " -> " ++ show expr
+    show (Lambda ids expr) = "(" ++ tail (foldl (++) "" ["," ++ id | id <- ids]) ++ ") -> " ++ show expr
     show (Proc p) = "do " ++ foldl (++) "" [show i ++ ";" | i <- p]
     show (Thread th) = "thread " ++ show th
     show (Null) = "null"
@@ -118,6 +118,7 @@ data Expr = Exception String                -- undefined
           | ToStr (Expr)                    -- conversion to string
           | ToList (Expr)                   -- conversion to list
           | Subs Expr Expr                  -- list subscript
+          | Concat Expr Expr                -- list concatenation
           | Add Expr Expr                   -- addition
           | Sub Expr Expr                   -- subtraction
           | Prod Expr Expr                  -- product
@@ -166,6 +167,7 @@ instance Show(Expr) where
     show (ToFloat f) = "float(" ++ show f ++ ")"
     show (ToStr s) = "str(" ++ show s ++ ")"
     show (ToList l) = "list(" ++ show l ++ ")"
+    show (Concat a b) = "(" ++ show a ++ " : " ++ show b ++ ")"
     show (Subs n s) = show s ++ " @" ++ show n
     show (Add x y) = "(" ++ show x ++ " + " ++ show y ++ ")"
     show (Sub x y) = "(" ++ show x ++ " - " ++ show y ++ ")"
@@ -185,7 +187,7 @@ instance Show(Expr) where
     show (EagerDef a b Skip) = show a ++ " := " ++ show b
     show (EagerDef a b c) = show c ++ " where " ++ show a ++ " := " ++ show b
     show (Var f) = f
-    show (Call f args) = show f ++ show args-- "(" ++ tail (foldl (++) "" ["," ++ show arg | arg <- args])++ ")"
+    show (Call f args) = show f ++ removeBrackets (show args)
     show (If cond x y) = "if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y
     show (Case c o) = "case " ++ show c ++ " of " ++ show o
     show (For x y z w) = "[for " ++ show x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
@@ -269,6 +271,9 @@ instance Binary(Expr) where
                                put a
                                put b
                                put c
+    put (Concat a b) =      do put (44 :: Word8)
+                               put a
+                               put b
     put (Call f p) =        do put (46 :: Word8)
                                put f
                                put p
@@ -379,6 +384,9 @@ instance Binary(Expr) where
                            b <- get
                            c <- get
                            return $ EagerDef a b c
+               44 ->    do a <- get
+                           b <- get
+                           return $ Concat a b
                46 ->    do a <- get
                            b <- get
                            return $ Call a b

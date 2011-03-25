@@ -60,6 +60,7 @@ exprHash (Or _ _) = 11
 exprHash (Not _) = 12
 exprHash (Subs _ _) = 13
 exprHash (Take _ _) = 14
+exprHash (Concat _ _) = 15
 exprHash (Var v) = hashLoc $ last (split v '.')
 exprHash (Call (Var v) args) = hashLoc $ last (split v '.')
 exprHash _ = 0
