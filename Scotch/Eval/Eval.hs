@@ -34,11 +34,11 @@ eval exp [] strict = eval exp emptyHash strict
 eval oexp vars strict = case exp of
   Call (Call id args) args' -> eval' $ Call id (args ++ args')
   Call (Var id) args -> Call (Var id) [eval' arg | arg <- args]
-  Call x args ->        Call (eval' x) args
   Call (Val (Lambda ids expr)) args ->
                         if length ids == length args
-                        then subDefs expr (zip [Var id | id <- ids] args) False
+                        then substitute expr (zip [Var id | id <- ids] args)
                         else exp
+  Call x args ->        Call (eval' x) args
   EvalExpr x ->         case eval' x of
                           Val (Str s) -> case length evaled of
                                            0 -> Skip
@@ -198,37 +198,36 @@ eval oexp vars strict = case exp of
                                      Bit b -> Val (Bit (not b))
                                      otherwise -> exNotBool otherwise
                           otherwise -> Not otherwise
-  Def f x y ->          eval' (subDefs y [(f, x)] True)
+  Def f x y ->          eval' (substitute y [(f, x)])
   EagerDef f x y ->     case eval' x of
                           Exception e -> Exception e
-                          Val v -> eval' (subDefs y [(f, Val v)] True)
+                          Val v -> eval' (substitute y [(f, Val v)])
                           otherwise -> EagerDef f (eval' otherwise) y
   If cond x y ->        case eval' cond of
                           Val (Bit True) -> x
                           Val (Bit False) -> y
                           Exception e -> Exception e
                           otherwise -> If otherwise x y
-  Case check (h:t) ->   case eval' check of
+  Case check cases ->   case check of
                           Exception e -> Exception e
-                          Val v -> caseExpr (Val v) (h:t)
-                          otherwise -> Case otherwise (h:t)
+                          otherwise -> rewrite check [(Eq (check) (fst thiscase), snd thiscase) | thiscase <- cases]
   For id x y conds ->   case eval' x of
-                          Val (List l) ->   ListExpr [subDefs y [(Var id, Val item)] True | item <- l,
-                                                      allTrue [subDefs cond [(Var id, Val item)] True | cond <- conds]
+                          Val (List l) ->   ListExpr [substitute y [(Var id, Val item)] | item <- l,
+                                                      allTrue [substitute cond [(Var id, Val item)] | cond <- conds]
                                                       ]
-                          ListExpr l ->     ListExpr [subDefs y [(Var id, item)] True | item <- l,
-                                                      allTrue [subDefs cond [(Var id, item)] True | cond <- conds]
+                          ListExpr l ->     ListExpr [substitute y [(Var id, item)] | item <- l,
+                                                      allTrue [substitute cond [(Var id, item)] | cond <- conds]
                                                       ]
                           Exception e ->    Exception e
                           otherwise ->      For id otherwise y conds
   TakeFor id x y conds n -> case eval' x of
                           Val (List l) ->   ListExpr (take (fromIntegral n)
-                                                     [subDefs y [(Var id, Val item)] True | item <- l,
-                                                      allTrue [subDefs cond [(Var id, Val item)] True | cond <- conds]
+                                                     [substitute y [(Var id, Val item)] | item <- l,
+                                                      allTrue [substitute cond [(Var id, Val item)] | cond <- conds]
                                                       ])
                           ListExpr l ->     ListExpr (take (fromIntegral n)
-                                                     [subDefs y [(Var id, item)] True | item <- l,
-                                                      allTrue [subDefs cond [(Var id, item)] True | cond <- conds]
+                                                     [substitute y [(Var id, item)] | item <- l,
+                                                      allTrue [substitute cond [(Var id, item)] | cond <- conds]
                                                       ])
                           Exception e ->    Exception e
                           otherwise ->      TakeFor id otherwise y conds n
@@ -282,16 +281,10 @@ eval oexp vars strict = case exp of
                          Val v -> False
                          otherwise -> if otherwise == h then False else allTrue (otherwise : t)
        
-       caseExpr :: Expr -> [(Expr, Expr)] -> Expr
-       caseExpr check [] = exNoCaseMatch check
-       caseExpr check (h:t) = if fst match
-                              then subDefs (snd h) (snd match) True
-                              else caseExpr check t
-                              where match = patternMatch check (fst h) True
        exp = if nexp == oexp
              then oexp
              else eval' nexp
-             where nexp = substitute oexp vars True
+             where nexp = rewrite oexp (vars !! exprHash oexp)
        eval' expr = eval expr vars strict
                                     
 

@@ -24,32 +24,28 @@ import Data.List
 
 -- if expression x should be rewritten, return the rewritten expression;
 -- otherwise, returns an InvalidValue
-inparams :: Expr -> [Binding] -> Bool -> Expr
-inparams x [] fromDict = Val (InvalidValue)
-inparams x (h:t) fromDict = 
+rewrite :: Expr -> [Binding] -> Expr
+rewrite x [] = x
+rewrite x (h:t) = 
   if fst match 
-  then subDefs (snd h) (snd match) False
-  else inparams x t fromDict
-  where match = patternMatch x (fst h) fromDict
+  then substitute (snd h) (snd match)
+  else rewrite x t 
+  where match = patternMatch x (fst h)
 
 nameMatch x y = x == y || isSuffixOf ("." ++ y) ("." ++ x)
 
 -- check if expression x matches definition y
-patternMatch :: Expr -> Expr -> Bool -> (Bool, [Binding])
-patternMatch x y fromDict =
+patternMatch :: Expr -> Expr -> (Bool, [Binding])
+patternMatch x y =
   case (x, y) of
-    (_, Var v) ->               case fromDict of
-                                  True -> (True, if x == y 
-                                                 then []
-                                                 else [(y, x)])
-                                  False -> case x of
-                                             Var v2 -> (nameMatch v v2, [])
-                                             otherwise -> (False, [])
+    (_, Var v) ->               (True, if x == y 
+                                       then []
+                                       else [(y, x)])
     (Call (Var v1) args1, 
      Call (Var v2) args2) -> 
                                 if length args1 == length args2
                                 then trySubs 
-                                     [patternMatch' (args1 !! n) (args2 !! n)
+                                     [patternMatch (args1 !! n) (args2 !! n)
                                       | n <- [0 .. (length args1) - 1]]
                                 else (False, [])
     (_, Concat (Var v1) 
@@ -67,27 +63,24 @@ patternMatch x y fromDict =
                                                                  (Var v2, Val (Str (tail l)))])
                                                     else (False, [])
                                   otherwise -> (False, [])
-    (Add a b, Add c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
-    (Sub a b, Sub c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
-    (Prod a b, Prod c d) ->     trySubs [patternMatch' a c, patternMatch' b d]
-    (Div a b, Div c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
-    (Exp a b, Exp c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
+    (Add a b, Add c d) ->       trySubs [patternMatch a c, patternMatch b d]
+    (Sub a b, Sub c d) ->       trySubs [patternMatch a c, patternMatch b d]
+    (Prod a b, Prod c d) ->     trySubs [patternMatch a c, patternMatch b d]
+    (Div a b, Div c d) ->       trySubs [patternMatch a c, patternMatch b d]
+    (Exp a b, Exp c d) ->       trySubs [patternMatch a c, patternMatch b d]
     otherwise ->                if veq False x y == Val (Bit True)
                                 then (True, []) else (False, [])
   where trySubs exprs = if all ((==) True) [fst expr | expr <- exprs]
                         then (True, foldl (++) [] [snd expr | expr <- exprs])
                         else (False, [])
-        patternMatch' a b = patternMatch a b fromDict
-                 
-subDefs :: Expr -> [Binding] -> Bool -> Expr
-subDefs exp [] fromDict = exp
-subDefs exp params fromDict = substitute exp (makeVarDict params) fromDict
+                        
 
-substitute :: Expr -> VarDict -> Bool -> Expr
-substitute exp [] fromDict = exp
-substitute exp params fromDict =
-  case inparams exp (params !! (exprHash exp)) fromDict of
-    Val (InvalidValue) -> 
+substitute :: Expr -> [Binding] -> Expr
+substitute exp [] = exp
+substitute exp params =
+  case lookup exp params of
+    Just expr -> expr
+    otherwise ->
       case exp of
         Call id args -> Call (substitute' id) [substitute' arg | arg <- args]
         Val (Proc p) -> Val (Proc ([substitute' e | e <- p]))
@@ -128,5 +121,4 @@ substitute exp params fromDict =
         FileAppend f x -> FileAppend (substitute' f) (substitute' x)
         EvalExpr x -> EvalExpr (substitute' x)
         otherwise -> otherwise
-      where substitute' x = substitute x params fromDict
-    otherwise -> otherwise
+      where substitute' x = substitute x params
