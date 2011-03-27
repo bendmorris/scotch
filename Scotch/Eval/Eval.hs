@@ -174,12 +174,13 @@ eval oexp vars strict = case exp of
                           Exception e ->    Exception e
                           ListExpr l ->     case y of
                                               Exception e -> Exception e
-                                              ListExpr l' -> ListExpr (l ++ l')
+                                              ListExpr l' -> ListExpr $ l ++ l'
                                               Val v -> Add (eval' x) y
                                               Add a b -> Add (eval' (Add x a)) b
                                               otherwise -> Add x (eval' y)
                           Val v ->          case y of
                                               Exception e -> Exception e
+                                              ListExpr l -> Add x (eval' y)
                                               Val v -> vadd strict x y
                                               otherwise -> Add x (eval' y)
                           otherwise -> Add (eval' x) y
@@ -313,15 +314,18 @@ iolist (h:t) = do item <- h
 ieval :: Expr -> VarDict -> Bool -> Maybe Expr -> IO Expr
 ieval expr vars strict last =
   do result <- subfile (eval expr vars strict) vars
+     {-putStrLn $ "**"
+     putStrLn $ "last: " ++ show last
+     putStrLn $ "expr: " ++ show expr
+     putStrLn $ "result: " ++ show result-}
      if Just result == last
       then return result
-      else do --putStrLn $ show result
-              vars' <- case expr of
+      else do vars' <- case expr of
                          Def id x y -> do return $ makeVarDict [(id, x)] vars
-                         EagerDef id x y -> do x' <- ieval x vars strict (Just result)
+                         EagerDef id x y -> do x' <- ieval x vars strict (Just expr)
                                                return $ makeVarDict [(id, x')] vars
                          otherwise -> do return vars
-              ieval result vars' strict (Just result)
+              ieval result vars' strict (Just expr)
 
 -- subfile: substitutes values for delayed I/O operations
 subfile :: Expr -> VarDict -> IO Expr
