@@ -313,10 +313,9 @@ iolist (h:t) = do item <- h
 ieval :: Expr -> VarDict -> Bool -> Maybe Expr -> IO Expr
 ieval expr vars strict last =
   do result <- subfile (eval expr vars strict) vars
-     putStrLn $ "expr " ++ show expr
      if Just result == last
       then return result
-      else do putStrLn $ "result " ++ show result
+      else do --putStrLn $ show result
               vars' <- case expr of
                          Def id x y -> do return $ makeVarDict [(id, x)] vars
                          EagerDef id x y -> do x' <- ieval x vars strict (Just result)

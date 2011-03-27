@@ -19,7 +19,7 @@ module Scotch.Types.Hash where
 import Data.Char
 import Scotch.Types.Types
 
-hashSize = 50
+hashSize = 100
 
 type HashFunction a = (a -> Int)
 
@@ -31,20 +31,20 @@ strHash s = mod (hashKey s) hashSize
 
 emptyHash = [[] | n <- [1..hashSize]]
 
-bucketMember :: (Eq a, Eq b) => (HashFunction a) -> a -> [(a, b)] -> Maybe b
+bucketMember :: (Eq a) => (HashFunction a) -> a -> [(a, b)] -> Maybe b
 bucketMember _ s [] = Nothing
 bucketMember f s (h:t) = if fst h == s then Just (snd h) else bucketMember f s t
 
-hashMember :: (Eq a, Eq b) => (HashFunction a) -> a -> [[(a, b)]] -> Maybe b
+hashMember :: (Eq a) => (HashFunction a) -> a -> [[(a, b)]] -> Maybe b
 hashMember f s h = bucketMember f s (h !! (f s))
 
-removeFromBucket :: (Eq a, Eq b) => (a, b) -> [(a, b)] -> [(a, b)]
+removeFromBucket :: (Eq a) => (a, b) -> [(a, b)] -> [(a, b)]
 removeFromBucket a [] = []
 removeFromBucket a (h:t) = if (fst h) == (fst a)
                            then removeFromBucket a t
                            else h : removeFromBucket a t
 
-makeHash :: (Eq a, Eq b) => (HashFunction a) -> [(a, b)] -> [[(a, b)]] -> [[(a, b)]]
+makeHash :: (Eq a) => (HashFunction a) -> [(a, b)] -> [[(a, b)]] -> [[(a, b)]]
 makeHash _ [] r = r
 makeHash f (h:t) r = 
   makeHash f t 

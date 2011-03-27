@@ -30,24 +30,27 @@ rewrite x (h:t) =
   if fst match 
   then substitute (snd h) (snd match)
   else rewrite x t 
-  where match = patternMatch x (fst h)
+  where match = patternMatch x (fst h) True
 
 nameMatch x y = x == y || isSuffixOf ("." ++ y) ("." ++ x)
 
 -- check if expression x matches definition y
-patternMatch :: Expr -> Expr -> (Bool, [Binding])
-patternMatch x y =
+patternMatch :: Expr -> Expr -> Bool -> (Bool, [Binding])
+patternMatch x y tl =
   case (x, y) of
-    (Skip, _) ->                (False, [])
-    (_, Var v) ->               (True, if x == y 
-                                       then []
-                                       else [(y, x)])
+    (_, Var v2) ->              case tl of
+                                  True -> case x of
+                                            Var v1 -> (nameMatch v2 v1, [])
+                                            otherwise -> (False, [])
+                                  False -> (True, if x == y 
+                                                  then []
+                                                  else [(y, x)])
     (Call (Var v1) args1, 
      Call (Var v2) args2) -> 
                                 if length args1 == length args2
                                    && nameMatch v2 v1
                                 then trySubs 
-                                     [patternMatch (args1 !! n) (args2 !! n)
+                                     [patternMatch (args1 !! n) (args2 !! n) False
                                       | n <- [0 .. (length args1) - 1]]
                                 else (False, [])
     (_, Concat (Var v1) 
@@ -65,16 +68,17 @@ patternMatch x y =
                                                                  (Var v2, Val (Str (tail l)))])
                                                     else (False, [])
                                   otherwise -> (False, [])
-    (Add a b, Add c d) ->       trySubs [patternMatch a c, patternMatch b d]
-    (Sub a b, Sub c d) ->       trySubs [patternMatch a c, patternMatch b d]
-    (Prod a b, Prod c d) ->     trySubs [patternMatch a c, patternMatch b d]
-    (Div a b, Div c d) ->       trySubs [patternMatch a c, patternMatch b d]
-    (Exp a b, Exp c d) ->       trySubs [patternMatch a c, patternMatch b d]
+    (Add a b, Add c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
+    (Sub a b, Sub c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
+    (Prod a b, Prod c d) ->     trySubs [patternMatch' a c, patternMatch' b d]
+    (Div a b, Div c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
+    (Exp a b, Exp c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
     otherwise ->                if veq False x y == Val (Bit True)
                                 then (True, []) else (False, [])
   where trySubs exprs = if all ((==) True) [fst expr | expr <- exprs]
                         then (True, foldl (++) [] [snd expr | expr <- exprs])
                         else (False, [])
+        patternMatch' a b = patternMatch a b False
                         
 
 substitute :: Expr -> [Binding] -> Expr

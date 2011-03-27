@@ -104,6 +104,7 @@ wexecute (verbose, interpret, strict) (h:t) bindings =
            localVar id = case id of
                            Var v -> Var ("local." ++ v)
                            Call (Var v) args -> Call (Var ("local." ++ v)) args
+                           otherwise -> id
 
 
 -- returns a qualified file name from a list of identifiers provided by an import statement        
