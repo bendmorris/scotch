@@ -32,6 +32,18 @@ import Scotch.Parse.Parse as Parse
 eval :: Expr -> VarDict -> Bool -> Expr
 eval exp [] strict = eval exp emptyHash strict
 eval oexp vars strict = case exp of
+  Var id ->             if length (qualHashDict id) > 0
+                        then Val $ Hash $ makeHash strHash (qualHashDict id) emptyHash
+                        else if length (qualHashDict ("local." ++ id)) > 0
+                             then Val $ Hash $ makeHash strHash (qualHashDict ("local." ++ id)) emptyHash
+                             else Var id
+                        where qualHashDict id = [([show (fst v) !! n | n <- [length id + 1 .. length (show (fst v)) - 1]], 
+                                                 snd v) 
+                                                | i <- vars, v <- i,
+                                                  (case fst v of
+                                                     Var id' -> isPrefixOf (id ++ ".") id'
+                                                     Call (Var id') _ -> isPrefixOf (id ++ ".") id'
+                                                     otherwise -> False)]
   Call (Call id args) args' -> eval' $ Call id (args ++ args')
   Call (Var id) args -> Call (Var id) [eval' arg | arg <- args]
   Call (Val (Lambda ids expr)) args ->
@@ -84,11 +96,12 @@ eval oexp vars strict = case exp of
                                                | item <- l]
                                          l'' = [Val item | item <- l']
                           Exception e -> Exception e
-  HashExpr l ->         Val $ Hash $ makeHash [(case eval' (fst i) of
-                                                  Val (Str s) -> s
-                                                  otherwise -> show otherwise,
-                                                snd i)
-                                                | i <- l]
+  HashExpr l ->         Val $ Hash $ makeHash strHash
+                                     [(case eval' (fst i) of
+                                         Val (Str s) -> s
+                                         otherwise -> show otherwise,
+                                       snd i)
+                                      | i <- l] emptyHash
   Val x ->              case x of
                           Undefined s -> Exception s
                           otherwise -> Val x
@@ -143,7 +156,9 @@ eval oexp vars strict = case exp of
                           Val (Hash l) -> case eval' n of
                                             Exception e -> Exception e
                                             otherwise -> case eval' (ToStr otherwise) of
-                                                           Val (Str s) ->    hashMember s l
+                                                           Val (Str s) ->    case hashMember strHash s l of
+                                                                               Just x -> x
+                                                                               Nothing -> exNotInHash s
                                                            Exception e ->    Exception e
                                                            otherwise ->      Subs otherwise (Val (Hash l))
                           Call (Var f) args ->  case eval' n of
@@ -298,15 +313,16 @@ iolist (h:t) = do item <- h
 ieval :: Expr -> VarDict -> Bool -> Maybe Expr -> IO Expr
 ieval expr vars strict last =
   do result <- subfile (eval expr vars strict) vars
+     putStrLn $ "expr " ++ show expr
      if Just result == last
       then return result
-      else do --putStrLn (show expr)
+      else do putStrLn $ "result " ++ show result
               vars' <- case expr of
-                         Def id x y -> do return $ makeVarDict' [(id, x)] vars
-                         EagerDef id x y -> do x' <- ieval x vars strict (Just expr)
-                                               return $ makeVarDict' [(id, x')] vars
+                         Def id x y -> do return $ makeVarDict [(id, x)] vars
+                         EagerDef id x y -> do x' <- ieval x vars strict (Just result)
+                                               return $ makeVarDict [(id, x')] vars
                          otherwise -> do return vars
-              ieval result vars' strict (Just expr)
+              ieval result vars' strict (Just result)
 
 -- subfile: substitutes values for delayed I/O operations
 subfile :: Expr -> VarDict -> IO Expr

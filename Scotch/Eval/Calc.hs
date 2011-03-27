@@ -44,7 +44,7 @@ vadd _ (Val (Str a)) (Val (List [])) = Val (Str a)
 vadd _ (Val (List [])) (Val (Str b)) = Val (Str b)
 vadd _ (Val v) (Val (List b)) = Val (List (v : b))
 vadd False (Val (List a)) (Val v) = Val (List (a ++ [v]))
-vadd _ (Val (Hash a)) (Val (Hash b)) = Val $ Hash $ makeHash' [i | c <- b, i <- c] a
+vadd _ (Val (Hash a)) (Val (Hash b)) = Val $ Hash $ makeHash strHash [i | c <- b, i <- c] a
 vadd _ a b = exTypeMismatch a b "+"
 -- subtraction
 vsub _ (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (a - b))

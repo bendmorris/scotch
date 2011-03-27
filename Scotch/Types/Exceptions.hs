@@ -24,6 +24,7 @@ exCantConvert a b = Exception $ "Can't convert " ++ a ++ " to " ++ b ++ "."
 exNoMatch f args = Exception $ "Function " ++ show f ++ " " ++ show args ++ " doesn't match any defined patterns"
 exNonNumSubs n = Exception $ "Non-numerical subscript " ++ show n
 exNotInList n = Exception $ "Member " ++ show n ++ " not in list"
+exNotInHash n = Exception $ "Key " ++ show n ++ " not in hash"
 exNotList a = Exception $ show a ++ " is not a list"
 exTypeMismatch a b f = Exception $ "Type mismatch: " ++ show a ++ " " ++ f ++ " " ++ show b
 exNotBool a = Exception $ show a ++ " is not a boolean value"

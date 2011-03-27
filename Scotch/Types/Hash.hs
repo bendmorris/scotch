@@ -21,19 +21,22 @@ import Scotch.Types.Types
 
 hashSize = 50
 
+type HashFunction a = (a -> Int)
+
 hashKey [] = 0
 hashKey (h:t) = (ord h) + hashKey t
 
-hashLoc s = mod (hashKey s) hashSize
+strHash :: HashFunction String
+strHash s = mod (hashKey s) hashSize
 
 emptyHash = [[] | n <- [1..hashSize]]
 
-bucketMember :: String -> [(String, Expr)] -> Expr
-bucketMember s [] = Exception $ "Key " ++ s ++ " not found in hash"
-bucketMember s (h:t) = if fst h == s then snd h else bucketMember s t
+bucketMember :: (Eq a, Eq b) => (HashFunction a) -> a -> [(a, b)] -> Maybe b
+bucketMember _ s [] = Nothing
+bucketMember f s (h:t) = if fst h == s then Just (snd h) else bucketMember f s t
 
-hashMember :: String -> [[(String, Expr)]] -> Expr
-hashMember s h = bucketMember s (h !! (hashLoc s))
+hashMember :: (Eq a, Eq b) => (HashFunction a) -> a -> [[(a, b)]] -> Maybe b
+hashMember f s h = bucketMember f s (h !! (f s))
 
 removeFromBucket :: (Eq a, Eq b) => (a, b) -> [(a, b)] -> [(a, b)]
 removeFromBucket a [] = []
@@ -41,13 +44,12 @@ removeFromBucket a (h:t) = if (fst h) == (fst a)
                            then removeFromBucket a t
                            else h : removeFromBucket a t
 
-makeHash' :: [(String, Expr)] -> [[(String, Expr)]] -> [[(String, Expr)]]
-makeHash' [] r = r
-makeHash' (h:t) r = makeHash' t 
-                    [(if hashLoc (fst h) == i
-                      then [h]
-                      else [])
-                     ++ (removeFromBucket h (r !! i))
-                     | i <- [0..(hashSize-1)]]
-makeHash :: [(String, Expr)] -> [[(String, Expr)]]
-makeHash s = makeHash' s emptyHash
+makeHash :: (Eq a, Eq b) => (HashFunction a) -> [(a, b)] -> [[(a, b)]] -> [[(a, b)]]
+makeHash _ [] r = r
+makeHash f (h:t) r = 
+  makeHash f t 
+  [(if f (fst h) == i
+    then [h]
+    else [])
+    ++ (removeFromBucket h (r !! i))
+   | i <- [0..(hashSize-1)]]

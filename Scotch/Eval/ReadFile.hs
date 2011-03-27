@@ -41,13 +41,13 @@ wexecute (verbose, interpret, strict) (h:t) bindings =
                 else return ()
      -- get new bindings if any definitions/imports were made
      newBindings <- case parsed of
-                      Def id x Skip -> do return [(id, x)]
+                      Def id x Skip -> do return [(localVar id, x)]
                       EagerDef id x Skip -> do evaluated <- ieval x bindings strict Nothing
                                                case evaluated of
                                                  Exception e -> do putStrLn $ show $ Exception e
                                                                    return []
-                                                 otherwise -> return [(id, evaluated)]
-                                               return [(id, evaluated)]
+                                                 otherwise -> return [(localVar id, evaluated)]
+                                               return [(localVar id, evaluated)]
                       Import s t -> do i <- importFile (verbose, strict) s t
                                        b <- case i of 
                                               (False, _) -> do putStrLn ("Failed to import module " ++ show s)
@@ -100,7 +100,11 @@ wexecute (verbose, interpret, strict) (h:t) bindings =
                      Nothing -> 1
            showPosition = name ++ ": Line " ++ show line ++ ", column " ++ show column
            position = fst h
-           nextline newBindings = wexecute (verbose, interpret, strict) t (makeVarDict' newBindings bindings)
+           nextline newBindings = wexecute (verbose, interpret, strict) t (makeVarDict newBindings bindings)
+           localVar id = case id of
+                           Var v -> Var ("local." ++ v)
+                           Call (Var v) args -> Call (Var ("local." ++ v)) args
+
 
 -- returns a qualified file name from a list of identifiers provided by an import statement        
 importName [] = ""
@@ -140,12 +144,16 @@ importFile (verbose, strict) s t =
                       Call (Var v) a -> Call (Var (qualifier ++ stripLocal v)) a
                       otherwise -> otherwise,--stripLocal (stripName (fst binding))),
                     snd binding) 
-                   | binding <- val--,
+                   | binding <- val,
+                     case fst binding of
+                       Var v -> isPrefixOf "local." v
+                       Call (Var v) _ -> isPrefixOf "local." v
+                       otherwise -> True
                      --isPrefixOf "local." (stripName (fst binding))
                      ]
                    where qualifier = (foldl (++) [] [i ++ "." | i <- t])
                          stripLocal s = if isPrefixOf "local." s then [s !! n | n <- [length "local." .. (length s) - 1]] else s
-     return (success, makeVarDict newval)
+     return (success, makeVarDict newval emptyHash)
 
 -- interpret the contents of a file
 execute :: (Bool, Bool) -> String -> VarDict -> IO VarDict

@@ -33,16 +33,10 @@ split (c:cs) delim
    | otherwise = (c : head rest) : tail rest
    where
        rest = split cs delim
+       
+unqualifiedName s = last (split s '.')
 
-varName' :: String -> Int -> String
-varName' s 0 = s
-varName' s n = if s !! n == '.'
-               then snd $ splitAt (n+1) s
-               else varName' s (n-1)
-varName "" = ""
-varName s = varName' s ((length s) - 1)
-
-exprHash :: Expr -> Int
+exprHash :: HashFunction Expr
 exprHash (Add _ _) = 1
 exprHash (Val (List _)) = 1
 exprHash (ListExpr _) = 1
@@ -61,8 +55,8 @@ exprHash (Not _) = 12
 exprHash (Subs _ _) = 13
 exprHash (Take _ _) = 14
 exprHash (Concat _ _) = 15
-exprHash (Var v) = hashLoc $ last (split v '.')
-exprHash (Call (Var v) args) = hashLoc $ last (split v '.')
+exprHash (Var v) = strHash $ unqualifiedName v
+exprHash (Call (Var v) args) = strHash $ unqualifiedName v
 exprHash _ = 0
 
 localId id = ("local." ++ stripLocal id)
@@ -70,13 +64,5 @@ stripLocal s = if isPrefixOf "local." s then [s !! n | n <- [length "local." .. 
 
 emptyVarDict = [[] | n <- [1..hashSize]]
 
-makeVarDict' :: [(Expr, Expr)] -> [[(Expr, Expr)]] -> [[(Expr, Expr)]]
-makeVarDict' [] r = r
-makeVarDict' (h:t) r = makeVarDict' t 
-                        [(if exprHash (fst h) == i
-                          then [h]
-                          else [])
-                         ++ (removeFromBucket h (r !! i))
-                         | i <- [0..(hashSize-1)]]
-makeVarDict :: [(Expr, Expr)] -> [[(Expr, Expr)]]
-makeVarDict s = makeVarDict' s emptyVarDict
+makeVarDict :: [Binding] -> VarDict -> VarDict
+makeVarDict = makeHash exprHash

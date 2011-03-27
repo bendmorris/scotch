@@ -359,7 +359,7 @@ keyExpr col = try (
 hashValue col =
   do sws col
      keysValues <- braces (sepBy (whiteSpace >> keyValue col) (oneOf ","))
-     return $ Hash (makeHash keysValues)
+     return $ Hash (makeHash strHash keysValues emptyHash)
 hashStmt col =
   do sws col
      keysValues <- braces (sepBy (whiteSpace >> keyExpr col) (oneOf ","))

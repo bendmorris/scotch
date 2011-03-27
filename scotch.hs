@@ -97,8 +97,8 @@ loop (verbose, strict) bindings state =
         Nothing -> return ()
         Just "quit" -> closeInput state
         Just "restart" -> main
-        Just "vars" -> do putStrLn $ show bindings--(foldl (++) "" 
-                                   --["** " ++ show binding ++ "\n" | e <- bindings, binding <- e])
+        Just "vars" -> do putStrLn $ foldl (++) "" 
+                                     ["** " ++ show binding ++ "\n" | e <- bindings, binding <- e]
                           loop (verbose, strict) bindings state
         Just "-v" -> loop (not verbose, strict) bindings state
         Just "-s" -> loop (verbose, not strict) bindings state
@@ -110,5 +110,5 @@ loop (verbose, strict) bindings state =
                                           otherwise -> do putStrLn (show exEvalMultiple)
                                                           return []
                          loop (verbose, strict) 
-                              (makeVarDict' [i | j <- newBindings, i <- j] bindings) 
+                              (makeVarDict [i | j <- newBindings, i <- j] bindings) 
                               state

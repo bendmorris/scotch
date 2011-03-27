@@ -38,12 +38,14 @@ nameMatch x y = x == y || isSuffixOf ("." ++ y) ("." ++ x)
 patternMatch :: Expr -> Expr -> (Bool, [Binding])
 patternMatch x y =
   case (x, y) of
+    (Skip, _) ->                (False, [])
     (_, Var v) ->               (True, if x == y 
                                        then []
                                        else [(y, x)])
     (Call (Var v1) args1, 
      Call (Var v2) args2) -> 
                                 if length args1 == length args2
+                                   && nameMatch v2 v1
                                 then trySubs 
                                      [patternMatch (args1 !! n) (args2 !! n)
                                       | n <- [0 .. (length args1) - 1]]
