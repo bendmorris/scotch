@@ -33,14 +33,9 @@ import Scotch.Parse.ParseBase
 sws col = do pos <- getPosition
              if (sourceColumn pos) < col then fail "" else return ()
 
-expression col = try (stmt col) <|> 
-                 try (operation col) <|> 
-                 try (term col)
-           
-operation col = buildExpressionParser (operators col) ((term col) <|> parens (term col))
+expression col = buildExpressionParser (operators col) (term col)
 
-term col = try (valueExpr col) <|>
-           try (parens (expression col))
+term col = parens (expression col) <|> stmt col <|> valueExpr col
 
 
 reservedWord col = try (do sws col
@@ -362,6 +357,11 @@ hashStmt col =
 
 varcallStmt col =
   try (
+  do sws col
+     var <- identifier
+     args <- parens (exprList col)
+     return $ Call (Var var) args
+  ) <|> (
   do sws col
      var <- identifier
      return $ Var var
