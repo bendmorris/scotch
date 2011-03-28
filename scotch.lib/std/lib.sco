@@ -104,21 +104,20 @@ show(a) = str(a)
 sum(h:t, s) = foldr((x, y) -> x + y, h:t, s)
 sum(l) = sum(l, 0)
 prod(h:t) = foldr((x, y) -> x * y, h:t, 1)
-{-
+
 sort(h:t) = qsort(h:t)
-qsort(h:t, n) = case (len(h:t) < n) of
-                  true -> h:t, 
-                  false -> (qsort(less) + [h] + qsort(more))
-                where less = filter((x) -> h > x, t), more = filter((x) -> h < x, t)
+qsort(h:t, n) = (case (len(h:t) < n) of
+                   true -> h:t, 
+                   false -> (qsort(less) + [h] + qsort(more))
+                 where less = filter((x) -> h > x, t), more = filter((x) -> h < x, t))
 qsort([], n) = []
 qsort(l) = qsort(l, 1)
 insert(x, h:t, a) = if x > h then h + insert(x, t) else ([x] + [h] + t)
 insert(x, [], a) = a + x
 insort(h:t) = insert(h, (insort(t)))
 insort([]) = []
--}
-execute(h:t) = do h
-                  execute(t)
+
+execute(h:t) = do h; execute(t)
 execute([]) = []
 
 repeat(f, r, n) = repeat(f, f(r), n-1)

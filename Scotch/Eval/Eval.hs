@@ -176,7 +176,7 @@ eval oexp vars strict = case exp of
                                               Exception e -> Exception e
                                               ListExpr l' -> ListExpr $ l ++ l'
                                               Val v -> Add (eval' x) y
-                                              Add a b -> Add (eval' (Add x a)) b
+                                              Add a (Call id args) -> eval' (Add (eval' (Add x a)) (Call id args))
                                               otherwise -> Add x (eval' y)
                           Val v ->          case y of
                                               Exception e -> Exception e
@@ -224,9 +224,7 @@ eval oexp vars strict = case exp of
                           Val (Bit False) -> y
                           Exception e -> Exception e
                           otherwise -> If otherwise x y
-  Case check cases ->   case check of
-                          Exception e -> Exception e
-                          otherwise -> rewrite check [(Eq (check) (fst thiscase), snd thiscase) | thiscase <- cases]
+  Case check cases ->   caseExpr check cases
   For id x y conds ->   case eval' x of
                           Val (List l) ->   ListExpr [substitute y [(Var id, Val item)] | item <- l,
                                                       allTrue [substitute cond [(Var id, Val item)] | cond <- conds]
@@ -296,11 +294,9 @@ eval oexp vars strict = case exp of
                          Exception e -> False
                          Val v -> False
                          otherwise -> if otherwise == h then False else allTrue (otherwise : t)
-       
-       exp = if nexp == oexp
-             then oexp
-             else eval' nexp
-             where nexp = rewrite oexp (vars !! exprHash oexp)
+       caseExpr check [] = exNoCaseMatch check
+       caseExpr check (h:t) = If (Eq (check) (fst h)) (snd h) (caseExpr check t)
+       exp = rewrite oexp (vars !! exprHash oexp)
        eval' expr = eval expr vars strict
                                     
 

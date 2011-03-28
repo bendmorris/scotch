@@ -512,7 +512,7 @@ operators col =
     Infix  (rsvdOp col "|"   >> return (Or              )) AssocLeft],
    [Prefix (rsvdOp col "-"   >> return (Prod (Val (NumInt (-1)))))],
    --[Postfix(do { l <- lambdaCallStmt col; return (l     )})          ],
+   [Postfix(do { w <- whereStmt col;return (w           )})          ],
    assignments col,
-   [Infix  (do { op <- customOp col;return (opCall op   )}) AssocLeft],
-   [Postfix(do { w <- whereStmt col;return (w           )})          ]
+   [Infix  (do { op <- customOp col;return (opCall op   )}) AssocLeft]
    ]
