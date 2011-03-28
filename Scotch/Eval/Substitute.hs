@@ -55,13 +55,9 @@ patternMatch x y tl =
                                 else (False, [])
     (_, Concat (Var v1) 
                (Var v2)) ->     case x of
-                                  ListExpr l ->     if length l > 0 
+                                  List l ->         if length l > 0 
                                                     then (True, [(Var v1, head l),
-                                                                 (Var v2, ListExpr (tail l))])
-                                                    else (False, [])
-                                  Val (List l) ->   if length l > 0 
-                                                    then (True, [(Var v1, Val (head l)),
-                                                                 (Var v2, Val (List (tail l)))])
+                                                                 (Var v2, List (tail l))])
                                                     else (False, [])
                                   Val (Str l) ->    if length l > 0 
                                                     then (True, [(Var v1, Val (Str [head l])),
@@ -97,7 +93,7 @@ substitute exp params =
         ToFloat x -> ToFloat (substitute' x)
         ToStr x -> ToStr (substitute' x)
         ToList l -> ToList (substitute' l)
-        ListExpr l -> ListExpr [substitute' e | e <- l]    
+        List l -> List [substitute' e | e <- l]    
         HashExpr l -> HashExpr [(substitute' (fst kv), substitute' (snd kv)) | kv <- l]
         Subs n x -> Subs (substitute' n) (substitute' x)
         Concat x y -> Concat (substitute' x) (substitute' y)

@@ -61,7 +61,6 @@ reservedExpr col =
 value col = 
   try (reservedWord col) <|>
   try (hashValue col) <|>
-  try (listValue col) <|> 
   try (strValue col) <|> 
   try (floatValue col) <|> 
   try (intValue col)
@@ -324,14 +323,10 @@ procStmt col =
      exprs <- many $ expression col'
      return $ Val $ Proc exprs
 
-listValue col =
-  do sws col
-     exprs <- brackets (sepBy (value col) (oneOf ","))
-     return $ List exprs
 listStmt col =
   do sws col
      exprs <- brackets (exprList col)
-     return $ ListExpr exprs
+     return $ List exprs
      
 keyValue col =
   do sws col
@@ -367,11 +362,6 @@ hashStmt col =
 
 varcallStmt col =
   try (
-  do sws col
-     var <- identifier
-     params <- parens (exprList col)
-     return $ Call (Var var) params
-  ) <|> (
   do sws col
      var <- identifier
      return $ Var var
@@ -459,11 +449,11 @@ whereStmt col =
      assignment <- sepBy1 (whiteSpace >> buildExpressionParser [assignments col] ((term col) <|> parens (term col))) (oneOf ",")
      return $ nestwhere assignment
      
-{-lambdaCallStmt col =
-  do whiteSpace
-     reservedOp "<-"
-     args <- sepBy1 (whiteSpace >> expression col) (oneOf ",")
-     return $ lambdaCall args-}
+callStmt col =
+  do sws col
+     args <- parens $ exprList col
+     return $ callPostfix args
+callPostfix args id = Call id args
 
 customOp col = 
   do whiteSpace
@@ -489,7 +479,8 @@ assignments col =
     Infix  (rsvdOp col "+="  >> return (accumulate      )) AssocNone]
 
 operators col = 
-  [[Infix  (rsvdOp col "@"   >> return (subs            )) AssocLeft],
+  [[Postfix(do { c <- callStmt col; return (c          )})          ],
+   [Infix  (rsvdOp col "@"   >> return (subs            )) AssocLeft],
    [Infix  (rsvdOp col "^"   >> return (Exp             )) AssocLeft],
    [Infix  (rsvdOp col "mod" >> return (Mod             )) AssocLeft,
     Infix  (rsvdOp col "%"   >> return (Mod             )) AssocLeft],
@@ -512,7 +503,7 @@ operators col =
     Infix  (rsvdOp col "|"   >> return (Or              )) AssocLeft],
    [Prefix (rsvdOp col "-"   >> return (Prod (Val (NumInt (-1)))))],
    --[Postfix(do { l <- lambdaCallStmt col; return (l     )})          ],
-   [Postfix(do { w <- whereStmt col;return (w           )})          ],
+   [Postfix(do { w <- whereStmt col;return (w          )})          ],
    assignments col,
    [Infix  (do { op <- customOp col;return (opCall op   )}) AssocLeft]
    ]

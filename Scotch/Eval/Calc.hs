@@ -39,19 +39,19 @@ vadd False (Val (Str a)) (Val (NumInt b)) = Val (Str (a ++ (show b)))
 vadd False (Val (NumInt a)) (Val (Str b)) = Val (Str ((show a) ++ b))
 vadd False (Val (Str a)) (Val (NumFloat b)) = Val (Str (a ++ (show b)))
 vadd False (Val (NumFloat a)) (Val (Str b)) = Val (Str ((show a) ++ b))
-vadd _ (Val (List a)) (Val (List b)) = Val (List (a ++ b))
-vadd _ (Val (Str a)) (Val (List [])) = Val (Str a)
-vadd _ (Val (List [])) (Val (Str b)) = Val (Str b)
-vadd _ (Val v) (Val (List b)) = Val (List (v : b))
-vadd False (Val (List a)) (Val v) = Val (List (a ++ [v]))
+vadd _ (List a) (List b) = List $ a ++ b
+vadd _ (Val (Str a)) (List []) = Val (Str a)
+vadd _ (List []) (Val (Str b)) = Val (Str b)
+vadd _ a (List b) = List $ a : b
+vadd False (List a) b = List (a ++ [b])
 vadd _ (Val (Hash a)) (Val (Hash b)) = Val $ Hash $ makeHash strHash [i | c <- b, i <- c] a
-vadd _ a b = exTypeMismatch a b "+"
+vadd _ a b = Add a b
 -- subtraction
 vsub _ (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (a - b))
 vsub _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a - b))
 vsub _ (Val (NumInt a)) (Val (NumFloat b)) = Val (NumFloat ((realToFrac a) - b))
 vsub _ (Val (NumFloat a)) (Val (NumInt b)) = Val (NumFloat (a - (realToFrac b)))
-vsub _ a b = exTypeMismatch a b "-"
+vsub _ a b = Sub a b
 -- multiplication
 vprod _ (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (a * b))
 vprod _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a * b))
@@ -59,11 +59,11 @@ vprod _ (Val (NumInt a)) (Val (NumFloat b)) = Val (NumFloat ((realToFrac a) * b)
 vprod _ (Val (NumFloat a)) (Val (NumInt b)) = Val (NumFloat (a * (realToFrac b)))
 vprod _ (Val (Str s)) (Val (NumInt b)) = Val (Str (foldr (++) "" (take (fromIntegral b) (repeat s))))
 vprod _ (Val (NumInt b)) (Val (Str s)) = Val (Str (foldr (++) "" (take (fromIntegral b) (repeat s))))
-vprod _ (Val (List l)) (Val (NumInt b)) = Val (List (foldr (++) [] (take (fromIntegral b) (repeat l))))
-vprod _ (Val (NumInt b)) (Val (List l)) = Val (List (foldr (++) [] (take (fromIntegral b) (repeat l))))
+vprod _ (List l) (Val (NumInt b)) = List $ foldr (++) [] (take (fromIntegral b) (repeat l))
+vprod _ (Val (NumInt b)) (List l) = List $ foldr (++) [] (take (fromIntegral b) (repeat l))
 vprod _ (Val (Bit a)) (Val (NumInt (-1))) = Val (Bit (not a))
 vprod _ (Val (NumInt (-1))) (Val (Bit a)) = Val (Bit (not a))
-vprod _ a b = exTypeMismatch a b "*"
+vprod _ a b = Prod a b
 -- division
 div_by_zero = Exception "Division by zero"
 vdiv _ (Val (NumInt a)) (Val (NumInt 0)) = div_by_zero
@@ -74,7 +74,7 @@ vdiv _ (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (a `div` b))
 vdiv _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a / b))
 vdiv _ (Val (NumInt a)) (Val (NumFloat b)) = Val (NumFloat ((realToFrac a) / b))
 vdiv _ (Val (NumFloat a)) (Val (NumInt b)) = Val (NumFloat (a / (realToFrac b)))
-vdiv _ a b = exTypeMismatch a b "/"
+vdiv _ a b = Div a b
 -- remainder
 vmod _ (Val (NumInt a)) (Val (NumInt 0)) = div_by_zero
 vmod _ (Val (NumInt a)) (Val (NumFloat 0)) = div_by_zero
@@ -84,25 +84,21 @@ vmod _ (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (mod a b))
 vmod _ (Val (NumInt a)) (Val (NumFloat b)) = Val (NumInt (mod a (truncate b)))
 vmod _ (Val (NumFloat a)) (Val (NumInt b)) = Val (NumInt (mod (truncate a) b))
 vmod _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumInt (mod (truncate a) (truncate b)))
-vmod _ a b = exTypeMismatch a b "%"
+vmod _ a b = Mod a b
 -- exponent
 vexp _ (Val (NumInt a)) (Val (NumInt b)) = if b > 0 then Val (NumInt (a ^ b)) 
                                            else Val (NumFloat ((realToFrac a) ** (realToFrac b)))
 vexp _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a ** b))
 vexp _ (Val (NumInt a)) (Val (NumFloat b)) = Val (NumFloat ((realToFrac a) ** b))
 vexp _ (Val (NumFloat a)) (Val (NumInt b)) = Val (NumFloat (a ** (realToFrac b)))
-vexp _ a b = exTypeMismatch a b "^"
+vexp _ a b = Exp a b
 -- equality
 veq _ (Val (NumInt a)) (Val (NumInt b)) = Val (Bit (a == b))
 veq _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (Bit (a == b))
 veq _ (Val (NumInt a)) (Val (NumFloat b)) = Val (Bit ((realToFrac a) == b))
 veq _ (Val (NumFloat a)) (Val (NumInt b)) = Val (Bit (a == (realToFrac b)))
-veq _ (Val (List [])) (Val (Str "")) = Val (Bit (True))
-veq _ (Val (Str "")) (Val (List [])) = Val (Bit (True))
-veq _ (ListExpr []) (Val (Str "")) = Val (Bit (True))
-veq _ (Val (Str "")) (ListExpr []) = Val (Bit (True))
-veq _ (Val (List [])) (ListExpr []) = Val (Bit (True))
-veq _ (ListExpr []) (Val (List [])) = Val (Bit (True))
+veq _ (List []) (Val (Str "")) = Val (Bit (True))
+veq _ (Val (Str "")) (List []) = Val (Bit (True))
 veq _ a b = case a == b of
               True -> Val (Bit True)
               False -> Val (Bit False)
@@ -112,14 +108,14 @@ vgt _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (Bit (a > b))
 vgt _ (Val (NumInt a)) (Val (NumFloat b)) = Val (Bit ((realToFrac a) > b))
 vgt _ (Val (NumFloat a)) (Val (NumInt b)) = Val (Bit (a > (realToFrac b)))
 vgt _ (Val (Str a)) (Val (Str b)) = Val (Bit (a > b))
-vgt _ a b = exTypeMismatch a b ">"
+vgt _ a b = Gt a b
 -- less than
 vlt _ (Val (NumInt a)) (Val (NumInt b)) = Val (Bit (a < b))
 vlt _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (Bit (a < b))
 vlt _ (Val (NumInt a)) (Val (NumFloat b)) = Val (Bit ((realToFrac a) < b))
 vlt _ (Val (NumFloat a)) (Val (NumInt b)) = Val (Bit (a < (realToFrac b)))
 vlt _ (Val (Str a)) (Val (Str b)) = Val (Bit (a < b))
-vlt _ a b = exTypeMismatch a b "<"
+vlt _ a b = Lt a b
 
 
 -- validList: checks a list for exceptions
@@ -128,9 +124,3 @@ validList (h:t) = case h of
                    Exception e -> Exception e
                    Val (Undefined e) -> Exception e
                    otherwise -> validList t
-                   
-computableList [] = True
-computableList (h:t) = case h of
-                         Val (InvalidValue) -> False
-                         Val v -> computableList t
-                         otherwise -> False

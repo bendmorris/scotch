@@ -61,40 +61,24 @@ eval oexp vars strict = case exp of
   Import s t ->         Import s t
   Take n x ->           case n of
                           Val (NumInt i) -> case x of
-                                              Val (List l) -> Val (List (take i' l))
-                                              ListExpr l -> eval' (ListExpr (take i' l))
+                                              List l -> List (take i' l)
                                               Range from to step -> case eval' (Range from to step) of
-                                                                      Val (List l) -> Val (List (take i' l))
-                                                                      ListExpr l -> eval' (ListExpr (take i' l))
+                                                                      List l -> List (take i' l)
                                                                       Exception e -> Exception e
                                                                       otherwise -> otherwise
                                               Val (Str s) -> Val $ Str $ take i' s
                                               For id x y conds -> TakeFor id x y conds i
                                               Exception e -> Exception e
-                                              Add (ListExpr l) (y) -> if length t == i'
-                                                                      then ListExpr t
-                                                                      else Take n (eval' x)
-                                                                      where t = take i' l
-                                              Add (Val (List l)) (y) -> if length t == i'
-                                                                        then Val $ List t
-                                                                        else Take n (eval' x)
-                                                                        where t = take i' l
+                                              Add (List l) (y) -> if length t == i'
+                                                                  then List t
+                                                                  else Take n (eval' x)
+                                                                  where t = take i' l
                                               otherwise -> Take n (eval' x)
                                             where i' = fromIntegral i
                           Exception e -> Exception e
                           otherwise -> Take (eval' otherwise) x
-  ListExpr l ->         case (validList l) of
-                          Val _ -> case validList l'' of
-                                     Exception e -> Exception e
-                                     otherwise -> if computableList l''
-                                                  then Val $ List l'
-                                                  else ListExpr [eval' i | i <- l]
-                                   where l' = [case eval' item of
-                                                 Val r -> r
-                                                 Exception e -> Undefined e
-                                                 otherwise -> InvalidValue
-                                               | item <- l]
-                                         l'' = [Val item | item <- l']
+  List l ->             case (validList l) of
+                          Val _ -> List [eval' i | i <- l]
                           Exception e -> Exception e
   HashExpr l ->         Val $ Hash $ makeHash strHash
                                      [(case eval' (fst i) of
@@ -125,33 +109,26 @@ eval oexp vars strict = case exp of
                           Exception e -> Exception e
                           otherwise -> ToStr $ eval' otherwise
   ToList x ->           case eval' x of
-                          Val (List l) -> Val $ List l
-                          ListExpr l -> ListExpr l
-                          Val (Str s) -> Val $ List [Str [c] | c <- s]
-                          Val (Hash h) -> ListExpr [ListExpr [Val (Str (fst l)), snd l] | e <- h, l <- e]
+                          List l -> List l
+                          Val (Str s) -> List [Val (Str [c]) | c <- s]
+                          Val (Hash h) -> List [List [Val (Str (fst l)), snd l] | e <- h, l <- e]
                           Val (File f) -> Call (Var "std.lib.split") [FileRead (Val (File f)), Val (Str "\n")]
                           FileObj f -> Call (Var "std.lib.split") [FileRead (f), Val (Str "\n")]
                           Exception e -> Exception e
-                          Val v -> Val (List [v])
+                          Val v -> List [Val v]
                           otherwise -> ToList $ eval' otherwise
   Subs n x ->           case x of
-                          Val (List l) -> case eval' n of
-                                            Val (NumInt n) -> if n >= 0
-                                                              then Val (l !! (fromIntegral n))
-                                                              else Val (l !! ((length l) + (fromIntegral n)))
-                                            Val (List l') ->  ListExpr [Subs (Val i) (Val (List l)) | i <- l']
-                                            otherwise ->      exNonNumSubs otherwise
-                          ListExpr l ->   case eval' n of
+                          List l ->       case eval' n of
                                             Val (NumInt n) -> if n >= 0
                                                               then l !! (fromIntegral n)
                                                               else l !! ((length l) + (fromIntegral n))
-                                            Val (List l') ->  ListExpr [Subs (Val i) (ListExpr l) | i <- l']
+                                            List l' ->        List [Subs i (List l) | i <- l']
                                             otherwise ->      exNonNumSubs otherwise
                           Val (Str s) ->  case eval' n of
                                             Val (NumInt n) -> if n >= 0
                                                               then Val (Str ([s !! (fromIntegral n)]))
                                                               else Val (Str ([s !! ((length s) + (fromIntegral n))]))
-                                            Val (List l') ->  ListExpr [Subs (Val i) (Val (Str s)) | i <- l']
+                                            List l' ->        List [Subs i (Val (Str s)) | i <- l']
                                             otherwise ->      exNonNumSubs otherwise
                           Val (Hash l) -> case eval' n of
                                             Exception e -> Exception e
@@ -165,25 +142,28 @@ eval oexp vars strict = case exp of
                                                   Val (NumInt n) -> if n >= 0
                                                                     then eval' $ Subs (Val (NumInt n)) (eval' (Take (Val (NumInt ((fromIntegral n) + 1))) (Call (Var f) args)))
                                                                     else Subs (Val (NumInt n)) (eval' x)
-                                                  Val (List l') ->  ListExpr [Subs (Val i) f' | i <- l']
+                                                  List l' ->        List [Subs i f' | i <- l']
                                                                     where f' = (Call (Var f) args)
                                                   otherwise ->      Subs otherwise (eval' x)
                           otherwise ->    Subs n (eval' otherwise)
   Concat x y ->         eval' (Add (ToList x) (ToList y))
   Add x y ->            case x of
                           Exception e ->    Exception e
-                          ListExpr l ->     case y of
+                          List l ->         case y of
                                               Exception e -> Exception e
-                                              ListExpr l' -> ListExpr $ l ++ l'
-                                              Val v -> Add (eval' x) y
+                                              List l' -> List $ l ++ l'
+                                              Val v -> vadd strict x y
                                               Add a (Call id args) -> eval' (Add (eval' (Add x a)) (Call id args))
-                                              otherwise -> Add x (eval' y)
+                                              otherwise -> nextOp
                           Val v ->          case y of
                                               Exception e -> Exception e
-                                              ListExpr l -> Add x (eval' y)
+                                              List l -> vadd strict x y
                                               Val v -> vadd strict x y
-                                              otherwise -> Add x (eval' y)
-                          otherwise -> Add (eval' x) y
+                                              otherwise -> nextOp
+                          otherwise ->      nextOp
+                        where nextOp = if vadd strict x y == Add x y
+                                       then Add (eval' x) (eval' y)
+                                       else vadd strict x y
   Sub x y ->            operation x y vsub Sub
   Prod x y ->           operation x y vprod Prod
   Div x y ->            operation x y vdiv Div
@@ -226,20 +206,13 @@ eval oexp vars strict = case exp of
                           otherwise -> If otherwise x y
   Case check cases ->   caseExpr check cases
   For id x y conds ->   case eval' x of
-                          Val (List l) ->   ListExpr [substitute y [(Var id, Val item)] | item <- l,
-                                                      allTrue [substitute cond [(Var id, Val item)] | cond <- conds]
-                                                      ]
-                          ListExpr l ->     ListExpr [substitute y [(Var id, item)] | item <- l,
+                          List l ->         List [substitute y [(Var id, item)] | item <- l,
                                                       allTrue [substitute cond [(Var id, item)] | cond <- conds]
                                                       ]
                           Exception e ->    Exception e
                           otherwise ->      For id otherwise y conds
   TakeFor id x y conds n -> case eval' x of
-                          Val (List l) ->   ListExpr (take (fromIntegral n)
-                                                     [substitute y [(Var id, Val item)] | item <- l,
-                                                      allTrue [substitute cond [(Var id, Val item)] | cond <- conds]
-                                                      ])
-                          ListExpr l ->     ListExpr (take (fromIntegral n)
+                          List l ->         List     (take (fromIntegral n)
                                                      [substitute y [(Var id, item)] | item <- l,
                                                       allTrue [substitute cond [(Var id, item)] | cond <- conds]
                                                       ])
@@ -248,11 +221,11 @@ eval oexp vars strict = case exp of
   Range from to step -> case from of
                           Val (NumInt i) -> case to of
                                               Val (NumInt j) -> case step of
-                                                                  Val (NumInt k) -> Val $ List [NumInt x | x <- [i, i+k .. j]]
+                                                                  Val (NumInt k) -> List [Val (NumInt x) | x <- [i, i+k .. j]]
                                                                   Exception e -> Exception e
                                                                   otherwise -> Range from to (eval' step)
                                               Skip -> case (eval' step) of
-                                                        Val (NumInt k) -> Val $ List [NumInt x | x <- [i, i+k ..]]
+                                                        Val (NumInt k) -> List [Val (NumInt x) | x <- [i, i+k ..]]
                                                         Exception e -> Exception e
                                                         otherwise -> Range from Skip otherwise
                                               Exception e -> Exception e
@@ -342,8 +315,8 @@ subfile exp vars =
                   return $ ToStr x'
     ToList l -> do l' <- subfile l vars
                    return $ ToList l'
-    ListExpr l -> do list <- iolist [subfile e vars | e <- l]
-                     return $ ListExpr list
+    List l ->     do list <- iolist [subfile e vars | e <- l]
+                     return $ List list
     HashExpr l -> do list1 <- iolist [subfile (fst e) vars | e <- l]
                      list2 <- iolist [subfile (snd e) vars | e <- l]
                      return $ HashExpr (zip list1 list2)

@@ -38,8 +38,8 @@ unqualifiedName s = last (split s '.')
 
 exprHash :: HashFunction Expr
 exprHash (Add _ _) = 1
-exprHash (Val (List _)) = 1
-exprHash (ListExpr _) = 1
+exprHash (List _) = 1
+exprHash (Concat _ _) = 1
 exprHash (Sub _ _) = 2
 exprHash (Prod _ _) = 3
 exprHash (Div _ _) = 4
@@ -54,7 +54,6 @@ exprHash (Or _ _) = 11
 exprHash (Not _) = 12
 exprHash (Subs _ _) = 13
 exprHash (Take _ _) = 14
-exprHash (Concat _ _) = 15
 exprHash (Var v) = strHash $ unqualifiedName v
 exprHash (Call (Var v) args) = strHash $ unqualifiedName v
 exprHash _ = 0

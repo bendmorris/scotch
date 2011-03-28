@@ -14,6 +14,7 @@ apply(f, x) = f(x)
 
 tests += assert_equal(apply(f, 1), 1)
 tests += assert_equal(apply(g, 1), 2)
+#tests += assert_equal((f(1))(2), f(1,2))
 
 #tests += assert_equal(split("a.b.c", "."), ["a","b","c"])
 #tests += assert_equal(join(["a","b","c"], "."), "a.b.c")

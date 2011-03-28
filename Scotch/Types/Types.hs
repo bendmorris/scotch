@@ -26,7 +26,6 @@ data Value = NumInt Integer
            | NumFloat Double
            | Str String
            | Bit Bool
-           | List [Value]
            | Hash [[(String, Expr)]]
            | Null
            | Lambda [Id] Expr
@@ -42,7 +41,6 @@ instance Show (Value) where
     show (NumFloat n) = showFFloat Nothing n ""
     show (Bit True) = "true"
     show (Bit False) = "false"
-    show (List l) = show l
     show (Hash h) = "{" ++ (if length items > 0
                             then tail (foldl (++) "" items)
                             else "") ++ "}"
@@ -63,8 +61,6 @@ instance Binary(Value) where
                                put n
     put (Bit b) =           do put (7 :: Word8)
                                put b
-    put (List l) =          do put (8 :: Word8)
-                               put l
     put (Hash h) =          do put (9 :: Word8)
                                put h
     put (Lambda i e) =      do put (11 :: Word8)
@@ -89,8 +85,6 @@ instance Binary(Value) where
                            return $ NumFloat n
                7 ->     do b <- get
                            return $ Bit b
-               8 ->     do l <- get
-                           return $ List l
                9 ->     do h <- get
                            return $ Hash h
                11 ->    do i <- get
@@ -110,7 +104,7 @@ instance Binary(Value) where
 data Expr = Exception String                -- undefined
           | Skip                            -- returns Null
           | Val (Value)                     -- value
-          | ListExpr [Expr]                 -- list expression
+          | List [Expr]                     -- list expression
           | Take Expr Expr                  -- take _ from _
           | HashExpr [(Expr, Expr)]         -- hash expression
           | ToInt (Expr)                    -- conversion to integer
@@ -156,7 +150,7 @@ instance Show(Expr) where
     show (Exception s) = "Exception: " ++ s
     show Skip = "*nothing*"
     show (Val v) = show v
-    show (ListExpr l) = show l
+    show (List l) = show l
     show (Take a b) = "take " ++ show a ++ " from " ++ show b
     show (TakeFor a b c d e) = show (Take (Val (NumInt e)) (For a b c d))
     show (HashExpr h) = "{" ++ (if length items > 0
@@ -207,7 +201,7 @@ instance Binary(Expr) where
     put (Skip) =            do put (19 :: Word8)
     put (Val v) =           do put (20 :: Word8)
                                put v
-    put (ListExpr l) =      do put (21 :: Word8)
+    put (List l) =          do put (21 :: Word8)
                                put l
     put (Take a b) =        do put (22 :: Word8)
                                put a
@@ -321,7 +315,7 @@ instance Binary(Expr) where
                20 ->    do v <- get
                            return $ Val v
                21 ->    do l <- get
-                           return $ ListExpr l
+                           return $ List l
                22 ->    do a <- get
                            b <- get
                            return $ Take a b
