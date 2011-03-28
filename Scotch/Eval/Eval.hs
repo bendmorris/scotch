@@ -235,7 +235,7 @@ eval oexp vars strict = case exp of
   FileObj f ->          case eval' f of
                           Val (Str s) -> Val $ File s
                           otherwise -> FileObj otherwise
-  Output x ->           Output (eval' (Call (Var "show") [x]))
+  Output x ->           Output (eval' x)
   FileRead f ->         FileRead (eval' f)
   FileWrite f x ->      case eval' f of
                           Val (File f) -> case eval' x of
@@ -248,7 +248,10 @@ eval oexp vars strict = case exp of
                                             otherwise -> FileAppend (Val (File f)) otherwise
                           otherwise -> FileAppend otherwise x
   otherwise ->          otherwise
- where operation x y f g = calc x y f strict
+ where operation x y f g = if calc x y f strict == g x y
+                           then g (eval' x) (eval' y)
+                           else calc x y f strict
+                             
        allTrue [] = True
        allTrue (h:t) = case eval' h of
                          Val (Bit True) -> allTrue t
