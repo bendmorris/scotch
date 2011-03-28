@@ -18,8 +18,8 @@ head([]) = []
 tail(h:t) = t
 tail([]) = []
 # Returns the last element in a list
-{-last(h:t) = (l) @ (len(l) - 1)
-              where (l := h:t)-}
+last(h:t) = (l) @ (len(l) - 1)
+            where (l := h:t)
 # Returns a list or string in reverse order.
 reverse(h:t) = reverse(t) + [h]
 reverse([]) = []
@@ -28,11 +28,9 @@ reverse([]) = []
 join(h:t, s) = h + (if len(t) > 0 then s + join(t, s) else "")
 
 # Returns true only if all of the members in a list are true.
-all(h:t) = case h of true -> all(t), otherwise -> false
-all([]) = true
+all(l) = foldr((x, y) -> x & y, l, true)
 # Returns true if any of the members in a list are true.
-any(l) = foldr( (|) , l, false)
-any([]) = false
+any(l) = foldr((x, y) -> x | y, l, false)
 
 # Checks whether string/list \c+d is a prefix of \a+b.
 prefix(a + b, c + d) = if a == c then prefix(b, d) else false
@@ -107,8 +105,8 @@ prod(h:t) = foldr((x, y) -> x * y, h:t, 1)
 
 sort(h:t) = qsort(h:t)
 qsort(h:t, n) = (case (len(h:t) < n) of
-                   true -> h:t, 
-                   false -> (qsort(less) + [h] + qsort(more))
+                   true -> h:t,
+                   false -> (qsort(less) : h : qsort(more))
                  where less = filter((x) -> h > x, t), more = filter((x) -> h < x, t))
 qsort([], n) = []
 qsort(l) = qsort(l, 1)

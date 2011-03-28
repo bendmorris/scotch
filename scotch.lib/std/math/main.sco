@@ -1,3 +1,5 @@
+import std.math.calculus as local
+
 # pi and natural number
 pi = 3.141592654
 e = 2.71828183
@@ -20,7 +22,7 @@ mean(h:t) = sum(h:t) / len(h:t)
 mean([]) = 0
 median'(h:t) = case len(h:t) of 
                  1 -> h, 
-                 2 -> (h + head(t)) / 2.0, 
+                 2 -> (h + head(t)) / 2, 
                  otherwise -> median'(left(t, len(t) - 1))
 median'([]) = 0
 median(h:t) = median'(sort(h:t))
@@ -39,5 +41,5 @@ abs(n) = if n < 0 then -n else n
 prime(n) = if n < 2 then false
            else len(take 1 from divisors'(n)) == 0
 primes = filter(prime, [2..])
-divisors'(n) = [for i in (2 + [3 .. int(sqrt(n) + 1), 2]), i, n mod i == 0, n > 2]
-divisors(n) = [for i in ([1 .. n - 1]), i, n mod i == 0, n > 0]
+divisors'(n) = [for i in 2 : [3 .. int(sqrt(n) + 2), 2], i, n mod i == 0, n > 2]
+divisors(n) = [for i in [1.. n-1], i, n mod i == 0, n > 0]

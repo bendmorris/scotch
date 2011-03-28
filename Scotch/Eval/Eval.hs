@@ -31,7 +31,9 @@ import Scotch.Parse.Parse as Parse
 -- eval: computes the value of an expression as far as possible
 eval :: Expr -> VarDict -> Bool -> Expr
 eval exp [] strict = eval exp emptyHash strict
-eval oexp vars strict = case exp of
+eval oexp vars strict = 
+  if exp /= oexp then exp
+  else case exp of
   Var id ->             if length (qualHashDict id) > 0
                         then Val $ Hash $ makeHash strHash (qualHashDict id) emptyHash
                         else if length (qualHashDict ("local." ++ id)) > 0
@@ -65,7 +67,7 @@ eval oexp vars strict = case exp of
                                               Range from to step -> case eval' (Range from to step) of
                                                                       List l -> List (take i' l)
                                                                       Exception e -> Exception e
-                                                                      otherwise -> otherwise
+                                                                      otherwise -> Take n otherwise
                                               Val (Str s) -> Val $ Str $ take i' s
                                               For id x y conds -> TakeFor id x y conds i
                                               Exception e -> Exception e
@@ -177,28 +179,25 @@ eval oexp vars strict = case exp of
                           Val (Bit True) -> case eval' y of
                                               Val (Bit True) -> Val (Bit True)
                                               Val (Bit False) -> Val (Bit False)
-                                              otherwise -> err
+                                              otherwise -> And (eval' x) (eval' y)
                           Val (Bit False) -> Val (Bit False)
-                          otherwise -> err
+                          otherwise -> And (eval' x) (eval' y)
                         where err = exTypeMismatch (eval' x) (eval' y) "and"
   Or x y ->             case eval' x of
                           Val (Bit True) -> Val (Bit True)                                            
                           Val (Bit False) -> case eval' y of
                                                Val (Bit b) -> Val (Bit b)
-                                               otherwise -> err
-                          otherwise -> err
+                                               otherwise -> Or (eval' x) (eval' y)
+                          otherwise -> Or (eval' x) (eval' y)
                         where err = exTypeMismatch (eval' x) (eval' y) "or"
   Not x ->              case eval' x of
                           Exception s -> Exception s
-                          Val r -> case r of
-                                     Bit b -> Val (Bit (not b))
-                                     otherwise -> exNotBool otherwise
+                          Val (Bit b) -> Val $ Bit $ not b
                           otherwise -> Not otherwise
-  Def f x y ->          eval' (substitute y [(f, x)])
-  EagerDef f x y ->     case eval' x of
-                          Exception e -> Exception e
-                          Val v -> eval' (substitute y [(f, Val v)])
-                          otherwise -> EagerDef f (eval' otherwise) y
+  Def f x y ->          substitute y [(f, x)]
+  EagerDef f x y ->     if eval' x == x
+                        then substitute y [(f, x)]
+                        else EagerDef f (eval' x) y
   If cond x y ->        case eval' cond of
                           Val (Bit True) -> x
                           Val (Bit False) -> y
@@ -260,7 +259,7 @@ eval oexp vars strict = case exp of
                          otherwise -> if otherwise == h then False else allTrue (otherwise : t)
        caseExpr check [] = exNoCaseMatch check
        caseExpr check (h:t) = If (Eq (check) (fst h)) (snd h) (caseExpr check t)
-       exp = rewrite oexp (vars !! exprHash oexp)
+       exp = rewrite oexp (vars !! exprHash oexp) (vars !! exprHash oexp)
        eval' expr = eval expr vars strict
                                     
 
@@ -273,11 +272,11 @@ iolist (h:t) = do item <- h
 -- ieval: evaluates an expression completely, replacing I/O operations as necessary
 ieval :: Expr -> VarDict -> Bool -> Maybe Expr -> IO Expr
 ieval expr vars strict last =
-  do result <- subfile (eval expr vars strict) vars
-     {-putStrLn $ "**"
+  do {-putStrLn $ "**"
      putStrLn $ "last: " ++ show last
-     putStrLn $ "expr: " ++ show expr
-     putStrLn $ "result: " ++ show result-}
+     putStrLn $ "expr: " ++ show expr-}
+     result <- subfile (eval expr vars strict) vars
+     --putStrLn $ "result: " ++ show result
      if Just result == last
       then return result
       else do vars' <- case expr of

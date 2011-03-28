@@ -1,41 +1,41 @@
 # Tests
-import std.unit as local
+import std.unit as local;
 
 print "Defining tests..."
 
-tests += assert_equal(1 + 1, 2)
-tests += assert_equal("abc" + "def", "abcdef")
-tests += assert_equal(head("abcdef"), "a")
-tests += assert_equal(tail("abcdef"), "bcdef")
+#tests += assert_equal(1 + 1, 2)
+#tests += assert_equal("abc" + "def", "abcdef")
+#tests += assert_equal(head("abcdef"), "a")
+#tests += assert_equal(tail("abcdef"), "bcdef")
 
-f(n) = n
-g(n) = f(n) + 1
-apply(f, x) = f(x)
+#f(n) = n
+#g(n) = f(n) + 1
+#apply(f, x) = f(x)
 
-tests += assert_equal(apply(f, 1), 1)
-tests += assert_equal(apply(g, 1), 2)
+#tests += assert_equal(apply(f, 1), 1)
+#tests += assert_equal(apply(g, 1), 2)
 #tests += assert_equal((f(1))(2), f(1,2))
 
 #tests += assert_equal(split("a.b.c", "."), ["a","b","c"])
 #tests += assert_equal(join(["a","b","c"], "."), "a.b.c")
 
-eval("import std.math")
+#eval("import std.math")
 #tests += assert_equal(filter(even, [1..10]), [2,4,6,8,10])
 #tests += assert_equal(reduce((x, y) -> x + y, [1..100], 0), 5050)
-tests += assert_equal(std.math @ 'pi', 3.141592654)
+#tests += assert_equal(std.math @ 'pi', 3.141592654)
 
-apply(f, x, n) = f(x) + apply(f, x, n - 1)
-apply(f, x, 0) = 0
+#apply(f, x, n) = f(x) + apply(f, x, n - 1)
+#apply(f, x, 0) = 0
 #tests += assert_equal(apply(f, 1, 3), 3)
 #tests += assert_equal(apply(g, 1, 3), 6)
 
-f(x, y) = x + y
-a = f(1)
+#f(x, y) = x + y
+#a = f(1)
 #tests += assert_equal(a(2), 3)
 
-tests += assert_equal(len("abcdefg"), 7)
+#tests += assert_equal(len("abcdefg"), 7)
 #tests += assert_equal(left("abcdefg", 3), "abc")
-tests += assert_equal(int("1234567"), 1234567)
+#tests += assert_equal(int("1234567"), 1234567)
 {-
 a = do b = 123
        c = 456

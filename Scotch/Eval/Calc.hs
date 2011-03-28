@@ -43,7 +43,7 @@ vadd _ (List a) (List b) = List $ a ++ b
 vadd _ (Val (Str a)) (List []) = Val (Str a)
 vadd _ (List []) (Val (Str b)) = Val (Str b)
 vadd _ a (List b) = List $ a : b
-vadd False (List a) b = List (a ++ [b])
+vadd False (List a) (Val b) = List (a ++ [Val b])
 vadd _ (Val (Hash a)) (Val (Hash b)) = Val $ Hash $ makeHash strHash [i | c <- b, i <- c] a
 vadd _ a b = Add a b
 -- subtraction
@@ -86,6 +86,10 @@ vmod _ (Val (NumFloat a)) (Val (NumInt b)) = Val (NumInt (mod (truncate a) b))
 vmod _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumInt (mod (truncate a) (truncate b)))
 vmod _ a b = Mod a b
 -- exponent
+vexp _ a (Val (NumInt 1)) = a
+vexp _ a (Val (NumFloat 1.0)) = a
+vexp _ a (Val (NumInt 0)) = Val (NumInt 1)
+vexp _ a (Val (NumFloat 0)) = Val (NumInt 1)
 vexp _ (Val (NumInt a)) (Val (NumInt b)) = if b > 0 then Val (NumInt (a ^ b)) 
                                            else Val (NumFloat ((realToFrac a) ** (realToFrac b)))
 vexp _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a ** b))
@@ -99,9 +103,11 @@ veq _ (Val (NumInt a)) (Val (NumFloat b)) = Val (Bit ((realToFrac a) == b))
 veq _ (Val (NumFloat a)) (Val (NumInt b)) = Val (Bit (a == (realToFrac b)))
 veq _ (List []) (Val (Str "")) = Val (Bit (True))
 veq _ (Val (Str "")) (List []) = Val (Bit (True))
-veq _ a b = case a == b of
-              True -> Val (Bit True)
-              False -> Val (Bit False)
+veq _ (Val a) (Val b) = Val (Bit (a == b))
+veq _ (List a) (List b) = if a == b then Val (Bit True) else Eq (List a) (List b)
+veq _ (Var a) (Var b) = if a == b then Val (Bit True) else Eq (Var a) (Var b)
+veq _ (Call a b) (Call c d) = if a == c && b == d then Val (Bit True) else Eq (Call a b) (Call c d)
+veq _ a b = Eq a b
 -- greater than
 vgt _ (Val (NumInt a)) (Val (NumInt b)) = Val (Bit (a > b))
 vgt _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (Bit (a > b))

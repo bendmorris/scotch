@@ -33,10 +33,14 @@ import Scotch.Parse.ParseBase
 sws col = do pos <- getPosition
              if (sourceColumn pos) < col then fail "" else return ()
 
-expression col = buildExpressionParser (operators col) (term col)
+expression col = try (stmt col) <|> 
+                 try (operation col) <|> 
+                 try (term col)
+           
+operation col = buildExpressionParser (operators col) ((term col) <|> parens (term col))
 
-term col = parens (expression col) <|> stmt col <|> valueExpr col
-
+term col = try (valueExpr col) <|>
+           try (parens (expression col))
 
 reservedWord col = try (do sws col
                            reserved "true"
@@ -116,12 +120,12 @@ caseStmt col =
      reserved "case"
      check <- whiteSpace >> expression col
      reserved "of"
-     cases <- sepBy (do cond <- whiteSpace >> expression col
-                        reservedOp "->"
-                        pos <- getPosition
-                        expr <- whiteSpace >> expression (sourceColumn pos)
-                        return $ (cond, expr)
-                        ) (oneOf ",")
+     cases <- sepBy1 (do cond <- whiteSpace >> expression col
+                         reservedOp "->"
+                         pos <- getPosition
+                         expr <- whiteSpace >> expression (sourceColumn pos)
+                         return $ (cond, expr)
+                         ) (oneOf ",")
      return $ Case check cases
      
 skipStmt col = do sws col

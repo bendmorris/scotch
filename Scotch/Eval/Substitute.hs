@@ -24,12 +24,13 @@ import Data.List
 
 -- if expression x should be rewritten, return the rewritten expression;
 -- otherwise, returns an InvalidValue
-rewrite :: Expr -> [Binding] -> Expr
-rewrite x [] = x
-rewrite x (h:t) = 
+rewrite :: Expr -> [Binding] -> [Binding] -> Expr
+rewrite x [] allDefs = parseExpr x rewrite'
+                       where rewrite' x = rewrite x allDefs allDefs
+rewrite x (h:t) allDefs = 
   if fst match 
   then substitute (snd h) (snd match)
-  else rewrite x t 
+  else rewrite x t allDefs
   where match = patternMatch x (fst h) True
 
 nameMatch x y = x == y || isSuffixOf ("." ++ y) ("." ++ x)
@@ -82,45 +83,48 @@ substitute exp [] = exp
 substitute exp params =
   case lookup exp params of
     Just expr -> expr
-    otherwise ->
-      case exp of
-        Call id args -> Call (substitute' id) [substitute' arg | arg <- args]
-        Val (Proc p) -> Val (Proc ([substitute' e | e <- p]))
-        Val (Lambda ids expr) -> Val (Lambda ids (substitute' expr))
-        Val (Thread e) -> Val (Thread (substitute' e))
-        Take n x -> Take (substitute' n) (substitute' x)
-        ToInt x -> ToInt (substitute' x)
-        ToFloat x -> ToFloat (substitute' x)
-        ToStr x -> ToStr (substitute' x)
-        ToList l -> ToList (substitute' l)
-        List l -> List [substitute' e | e <- l]    
-        HashExpr l -> HashExpr [(substitute' (fst kv), substitute' (snd kv)) | kv <- l]
-        Subs n x -> Subs (substitute' n) (substitute' x)
-        Concat x y -> Concat (substitute' x) (substitute' y)
-        Add x y -> Add (substitute' x) (substitute' y)
-        Sub x y -> Sub (substitute' x) (substitute' y)
-        Prod x y -> Prod (substitute' x) (substitute' y)
-        Div x y -> Div (substitute' x) (substitute' y)
-        Mod x y -> Mod (substitute' x) (substitute' y)
-        Exp x y -> Exp (substitute' x) (substitute' y)
-        Eq x y -> Eq (substitute' x) (substitute' y)
-        InEq x y -> InEq (substitute' x) (substitute' y)
-        Gt x y -> Gt (substitute' x) (substitute' y)
-        Lt x y -> Lt (substitute' x) (substitute' y)
-        And x y -> And (substitute' x) (substitute' y)
-        Or x y -> Or (substitute' x) (substitute' y)
-        Not x -> Not (substitute' x)
-        Def id x y -> Def id (substitute' x) (substitute' y)
-        EagerDef id x y -> EagerDef id (substitute' x) (substitute' y)
-        If x y z -> If (substitute' x) (substitute' y) (substitute' z)
-        Case c opts -> Case (substitute' c) [(fst opt, substitute' (snd opt)) | opt <- opts]
-        For id x y z -> For id (substitute' x) (substitute' y) [substitute' i | i <- z]
-        Range x y z -> Range (substitute' x) (substitute' y) (substitute' z)
-        Output x -> Output (substitute' x)
-        FileObj x -> FileObj (substitute' x)
-        FileRead x -> FileRead (substitute' x)
-        FileWrite f x -> FileWrite (substitute' f) (substitute' x)
-        FileAppend f x -> FileAppend (substitute' f) (substitute' x)
-        EvalExpr x -> EvalExpr (substitute' x)
-        otherwise -> otherwise
-      where substitute' x = substitute x params
+    otherwise -> parseExpr exp substitute'
+                 where substitute' x = substitute x params
+      
+parseExpr exp f =
+  case exp of
+    Call id args -> Call (f id) [f arg | arg <- args]
+    Val (Proc p) -> Val (Proc ([f e | e <- p]))
+    Val (Lambda ids expr) -> Val (Lambda ids (f expr))
+    Val (Thread e) -> Val (Thread (f e))
+    Take n x -> Take (f n) (f x)        
+    ToInt x -> ToInt (f x)
+    ToFloat x -> ToFloat (f x)
+    ToStr x -> ToStr (f x)
+    ToList l -> ToList (f l)
+    List l -> List [f e | e <- l]    
+    HashExpr l -> HashExpr [(f (fst kv), f (snd kv)) | kv <- l]
+    Subs n x -> Subs (f n) (f x)
+    Concat x y -> Concat (f x) (f y)
+    Add x y -> Add (f x) (f y)
+    Sub x y -> Sub (f x) (f y)
+    Prod x y -> Prod (f x) (f y)
+    Div x y -> Div (f x) (f y)
+    Mod x y -> Mod (f x) (f y)
+    Exp x y -> Exp (f x) (f y)
+    Eq x y -> Eq (f x) (f y)
+    InEq x y -> InEq (f x) (f y)
+    Gt x y -> Gt (f x) (f y)
+    Lt x y -> Lt (f x) (f y)
+    And x y -> And (f x) (f y)
+    Or x y -> Or (f x) (f y)
+    Not x -> Not (f x)
+    Def id x y -> Def id (f x) (f y)
+    EagerDef id x y -> EagerDef id (f x) (f y)
+    If x y z -> If (f x) (f y) (f z)
+    Case c opts -> Case (f c) [(fst opt, f (snd opt)) | opt <- opts]
+    For id x y z -> For id (f x) (f y) [f i | i <- z]
+    TakeFor id x y z n -> TakeFor id (f x) (f y) [f i | i <- z] n
+    Range x y z -> Range (f x) (f y) (f z)
+    Output x -> Output (f x)
+    FileObj x -> FileObj (f x)
+    FileRead x -> FileRead (f x)
+    FileWrite a x -> FileWrite (f a) (f x)
+    FileAppend a x -> FileAppend (f a) (f x)
+    EvalExpr x -> EvalExpr (f x)
+    otherwise -> otherwise
