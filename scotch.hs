@@ -98,7 +98,8 @@ loop (verbose, strict) bindings state =
         Just "quit" -> closeInput state
         Just "restart" -> main
         Just "vars" -> do putStrLn $ foldl (++) "" 
-                                     ["** " ++ show binding ++ "\n" | e <- bindings, binding <- e]
+                                     ["** " ++ show (fst binding) ++ " = " ++ show (snd binding) ++ "\n" 
+                                      | e <- bindings, binding <- e]
                           loop (verbose, strict) bindings state
         Just "-v" -> loop (not verbose, strict) bindings state
         Just "-s" -> loop (verbose, not strict) bindings state

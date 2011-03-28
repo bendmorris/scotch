@@ -46,7 +46,7 @@ tests += assert_equal(c, 456)
 -}
 
 #tests += assert_equal(median([5,3,2,4,1]), 3)
-tests += assert_equal(mean([5,3,2,4,1]), 3)
+#tests += assert_equal(mean([5,3,2,4,1]), 3)
 #tests += assert_equal(sort([5,4,3,2,1]), [1,2,3,4,5])
 
 #file_name = "test.sco"

@@ -183,7 +183,7 @@ instance Show(Expr) where
     show (Var f) = f
     show (Call f args) = show f ++ removeBrackets (show args)
     show (If cond x y) = "if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y
-    show (Case c o) = "case " ++ show c ++ " of " ++ show o
+    show (Case c o) = "case " ++ show c ++ " of" ++ tail (foldl (++) "" [", " ++ show (fst i) ++ " -> " ++ show (snd i) | i <- o])
     show (For x y z w) = "[for " ++ show x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
     show (Range x y z) = "[" ++ show x ++ ".." ++ show y ++ (if z == (Val (NumInt 1)) then "" else "," ++ show z) ++ "]"
     show (Output x) = "print " ++ show x

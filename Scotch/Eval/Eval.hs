@@ -153,7 +153,7 @@ eval oexp vars strict = case exp of
                                               Exception e -> Exception e
                                               List l' -> List $ l ++ l'
                                               Val v -> vadd strict x y
-                                              Add a (Call id args) -> eval' (Add (eval' (Add x a)) (Call id args))
+                                              Add a (Call id args) -> Add (eval' (Add x a)) (Call id args)
                                               otherwise -> nextOp
                           Val v ->          case y of
                                               Exception e -> Exception e
@@ -248,19 +248,7 @@ eval oexp vars strict = case exp of
                                             otherwise -> FileAppend (Val (File f)) otherwise
                           otherwise -> FileAppend otherwise x
   otherwise ->          otherwise
- where operation x y f g = case x of
-                             Val v -> case y of
-                                        Val v -> calc x y f strict
-                                        Exception e -> Exception e
-                                        otherwise -> if y' == y 
-                                                     then operation x y' f g
-                                                     else g x y'
-                                                     where y' = eval' y
-                             Exception e -> Exception e
-                             otherwise -> if x' == x
-                                          then operation x' y f g
-                                          else g x' y
-                                          where x' = eval' x
+ where operation x y f g = calc x y f strict
        allTrue [] = True
        allTrue (h:t) = case eval' h of
                          Val (Bit True) -> allTrue t
