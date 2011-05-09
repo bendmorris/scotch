@@ -29,10 +29,11 @@ import Scotch.Parse.Parse as Parse
 
 
 -- eval: computes the value of an expression as far as possible
-eval :: Expr -> VarDict -> Bool -> Expr
-eval exp [] strict = eval exp emptyHash strict
-eval oexp vars strict = 
-  if exp /= oexp then exp
+eval :: Expr -> VarDict -> Bool -> Bool -> Expr
+eval exp [] strict rw = eval exp emptyHash strict rw
+eval oexp vars strict rw = 
+  if exp /= oexp 
+  then exp
   else case exp of
   Var id ->             if length (qualHashDict id) > 0
                         then Val $ Hash $ makeHash strHash (qualHashDict id) emptyHash
@@ -148,7 +149,7 @@ eval oexp vars strict =
                                                                     where f' = (Call (Var f) args)
                                                   otherwise ->      Subs otherwise (eval' x)
                           otherwise ->    Subs n (eval' otherwise)
-  Concat x y ->         eval' (Add (ToList x) (ToList y))
+  Concat x y ->         eval' (Add x y)
   Add x y ->            case x of
                           Exception e ->    Exception e
                           List l ->         case y of
@@ -162,12 +163,20 @@ eval oexp vars strict =
                                               List l -> vadd strict x y
                                               Val v -> vadd strict x y
                                               otherwise -> nextOp
+                          Add a b ->        if (eval' x) == x
+                                            then Add a (Add b y)
+                                            else nextOp
                           otherwise ->      nextOp
                         where nextOp = if vadd strict x y == Add x y
                                        then Add (eval' x) (eval' y)
-                                       else vadd strict x y
+                                       else operation x y vadd Add
   Sub x y ->            operation x y vsub Sub
-  Prod x y ->           operation x y vprod Prod
+  Prod x y ->           case x of
+                          Prod a b -> if eval' x == x
+                                      then Prod a (Prod b y)
+                                      else nextOp
+                          otherwise -> nextOp
+                        where nextOp = operation x y vprod Prod
   Div x y ->            operation x y vdiv Div
   Mod x y ->            operation x y vmod Mod
   Exp x y ->            operation x y vexp Exp
@@ -259,8 +268,11 @@ eval oexp vars strict =
                          otherwise -> if otherwise == h then False else allTrue (otherwise : t)
        caseExpr check [] = exNoCaseMatch check
        caseExpr check (h:t) = If (Eq (check) (fst h)) (snd h) (caseExpr check t)
-       exp = rewrite oexp (vars !! exprHash oexp) (vars !! exprHash oexp)
-       eval' expr = eval expr vars strict
+       exp = if rw
+             then rewrite oexp (vars !! exprHash oexp) (vars !! exprHash oexp) eval''
+             else oexp
+       eval' expr = eval expr vars strict rw
+       eval'' expr = eval expr vars strict False
                                     
 
 iolist :: [IO Expr] -> IO [Expr]
@@ -270,21 +282,22 @@ iolist (h:t) = do item <- h
                   return (item:rest)
 
 -- ieval: evaluates an expression completely, replacing I/O operations as necessary
-ieval :: Expr -> VarDict -> Bool -> Maybe Expr -> IO Expr
-ieval expr vars strict last =
-  do {-putStrLn $ "**"
-     putStrLn $ "last: " ++ show last
-     putStrLn $ "expr: " ++ show expr-}
-     result <- subfile (eval expr vars strict) vars
+ieval :: Bool -> Expr -> VarDict -> Bool -> Maybe Expr -> IO Expr
+ieval verbose expr vars strict last =
+  do result <- subfile (eval expr vars strict True) vars
      --putStrLn $ "result: " ++ show result
      if Just result == last
       then return result
-      else do vars' <- case expr of
+      else do if verbose then case last of
+                           Just x -> putStrLn (show x)
+                           otherwise -> return ()
+                         else return ()
+              vars' <- case expr of
                          Def id x y -> do return $ makeVarDict [(id, x)] vars
-                         EagerDef id x y -> do x' <- ieval x vars strict (Just expr)
+                         EagerDef id x y -> do x' <- ieval verbose x vars strict (Just expr)
                                                return $ makeVarDict [(id, x')] vars
                          otherwise -> do return vars
-              ieval result vars' strict (Just expr)
+              ieval verbose result vars' strict (Just expr)
 
 -- subfile: substitutes values for delayed I/O operations
 subfile :: Expr -> VarDict -> IO Expr
