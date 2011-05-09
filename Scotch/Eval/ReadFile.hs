@@ -36,13 +36,11 @@ wexecute _ [] bindings = do return bindings
 wexecute (verbose, interpret, strict) (h:t) bindings = 
   do parsed <- subfile (snd h) bindings
      -- evaluate the parsed code
-     result <- do ieval parsed bindings strict Nothing
-     if verbose then putStrLn (show parsed)
-                else return ()
+     result <- do ieval verbose parsed bindings strict Nothing
      -- get new bindings if any definitions/imports were made
      newBindings <- case parsed of
                       Def id x Skip -> do return [(localVar id, x)]
-                      EagerDef id x Skip -> do evaluated <- ieval x bindings strict Nothing
+                      EagerDef id x Skip -> do evaluated <- ieval verbose x bindings strict Nothing
                                                case evaluated of
                                                  Exception e -> do putStrLn $ show $ Exception e
                                                                    return []
@@ -52,7 +50,7 @@ wexecute (verbose, interpret, strict) (h:t) bindings =
                                        b <- case i of 
                                               (False, _) -> do putStrLn ("Failed to import module " ++ show s)
                                                                return []
-                                              (True, i) -> do return [e | j <- i, e <- j]
+                                              (True, i) -> do return $ reverse [e | j <- i, e <- j]
                                        return b
                                      
                       otherwise -> case result of

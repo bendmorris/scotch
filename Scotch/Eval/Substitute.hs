@@ -22,22 +22,24 @@ import Scotch.Types.Hash
 import Scotch.Eval.Calc
 import Data.List
 
+fullEval x evalFunc = if evalFunc x == x then x else fullEval (evalFunc x) evalFunc
+
 -- if expression x should be rewritten, return the rewritten expression;
 -- otherwise, returns an InvalidValue
-rewrite :: Expr -> [Binding] -> [Binding] -> Expr
-rewrite x [] allDefs = parseExpr x rewrite'
-                       where rewrite' x = rewrite x allDefs allDefs
-rewrite x (h:t) allDefs = 
+rewrite :: Expr -> [Binding] -> [Binding] -> (Expr -> Expr) -> Expr
+rewrite x [] allDefs _ = x{-parseExpr x rewrite'
+                       where rewrite' x = rewrite x allDefs allDefs-}
+rewrite x (h:t) allDefs evalFunc = 
   if fst match 
   then substitute (snd h) (snd match)
-  else rewrite x t allDefs
-  where match = patternMatch x (fst h) True
+  else rewrite x t allDefs evalFunc
+  where match = patternMatch x (fst h) evalFunc True
 
 nameMatch x y = x == y || isSuffixOf ("." ++ y) ("." ++ x)
 
 -- check if expression x matches definition y
-patternMatch :: Expr -> Expr -> Bool -> (Bool, [Binding])
-patternMatch x y tl =
+patternMatch :: Expr -> Expr -> (Expr -> Expr) -> Bool -> (Bool, [Binding])
+patternMatch x y evalFunc tl =
   case (x, y) of
     (_, Var v2) ->              case tl of
                                   True -> case x of
@@ -51,7 +53,7 @@ patternMatch x y tl =
                                 if length args1 == length args2
                                    && nameMatch v2 v1
                                 then trySubs 
-                                     [patternMatch (args1 !! n) (args2 !! n) False
+                                     [patternMatch (args1 !! n) (args2 !! n) evalFunc False
                                       | n <- [0 .. (length args1) - 1]]
                                 else (False, [])
     (_, Concat (Var v1) 
@@ -65,17 +67,23 @@ patternMatch x y tl =
                                                                  (Var v2, Val (Str (tail l)))])
                                                     else (False, [])
                                   otherwise -> (False, [])
+    (List a, List b) ->         if length a == length b 
+                                then trySubs [patternMatch' (a !! n) (b !! n) | n <- [0 .. (length a) - 1]]
+                                else (False, [])
     (Add a b, Add c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
     (Sub a b, Sub c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
     (Prod a b, Prod c d) ->     trySubs [patternMatch' a c, patternMatch' b d]
     (Div a b, Div c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
     (Exp a b, Exp c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
-    otherwise ->                if veq False x y == Val (Bit True)
-                                then (True, []) else (False, [])
+    otherwise ->                case tl of
+                                  False -> if veq False (fullEval x evalFunc) y == Val (Bit True)
+                                           then (True, []) else (False, [])
+                                  True -> if veq False x y == Val (Bit True) 
+                                          then (True, []) else (False, [])
   where trySubs exprs = if all ((==) True) [fst expr | expr <- exprs]
                         then (True, foldl (++) [] [snd expr | expr <- exprs])
                         else (False, [])
-        patternMatch' a b = patternMatch a b False
+        patternMatch' a b = patternMatch a b evalFunc False
                         
 
 substitute :: Expr -> [Binding] -> Expr
