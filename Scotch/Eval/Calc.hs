@@ -63,6 +63,10 @@ vprod _ (List l) (Val (NumInt b)) = List $ foldr (++) [] (take (fromIntegral b) 
 vprod _ (Val (NumInt b)) (List l) = List $ foldr (++) [] (take (fromIntegral b) (repeat l))
 vprod _ (Val (Bit a)) (Val (NumInt (-1))) = Val (Bit (not a))
 vprod _ (Val (NumInt (-1))) (Val (Bit a)) = Val (Bit (not a))
+vprod _ a (Val (NumInt 1)) = a
+vprod _ (Val (NumInt 1)) b = b
+vprod _ a (Val (NumInt 0)) = Val (NumInt 0)
+vprod _ (Val (NumInt 0)) b = Val (NumInt 0)
 vprod _ a b = Prod a b
 -- division
 div_by_zero = Exception "Division by zero"

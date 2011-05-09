@@ -455,7 +455,7 @@ whereStmt col =
   do whiteSpace
      sws col
      reserved "where"
-     assignment <- sepBy1 (whiteSpace >> buildExpressionParser [assignments col] ((term col) <|> parens (term col))) (oneOf ",")
+     assignment <- sepBy1 (whiteSpace >> buildExpressionParser [assignments col] (expression col)) (oneOf ",")
      return $ nestwhere assignment
      
 callStmt col =
