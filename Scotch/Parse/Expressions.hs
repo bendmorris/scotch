@@ -509,5 +509,6 @@ operators col =
    --[Postfix(do { l <- lambdaCallStmt col; return (l     )})          ],
    [Postfix(do { w <- whereStmt col;return (w          )})          ],
    assignments col,
-   [Infix  (do { op <- customOp col;return (opCall op   )}) AssocLeft]
+   [Infix  (do { op <- customOp col;return (opCall op   )}) AssocLeft],
+   [Postfix(do { w <- callStmt col;return (w)})      ]
    ]

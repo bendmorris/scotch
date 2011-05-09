@@ -165,6 +165,8 @@ instance Show(Expr) where
     show (Subs n s) = show s ++ " @" ++ show n
     show (Add x y) = "(" ++ show x ++ " + " ++ show y ++ ")"
     show (Sub x y) = "(" ++ show x ++ " - " ++ show y ++ ")"
+    show (Prod (Val (NumInt x)) y) = show x ++ "(" ++ show y ++ ")"
+    show (Prod (Val (NumFloat x)) y) = show x ++ "(" ++ show y ++ ")"
     show (Prod x y) = "(" ++ show x ++ " * " ++ show y ++ ")"
     show (Div x y) = "(" ++ show x ++ " / " ++ show y ++ ")"
     show (Mod x y) = "(" ++ show x ++ " mod " ++ show y ++ ")"
