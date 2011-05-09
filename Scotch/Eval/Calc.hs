@@ -107,7 +107,7 @@ veq _ (Val a) (Val b) = Val (Bit (a == b))
 veq _ (List a) (List b) = if a == b then Val (Bit True) else Eq (List a) (List b)
 veq _ (Var a) (Var b) = if a == b then Val (Bit True) else Eq (Var a) (Var b)
 veq _ (Call a b) (Call c d) = if a == c && b == d then Val (Bit True) else Eq (Call a b) (Call c d)
-veq _ a b = Eq a b
+veq _ a b = Val (Bit (a == b))
 -- greater than
 vgt _ (Val (NumInt a)) (Val (NumInt b)) = Val (Bit (a > b))
 vgt _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (Bit (a > b))

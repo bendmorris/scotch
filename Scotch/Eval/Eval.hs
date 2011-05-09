@@ -182,7 +182,7 @@ eval oexp vars strict rw =
   Div x y ->            operation x y vdiv Div
   Mod x y ->            operation x y vmod Mod
   Exp x y ->            operation x y vexp Exp
-  Eq x y ->             operation x y veq Eq
+  Eq x y ->             operation (fullEval x eval') (fullEval y eval') veq Eq
   InEq x y ->           eval' (Prod (operation x y veq Eq) (Val (NumInt (-1))))
   Gt x y ->             operation x y vgt Gt
   Lt x y ->             operation x y vlt Lt
