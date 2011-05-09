@@ -455,9 +455,10 @@ whereStmt col =
      
 callStmt col =
   do sws col
-     args <- parens $ exprList col
+     args <- many1 (parens $ exprList col)
      return $ callPostfix args
-callPostfix args id = Call id args
+callPostfix [] id = id
+callPostfix (h:t) id = callPostfix t (Call id h)
 
 customOp col = 
   do whiteSpace
@@ -509,6 +510,5 @@ operators col =
    --[Postfix(do { l <- lambdaCallStmt col; return (l     )})          ],
    [Postfix(do { w <- whereStmt col;return (w          )})          ],
    assignments col,
-   [Infix  (do { op <- customOp col;return (opCall op   )}) AssocLeft],
-   [Postfix(do { w <- callStmt col;return (w)})      ]
+   [Infix  (do { op <- customOp col;return (opCall op   )}) AssocLeft]
    ]
