@@ -53,6 +53,8 @@ eval oexp vars strict rw =
                         if length ids == length args
                         then substitute expr (zip [Var id | id <- ids] args)
                         else exp
+  Call (Val (NumInt i)) args -> Prod (Val (NumInt i)) (totalProd args)
+  Call (Val (NumFloat i)) args -> Prod (Val (NumFloat i)) (totalProd args)
   Call x args ->        Call (eval' x) args
   EvalExpr x ->         case eval' x of
                           Val (Str s) -> case length evaled of
@@ -273,6 +275,11 @@ eval oexp vars strict rw =
              else oexp
        eval' expr = eval expr vars strict rw
        eval'' expr = eval expr vars strict False
+       
+       
+totalProd (h:t) = if t == []
+                  then h
+                  else Prod h (totalProd t)
                                     
 
 iolist :: [IO Expr] -> IO [Expr]
