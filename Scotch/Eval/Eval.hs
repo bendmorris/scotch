@@ -48,7 +48,7 @@ eval oexp vars strict rw =
                                                      Call (Var id') _ -> isPrefixOf (id ++ ".") id'
                                                      otherwise -> False)]
   Call (Call id args) args' -> eval' $ Call id (args ++ args')
-  Call (Var id) args -> Call (Var id) [eval' arg | arg <- args]
+  Call (Var id) args -> Call (Var id) [fullEval arg eval' | arg <- args]
   Call (Val (Lambda ids expr)) args ->
                         if length ids == length args
                         then substitute expr (zip [Var id | id <- ids] args)
@@ -270,8 +270,11 @@ eval oexp vars strict rw =
                          otherwise -> if otherwise == h then False else allTrue (otherwise : t)
        caseExpr check [] = exNoCaseMatch check
        caseExpr check (h:t) = If (Eq (check) (fst h)) (snd h) (caseExpr check t)
+       evalArgs x = case x of
+                      Call a b -> Call (evalArgs a) ([fullEval i eval' | i <- b])
+                      otherwise -> otherwise
        exp = if rw
-             then rewrite oexp (vars !! exprHash oexp) (vars !! exprHash oexp) eval''
+             then rewrite (evalArgs oexp) (vars !! exprHash oexp) (vars !! exprHash oexp) eval''
              else oexp
        eval' expr = eval expr vars strict rw
        eval'' expr = eval expr vars strict False

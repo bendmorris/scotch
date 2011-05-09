@@ -53,9 +53,10 @@ patternMatch x y evalFunc tl =
                                 if length args1 == length args2
                                    && nameMatch v2 v1
                                 then trySubs 
-                                     [patternMatch (args1 !! n) (args2 !! n) evalFunc False
+                                     [patternMatch (a1 !! n) (args2 !! n) evalFunc False
                                       | n <- [0 .. (length args1) - 1]]
                                 else (False, [])
+                                where a1 = [fullEval a evalFunc | a <- args1]
     (_, Concat (Var v1) 
                (Var v2)) ->     case x of
                                   List l ->         if length l > 0 

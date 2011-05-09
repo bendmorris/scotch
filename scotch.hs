@@ -111,5 +111,5 @@ loop (verbose, strict) bindings state =
                                           otherwise -> do putStrLn (show exEvalMultiple)
                                                           return []
                          loop (verbose, strict) 
-                              (makeVarDict [i | j <- newBindings, i <- j] bindings) 
+                              (makeVarDict (reverse [i | j <- newBindings, i <- j]) bindings)
                               state
