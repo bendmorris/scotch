@@ -86,8 +86,8 @@ valueExpr col =
   try (forStmt col) <|>
   try (notStmt col) <|>
   try (conversionStmt col) <|>
-  try (valueStmt col) <|>
-  try (varcallStmt col)
+  try (varcallStmt col) <|>
+  try (valueStmt col)
 
 
 
@@ -363,16 +363,21 @@ varcallStmt col =
   try (
   do sws col
      var <- identifier
-     args <- parens (exprList col)
-     return $ Call (Var var) args
-  ) <|> (
-  do sws col
-     var <- identifier
      return $ Var var
   ) <|> (
   do sws col
      var <- parens (customOp col)
      return $ Var var
+  ) <|> (
+  do sws col
+     n <- intStmt col
+     var <- identifier
+     return $ Prod n (Var var)
+  ) <|> (
+  do sws col
+     n <- floatStmt col
+     var <- identifier
+     return $ Prod n (Var var)
   )
      
 
