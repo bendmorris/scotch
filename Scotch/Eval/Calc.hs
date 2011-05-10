@@ -20,14 +20,14 @@ import Scotch.Types.Types
 import Scotch.Types.Hash
 import Scotch.Types.Exceptions
                                   
--- calc: calls a function on the value of two Calculations, resulting in an exception if
---       either Calculation previously resulted in an exception
+-- calc: gives the result of a binary operation, resulting in an exception if
+--       either side of the expression is an exception
 calc :: Expr -> Expr -> (Bool -> Expr -> Expr -> Expr) -> Bool -> Expr
 calc _ (Exception s) _ _ = Exception s
 calc (Exception s) _ _ _ = Exception s
 calc a b f strict = f strict a b
 
--- the following functions provide basic operations between Values, returning an Expr
+-- the following functions represent all built-in binary operation definitions
 -- addition
 vadd, vsub, vprod, vdiv, vmod, vexp, veq, vgt, vlt :: Bool -> Expr -> Expr -> Expr
 vadd _ (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (a + b))

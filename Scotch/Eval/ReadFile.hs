@@ -114,6 +114,7 @@ searchPathMatch (h:t) = do exists <- doesFileExist (h ++ ".sco")
                            case exists of
                              True -> return h
                              False -> searchPathMatch t
+                             
 -- returns (was the import successful?, VarDict of imported bindings)
 importFile :: (Bool, Bool) -> [String] -> [String] -> IO (Bool, VarDict)
 importFile (verbose, strict) s t = 
@@ -154,7 +155,7 @@ importFile (verbose, strict) s t =
                          stripLocal s = if isPrefixOf "local." s then [s !! n | n <- [length "local." .. (length s) - 1]] else s
      return (success, makeVarDict newval emptyHash)
 
--- interpret the contents of a file
+-- interpret the contents of a file, returning a dictionary of the new bindings
 execute :: (Bool, Bool) -> String -> VarDict -> IO VarDict
 execute (verbose, strict) file bindings = 
   do optimized <- doesFileExist (file ++ ".osc")

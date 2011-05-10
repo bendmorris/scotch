@@ -28,7 +28,11 @@ import Scotch.Eval.Substitute
 import Scotch.Parse.Parse as Parse
 
 
--- eval: computes the value of an expression as far as possible
+{- 
+eval: evaluates an expression.
+      This function evaluates expressions step by step and should not be assumed to result 
+      in full evaluation; rather, eval should be run until the result is the same as the initial input.
+-}
 eval :: Expr -> VarDict -> Bool -> Bool -> Expr
 eval exp [] strict rw = eval exp emptyHash strict rw
 eval oexp vars strict rw = 
