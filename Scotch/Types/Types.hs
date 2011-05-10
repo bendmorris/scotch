@@ -19,6 +19,10 @@ module Scotch.Types.Types where
 import Data.Binary
 import Numeric
 
+formatString [] = []
+formatString (h:t) = if h == '"' then "\\\"" ++ formatString t
+                     else h : formatString t
+
 -- a bindable identifier
 type Id = String
 -- a value with its corresponding type
@@ -36,15 +40,15 @@ data Value = NumInt Integer
            | InvalidValue
            deriving Eq
 instance Show (Value) where
-    show (Str s) = "\"" ++ s ++ "\""
+    show (Str s) = "\"" ++ formatString s ++ "\""
     show (NumInt n) = show n
     show (NumFloat n) = showFFloat Nothing n ""
     show (Bit True) = "true"
     show (Bit False) = "false"
     show (Hash h) = "{" ++ (if length items > 0
-                            then tail (foldl (++) "" items)
+                            then tail $ tail (foldl (++) "" items)
                             else "") ++ "}"
-                           where items = ["," ++ fst i ++ ":" ++ show (snd i) | j <- h, i <- j]
+                           where items = [", \"" ++ fst i ++ "\": " ++ show (snd i) | j <- h, i <- j]
     show (Lambda ids expr) = "(" ++ tail (foldl (++) "" ["," ++ id | id <- ids]) ++ ") -> " ++ show expr
     show (Proc p) = "do " ++ foldl (++) "" [show i ++ ";" | i <- p]
     show (Thread th) = "thread " ++ show th
@@ -167,8 +171,7 @@ instance Show(Expr) where
     show (Sub x y) = "(" ++ show x ++ " - " ++ show y ++ ")"
     show (Prod (Val (NumInt x)) (Var y)) = show x ++ y
     show (Prod (Val (NumInt x)) y) = show x ++ if show y !! 0 == '(' then show y else "(" ++ show y ++ ")"
-    show (Prod (Val (NumFloat x)) (Val y)) = show x ++ "(" ++ show y ++ ")"
-    show (Prod (Val (NumFloat x)) y) = show x ++ show y
+    show (Prod (Val (NumFloat x)) (Val y)) = show x ++ if show y !! 0 == '(' then show y else "(" ++ show y ++ ")"
     show (Prod x y) = "(" ++ show x ++ " * " ++ show y ++ ")"
     show (Div x y) = "(" ++ show x ++ " / " ++ show y ++ ")"
     show (Mod x y) = "(" ++ show x ++ " mod " ++ show y ++ ")"

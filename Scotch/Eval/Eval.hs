@@ -48,14 +48,16 @@ eval oexp vars strict rw =
                                                      Call (Var id') _ -> isPrefixOf (id ++ ".") id'
                                                      otherwise -> False)]
   Call (Call id args) args' -> eval' $ Call id (args ++ args')
-  Call (Var id) args -> Call (Var id) [fullEval arg eval' | arg <- args]
+  Call (Var id) args -> if fullEval (Var id) eval' == Var id
+                        then Call (Var id) [fullEval arg eval' | arg <- args]
+                        else Call (fullEval (Var id) eval') args
   Call (Val (Lambda ids expr)) args ->
                         if length ids == length args
                         then substitute expr (zip [Var id | id <- ids] args)
                         else exp
   Call (Val (NumInt i)) args -> Prod (Val (NumInt i)) (totalProd args)
   Call (Val (NumFloat i)) args -> Prod (Val (NumFloat i)) (totalProd args)
-  Call x args ->        Call (eval' x) args
+  Call x args ->        Call (fullEval x eval') args
   EvalExpr x ->         case eval' x of
                           Val (Str s) -> case length evaled of
                                            0 -> Skip
@@ -173,11 +175,19 @@ eval oexp vars strict rw =
                                        then Add (eval' x) (eval' y)
                                        else operation x y vadd Add
   Sub x y ->            operation x y vsub Sub
-  Prod x y ->           case x of
-                          Prod a b -> if eval' x == x
-                                      then Prod a (Prod b y)
-                                      else nextOp
-                          otherwise -> nextOp
+  Prod x y ->           {-if nextOp == Prod x y
+                        then if eval' (Prod y x) == Prod y x
+                             then nextOp
+                             else case x of
+                                    Prod a b -> if eval' x == x
+                                                then Prod a (Prod b y)
+                                                else nextOp
+                                    otherwise -> case y of
+                                                   Prod a b -> if eval' y == y
+                                                               then Prod (Prod x a) b
+                                                               else nextOp
+                                                   otherwise -> nextOp
+                        else -}nextOp
                         where nextOp = operation x y vprod Prod
   Div x y ->            operation x y vdiv Div
   Mod x y ->            operation x y vmod Mod

@@ -59,7 +59,6 @@ reservedExpr col =
 
 value col = 
   try (reservedWord col) <|>
-  try (hashValue col) <|>
   try (strValue col) <|> 
   try (floatValue col) <|> 
   try (intValue col)
@@ -327,17 +326,7 @@ listStmt col =
      exprs <- brackets (exprList col)
      return $ List exprs
      
-keyValue col =
-  do sws col
-     key <- do quote <- oneOf "\"'"
-               chars <- many (noneOf [quote])
-               oneOf [quote]
-               return chars
-     whiteSpace >> symbol ":"
-     val <- whiteSpace >> expression col
-     return (key, val)
-     
-keyExpr col = try (
+keyValue col = try (
   do sws col
      key <- whiteSpace >> (many (oneOf (upperCase ++ lowerCase)))
      whiteSpace >> symbol "="
@@ -345,18 +334,14 @@ keyExpr col = try (
      return (Val (Str key), expr)
   ) <|> (
   do sws col
-     key <- whiteSpace >> expression col
+     key <- whiteSpace >> value col
      whiteSpace >> symbol ":"
      expr <- whiteSpace >> expression col
-     return (key, expr)
+     return (Val key, expr)
   )
-hashValue col =
-  do sws col
-     keysValues <- braces (sepBy (whiteSpace >> keyValue col) (oneOf ","))
-     return $ Hash (makeHash strHash keysValues emptyHash)
 hashStmt col =
   do sws col
-     keysValues <- braces (sepBy (whiteSpace >> keyExpr col) (oneOf ","))
+     keysValues <- braces (sepBy (whiteSpace >> keyValue col) (oneOf ","))
      return $ HashExpr keysValues
 
 varcallStmt col =
