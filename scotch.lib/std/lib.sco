@@ -107,7 +107,7 @@ sort(h:t) = qsort(h:t)
 qsort(h:t, n) = (case (len(h:t) < n) of
                    true -> h:t,
                    false -> (qsort(less) : h : qsort(more))
-                 where less = filter((x) -> h > x, t), more = filter((x) -> h < x, t))
+                  where less = filter((x) -> h > x, t), more = filter((x) -> h < x, t))
 qsort([], n) = []
 qsort(l) = qsort(l, 1)
 insert(x, h:t, a) = if x > h then h + insert(x, t) else ([x] + [h] + t)
@@ -122,8 +122,21 @@ repeat(f, r, n) = repeat(f, f(r), n-1)
 repeat(f, r, 0) = r
 
 zip(a:b, c:d) = [[a,c]] + zip(b, d)
+zip([], []) = []
 zip([], c:d) = []
 zip(a:b, []) = []
 zip(a:b, c:d, f) = [f(a, c)] + zip(b, d, f)
+zip([], [], f) = []
 zip([], c:d, f) = []
 zip(a:b, [], f) = []
+
+
+do (+)(x, y) = x + y;
+   (-)(x, y) = x - y;
+   (*)(x, y) = x * y;
+   (/)(x, y) = x / y;
+   (^)(x, y) = x ^ y;
+   (&)(x, y) = x & y;
+   (|)(x, y) = x | y;
+   (==)(x, y) = x == y;
+   (!=)(x, y) = x != y;

@@ -44,8 +44,11 @@ eval oexp vars strict rw =
                         else if length (qualHashDict ("local." ++ id)) > 0
                              then Val $ Hash $ makeHash strHash (qualHashDict ("local." ++ id)) emptyHash
                              else Var id
-                        where qualHashDict id = [([show (fst v) !! n | n <- [length id + 1 .. length (show (fst v)) - 1]], 
-                                                 snd v) 
+                        where v' v = case fst v of
+                                       Call (Var var) args -> (Var var, Var var)
+                                       otherwise -> v
+                              qualHashDict id = [([show (fst (v' v)) !! n | n <- [length id + 1 .. length (show (fst (v' v))) - 1]], 
+                                                   snd (v' v))
                                                 | i <- vars, v <- i,
                                                   (case fst v of
                                                      Var id' -> isPrefixOf (id ++ ".") id'

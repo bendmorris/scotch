@@ -27,8 +27,7 @@ fullEval x evalFunc = if evalFunc x == x then x else fullEval (evalFunc x) evalF
 -- if expression x should be rewritten, return the rewritten expression;
 -- otherwise, returns an InvalidValue
 rewrite :: Expr -> [Binding] -> [Binding] -> (Expr -> Expr) -> Expr
-rewrite x [] allDefs _ = x{-parseExpr x rewrite'
-                       where rewrite' x = rewrite x allDefs allDefs-}
+rewrite x [] allDefs _ = x
 rewrite x (h:t) allDefs evalFunc = 
   if fst match 
   then substitute (snd h) (snd match)
@@ -41,6 +40,9 @@ nameMatch x y = x == y || isSuffixOf ("." ++ y) ("." ++ x)
 patternMatch :: Expr -> Expr -> (Expr -> Expr) -> Bool -> (Bool, [Binding])
 patternMatch x y evalFunc tl =
   case (x, y) of
+    (a, Call (Var v2) []) ->    if a == fullEval (Var v2) evalFunc
+                                then (True, [])
+                                else (False, [])
     (_, Var v2) ->              case tl of
                                   True -> case x of
                                             Var v1 -> (nameMatch v2 v1, [])
