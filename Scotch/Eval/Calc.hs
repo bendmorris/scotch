@@ -74,7 +74,9 @@ vdiv _ (Val (NumInt a)) (Val (NumInt 0)) = div_by_zero
 vdiv _ (Val (NumInt a)) (Val (NumFloat 0)) = div_by_zero
 vdiv _ (Val (NumFloat a)) (Val (NumInt 0)) = div_by_zero
 vdiv _ (Val (NumFloat a)) (Val (NumFloat 0)) = div_by_zero
-vdiv _ (Val (NumInt a)) (Val (NumInt b)) = Val (NumInt (a `div` b))
+vdiv _ (Val (NumInt a)) (Val (NumInt b)) = if mod a b == 0
+                                           then Val (NumInt (a `div` b))
+                                           else Val (NumFloat ((realToFrac a) / (realToFrac b)))
 vdiv _ (Val (NumFloat a)) (Val (NumFloat b)) = Val (NumFloat (a / b))
 vdiv _ (Val (NumInt a)) (Val (NumFloat b)) = Val (NumFloat ((realToFrac a) / b))
 vdiv _ (Val (NumFloat a)) (Val (NumInt b)) = Val (NumFloat (a / (realToFrac b)))
