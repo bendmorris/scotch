@@ -293,7 +293,8 @@ eval oexp vars strict rw =
        eval' expr = eval expr vars strict rw
        eval'' expr = eval expr vars strict False
        
-       
+
+toatlProd [] = Val (NumInt 1)       
 totalProd (h:t) = if t == []
                   then h
                   else Prod h (totalProd t)
