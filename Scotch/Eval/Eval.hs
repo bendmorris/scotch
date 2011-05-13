@@ -129,27 +129,27 @@ eval oexp vars strict rw =
                           Val v -> List [Val v]
                           otherwise -> ToList $ eval' otherwise
   Subs n x ->           case x of
-                          List l ->       case eval' n of
+                          List l ->       case fullEval n eval' of
                                             Val (NumInt n) -> if n >= 0
                                                               then l !! (fromIntegral n)
                                                               else l !! ((length l) + (fromIntegral n))
                                             List l' ->        List [Subs i (List l) | i <- l']
                                             otherwise ->      exNonNumSubs otherwise
-                          Val (Str s) ->  case eval' n of
+                          Val (Str s) ->  case fullEval n eval' of
                                             Val (NumInt n) -> if n >= 0
                                                               then Val (Str ([s !! (fromIntegral n)]))
                                                               else Val (Str ([s !! ((length s) + (fromIntegral n))]))
                                             List l' ->        List [Subs i (Val (Str s)) | i <- l']
                                             otherwise ->      exNonNumSubs otherwise
-                          Val (Hash l) -> case eval' n of
+                          Val (Hash l) -> case fullEval n eval' of
                                             Exception e -> Exception e
-                                            otherwise -> case eval' (ToStr otherwise) of
+                                            otherwise -> case fullEval (ToStr otherwise) eval' of
                                                            Val (Str s) ->    case hashMember strHash s l of
                                                                                Just x -> x
                                                                                Nothing -> exNotInHash s
                                                            Exception e ->    Exception e
                                                            otherwise ->      Subs otherwise (Val (Hash l))
-                          Call (Var f) args ->  case eval' n of
+                          Call (Var f) args ->  case fullEval n eval' of
                                                   Val (NumInt n) -> if n >= 0
                                                                     then eval' $ Subs (Val (NumInt n)) (eval' (Take (Val (NumInt ((fromIntegral n) + 1))) (Call (Var f) args)))
                                                                     else Subs (Val (NumInt n)) (eval' x)
