@@ -54,6 +54,7 @@ exprHash (Or _ _) = 11
 exprHash (Not _) = 12
 exprHash (Subs _ _) = 13
 exprHash (Take _ _) = 14
+exprHash (Output _) = 15
 exprHash (Var v) = strHash $ unqualifiedName v
 exprHash (Call (Var v) args) = strHash $ unqualifiedName v
 exprHash _ = 0

@@ -231,7 +231,7 @@ eval oexp vars strict rw =
                           Val (Bit False) -> y
                           Exception e -> Exception e
                           otherwise -> If otherwise x y
-  Case check cases ->   caseExpr check cases
+  Case check cases ->   caseExpr check (reverse cases)
   For id x y conds ->   case eval' x of
                           List l ->         List [substitute y [(Var id, item)] | item <- l,
                                                       allTrue [substitute cond [(Var id, item)] | cond <- conds]
@@ -285,8 +285,8 @@ eval oexp vars strict rw =
                          Exception e -> False
                          Val v -> False
                          otherwise -> if otherwise == h then False else allTrue (otherwise : t)
-       caseExpr check [] = exNoCaseMatch check
-       caseExpr check (h:t) = If (Eq (check) (fst h)) (snd h) (caseExpr check t)
+       caseExpr check [] = Call (Var "case") [fullEval check eval']
+       caseExpr check (h:t) = Def (Call (Var "case") [fst h]) (snd h) (caseExpr check t)
        evalArgs x = case x of
                       Call a b -> Call (evalArgs a) ([fullEval i eval' | i <- b])
                       otherwise -> otherwise
