@@ -163,9 +163,12 @@ execute (verbose, strict) file bindings =
      parsed <- case optimized of
                  True -> do t1 <- getModificationTime (file ++ ".sco")
                             t2 <- getModificationTime (file ++ ".osc")
-                            if t1 > t2 then do let exprs = (Parse.read (file ++ ".sco") input)
-                                               serialize (file ++ ".osc") exprs
-                                       else do return ()
+                            exePath <- getExecutablePath
+                            t3 <- getModificationTime exePath
+                            if t1 > t2 || t3 > t2
+                             then do let exprs = (Parse.read (file ++ ".sco") input)
+                                     serialize (file ++ ".osc") exprs
+                             else do return ()
                             bytes <- Data.ByteString.Lazy.readFile (file ++ ".osc")
                             return $ Parse.readBinary (bytes)
                  False -> do let exprs = (Parse.read (file ++ ".sco") input)
