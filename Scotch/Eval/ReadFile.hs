@@ -131,7 +131,16 @@ importFile settings s t =
      let builtin = stdlib settings
      val <- case path of 
               "" -> do return []
-              otherwise -> do e <- execute settings path builtin
+              otherwise -> do e <- execute (InterpreterSettings 
+                                            {
+                                             verbose = verbose settings,
+                                             strict = strict settings,
+                                             interpret = False,
+                                             exePath = exePath settings,
+                                             exeMod = exeMod settings,
+                                             stdlib = stdlib settings
+                                            })
+                                   path builtin
                               return [i | j <- e, i <- j]
      let success = case path of
                      "" -> False
