@@ -27,26 +27,27 @@ import Scotch.Types.Types
 import Scotch.Types.Exceptions
 import Scotch.Types.Bindings
 import Scotch.Types.Hash
+import Scotch.Types.Interpreter
 import Scotch.Eval.Eval
 
 
 -- interpret a list of code lines using a list of scoped bindings
-wexecute :: (Bool, Bool, Bool) -> [PosExpr] -> VarDict -> IO VarDict
+wexecute :: InterpreterSettings -> [PosExpr] -> VarDict -> IO VarDict
 wexecute _ [] bindings = do return bindings
-wexecute (verbose, interpret, strict) (h:t) bindings = 
+wexecute settings (h:t) bindings = 
   do parsed <- subfile (snd h) bindings
      -- evaluate the parsed code
-     result <- do ieval verbose parsed bindings strict []
+     result <- do ieval settings parsed bindings []
      -- get new bindings if any definitions/imports were made
      newBindings <- case parsed of
                       Def id x Skip -> do return [(localVar id, x)]
-                      EagerDef id x Skip -> do evaluated <- ieval verbose x bindings strict []
+                      EagerDef id x Skip -> do evaluated <- ieval settings x bindings []
                                                case evaluated of
                                                  Exception e -> do putStrLn $ show $ Exception e
                                                                    return []
                                                  otherwise -> return [(localVar id, evaluated)]
                                                return [(localVar id, evaluated)]
-                      Import s t -> do i <- importFile (verbose, strict) s t
+                      Import s t -> do i <- importFile settings s t
                                        b <- case i of 
                                               (False, _) -> do putStrLn ("Failed to import module " ++ show s)
                                                                return []
@@ -54,9 +55,9 @@ wexecute (verbose, interpret, strict) (h:t) bindings =
                                        return b
                                      
                       otherwise -> case result of
-                                     Val (Proc p) -> do e <- wexecute (verbose, interpret, strict) [(position, e) | e <- p] bindings
+                                     Val (Proc p) -> do e <- wexecute settings [(position, e) | e <- p] bindings
                                                         return [i | j <- e, i <- j]
-                                     Import s t -> do i <- importFile (verbose, strict) s t
+                                     Import s t -> do i <- importFile settings s t
                                                       b <- case i of
                                                              (False, _) -> do putStrLn ("Failed to import module " ++ show s)
                                                                               return []
@@ -75,7 +76,7 @@ wexecute (verbose, interpret, strict) (h:t) bindings =
                                                     nextline newBindings
        FileAppend (Val (File f)) (Val (Str x)) -> do appendFile f x
                                                      nextline newBindings
-       Val (Thread th) -> do forkIO (do wexecute (verbose, interpret, strict) [(Nothing, th)] bindings
+       Val (Thread th) -> do forkIO (do wexecute settings [(Nothing, th)] bindings
                                         return ())
                              nextline newBindings
        Val (Proc p) -> nextline newBindings
@@ -83,7 +84,7 @@ wexecute (verbose, interpret, strict) (h:t) bindings =
        Import a b -> nextline newBindings
        Def a b c -> nextline newBindings
        EagerDef a b c -> nextline newBindings
-       otherwise -> if interpret 
+       otherwise -> if (interpret settings)
                     then do putStrLn $ show otherwise
                             nextline newBindings
                     else nextline newBindings
@@ -98,7 +99,7 @@ wexecute (verbose, interpret, strict) (h:t) bindings =
                      Nothing -> 1
            showPosition = name ++ ": Line " ++ show line ++ ", column " ++ show column
            position = fst h
-           nextline newBindings = wexecute (verbose, interpret, strict) t (makeVarDict newBindings bindings)
+           nextline newBindings = wexecute settings t (makeVarDict newBindings bindings)
            localVar id = case id of
                            Var v -> Var ("local." ++ v)
                            Call (Var v) args -> Call (Var ("local." ++ v)) args
@@ -116,8 +117,8 @@ searchPathMatch (h:t) = do exists <- doesFileExist (h ++ ".sco")
                              False -> searchPathMatch t
                              
 -- returns (was the import successful?, VarDict of imported bindings)
-importFile :: (Bool, Bool) -> [String] -> [String] -> IO (Bool, VarDict)
-importFile (verbose, strict) s t = 
+importFile :: InterpreterSettings -> [String] -> [String] -> IO (Bool, VarDict)
+importFile settings s t = 
   do currDir <- getCurrentDirectory
      fullPath <- splitExecutablePath
      let libDir = (fst fullPath) ++ "scotch.lib"
@@ -127,14 +128,10 @@ importFile (verbose, strict) s t =
                        libDir ++ moduleName ++ "/main",
                        libDir ++ moduleName]
      path <- searchPathMatch searchPath
-     stdlib <- if s == ["std", "lib"] then do return (False, []) 
-                                      else importFile (False, strict) ["std", "lib"] ["std", "lib"]
-     let builtin = case stdlib of
-                    (True, b) -> b
-                    (False, _) -> emptyHash
+     let builtin = stdlib settings
      val <- case path of 
               "" -> do return []
-              otherwise -> do e <- execute (verbose, strict) path builtin
+              otherwise -> do e <- execute settings path builtin
                               return [i | j <- e, i <- j]
      let success = case path of
                      "" -> False
@@ -156,22 +153,21 @@ importFile (verbose, strict) s t =
      return (success, makeVarDict newval emptyHash)
 
 -- interpret the contents of a file, returning a dictionary of the new bindings
-execute :: (Bool, Bool) -> String -> VarDict -> IO VarDict
-execute (verbose, strict) file bindings = 
+execute :: InterpreterSettings -> String -> VarDict -> IO VarDict
+execute settings file bindings = 
   do optimized <- doesFileExist (file ++ ".osc")
-     input <- Prelude.readFile (file ++ ".sco")
      parsed <- case optimized of
                  True -> do t1 <- getModificationTime (file ++ ".sco")
                             t2 <- getModificationTime (file ++ ".osc")
-                            exePath <- getExecutablePath
-                            t3 <- getModificationTime exePath
-                            if t1 > t2 || t3 > t2
-                             then do let exprs = (Parse.read (file ++ ".sco") input)
+                            if t1 > t2 || (exeMod settings) > t2
+                             then do input <- Prelude.readFile (file ++ ".sco")
+                                     let exprs = (Parse.read (file ++ ".sco") input)
                                      serialize (file ++ ".osc") exprs
                              else do return ()
                             bytes <- Data.ByteString.Lazy.readFile (file ++ ".osc")
                             return $ Parse.readBinary (bytes)
-                 False -> do let exprs = (Parse.read (file ++ ".sco") input)
+                 False -> do input <- Prelude.readFile (file ++ ".sco")
+                             let exprs = (Parse.read (file ++ ".sco") input)
                              serialize (file ++ ".osc") exprs
                              return exprs
-     wexecute (verbose, False, strict) parsed bindings
+     wexecute settings parsed bindings

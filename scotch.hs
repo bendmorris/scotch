@@ -19,6 +19,7 @@ module Main where
 import System
 import System.Environment.Executable
 import System.Directory
+import System.IO
 import Control.Concurrent
 import Data.List
 import System.Console.Haskeline
@@ -30,6 +31,7 @@ import Scotch.Types.Types
 import Scotch.Types.Exceptions
 import Scotch.Types.Bindings
 import Scotch.Types.Hash
+import Scotch.Types.Interpreter
 import Scotch.Eval.Eval
 import Scotch.Eval.Substitute
 
@@ -54,44 +56,56 @@ modNameMatch str [] = False
 modNameMatch str name = if isPrefixOf str name then True 
                         else modNameMatch str (nextQName name)
 
-main = do args <- getArgs          
-          let (verbose, interpret, strict, evaluate) = getFlags args (False, False, False, False)
+main = do args <- getArgs
+          let (verbose, interpret', strict, evaluate) = getFlags args (False, False, False, False)
+          let interpret = if evaluate == False then True else interpret'
           -- import std.lib
-          bindings <- importFile (verbose, strict) ["std", "lib"] ["std", "lib"]
+          exePath <- getExecutablePath
+          exeMod <- getModificationTime (exePath)
+          importStdLib <- importFile (InterpreterSettings {verbose = verbose, interpret = False, strict = strict, exePath = exePath, exeMod = exeMod, stdlib = emptyHash}) 
+                                     ["std", "lib"] ["std", "lib"]
+          stdlib <- case importStdLib of
+                      (False, _) -> do putStrLn "Failed to import std.lib."
+                                       return emptyHash
+                      (True, b) -> do return $ b
+          let settings = InterpreterSettings {
+                                              verbose = verbose,
+                                              strict = strict,
+                                              interpret = interpret,
+                                              exePath = exePath,
+                                              exeMod = exeMod,
+                                              stdlib = stdlib
+                                              }
           let completionFunction str = do return $ [Completion { replacement = binding,
                                                                  display = binding,
                                                                  isFinished = False }
-                                                    | i <- snd bindings, binding <- sort (nub [show (fst a) | a <- i]), modNameMatch str binding]
+                                                    | i <- stdlib, binding <- sort (nub [show (fst a) | a <- i]), modNameMatch str binding]
 
           state <- initializeInput (setComplete (completeWord Nothing " " (completionFunction)) defaultSettings)
-          bindings' <- case bindings of
-                         (False, _) -> do putStrLn "Failed to import std.lib."
-                                          return emptyHash
-                         (True, b) -> do return $ b
           if verbose then putStrLn "-v Verbose mode on" else return ()
           if (length args) > 0 && not (isPrefixOf "-" (args !! 0))
             -- if a .sco filename is given as the first argument, interpret that file
             then if evaluate
-                 then do statement <- wexecute (verbose, True, strict) 
+                 then do statement <- wexecute settings
                                                (Parse.read "" (args !! 0)) 
-                                               (snd bindings)
-                         if interpret then loop (verbose, strict) statement state
+                                               stdlib
+                         if interpret then loop settings statement state
                                       else return ()
                  else do let filename = case isSuffixOf ".sco" (args !! 0) of
                                          True -> [(args !! 0) !! n| n <- [0..length (args !! 0) - 5]]
                                          False -> args !! 0
-                         newbindings <- execute (verbose, strict) filename bindings'
+                         newbindings <- execute settings filename stdlib
                          -- if the -i flag is set, start the interpreter
-                         if interpret then loop (verbose, strict) newbindings state
+                         if interpret then loop settings newbindings state
                                       else return ()
             -- otherwise, start the interpreter
-            else do wexecute (False, False, True) [(Nothing, (Var "startup"))] bindings'
-                    loop (verbose, strict) bindings' state
+            else do wexecute settings [(Nothing, (Var "startup"))] stdlib
+                    loop settings stdlib state
 
 -- the interpreter's main REPL loop
-loop :: (Bool, Bool) -> VarDict -> InputState -> IO ()
-loop (verbose, strict) [] state = loop (verbose, strict) emptyHash state
-loop (verbose, strict) bindings state = 
+loop :: InterpreterSettings -> VarDict -> InputState -> IO ()
+loop settings [] state = loop settings emptyHash state
+loop settings bindings state = 
   do line <- queryInput state (getInputLine ">> ")
      case line of
         Nothing -> return ()
@@ -100,16 +114,28 @@ loop (verbose, strict) bindings state =
         Just "vars" -> do putStrLn $ foldl (++) "" 
                                      ["** " ++ show (fst binding) ++ " = " ++ show (snd binding) ++ "\n" 
                                       | e <- bindings, binding <- e]
-                          loop (verbose, strict) bindings state
-        Just "-v" -> loop (not verbose, strict) bindings state
-        Just "-s" -> loop (verbose, not strict) bindings state
+                          loop settings bindings state
+        Just "-v" -> loop (InterpreterSettings {verbose = not (verbose settings),
+                                                strict = strict settings,
+                                                interpret = interpret settings,
+                                                exePath = exePath settings,
+                                                exeMod = exeMod settings,
+                                                stdlib = stdlib settings
+                                                }) bindings state
+        Just "-s" -> loop (InterpreterSettings {verbose = verbose settings,
+                                                strict = not (strict settings),
+                                                interpret = interpret settings,
+                                                exePath = exePath settings,
+                                                exeMod = exeMod settings,
+                                                stdlib = stdlib settings
+                                                }) bindings state
         Just input -> do -- parse input
                          let parsed = Parse.read "Interpreter" input
                          newBindings <- case length parsed of
                                           0 -> do return []
-                                          1 -> wexecute (verbose, True, strict) parsed bindings
+                                          1 -> wexecute settings parsed bindings
                                           otherwise -> do putStrLn (show exEvalMultiple)
                                                           return []
-                         loop (verbose, strict) 
+                         loop settings
                               (makeVarDict (reverse [i | j <- newBindings, i <- j]) bindings)
                               state

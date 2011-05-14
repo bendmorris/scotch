@@ -23,6 +23,7 @@ import Scotch.Types.Types
 import Scotch.Types.Exceptions
 import Scotch.Types.Bindings
 import Scotch.Types.Hash
+import Scotch.Types.Interpreter
 import Scotch.Eval.Calc
 import Scotch.Eval.Substitute
 import Scotch.Parse.Parse as Parse
@@ -33,9 +34,9 @@ eval: evaluates an expression.
       This function evaluates expressions step by step and should not be assumed to result 
       in full evaluation; rather, eval should be run until the result is the same as the initial input.
 -}
-eval :: Expr -> VarDict -> Bool -> Bool -> Expr
-eval exp [] strict rw = eval exp emptyHash strict rw
-eval oexp vars strict rw = 
+eval :: Expr -> VarDict -> InterpreterSettings -> Bool -> Expr
+eval exp [] settings rw = eval exp emptyHash settings rw
+eval oexp vars settings rw = 
   if exp /= oexp 
   then exp
   else case exp of
@@ -166,19 +167,19 @@ eval oexp vars strict rw =
                           List l ->         case y of
                                               Exception e -> Exception e
                                               List l' -> List $ l ++ l'
-                                              Val v -> vadd strict x y
+                                              Val v -> vadd (strict settings) x y
                                               Add a (Call id args) -> Add (eval' (Add x a)) (Call id args)
                                               otherwise -> nextOp
                           Val v ->          case y of
                                               Exception e -> Exception e
-                                              List l -> vadd strict x y
-                                              Val v -> vadd strict x y
+                                              List l -> vadd (strict settings) x y
+                                              Val v -> vadd (strict settings) x y
                                               otherwise -> nextOp
                           Add a b ->        if (eval' x) == x
                                             then Add a (Add b y)
                                             else nextOp
                           otherwise ->      nextOp
-                        where nextOp = if vadd strict x y == Add x y
+                        where nextOp = if vadd (strict settings) x y == Add x y
                                        then Add (eval' x) (eval' y)
                                        else operation x y vadd Add
   Sub x y ->            operation x y vsub Sub
@@ -275,9 +276,9 @@ eval oexp vars strict rw =
                                             otherwise -> FileAppend (Val (File f)) otherwise
                           otherwise -> FileAppend otherwise x
   otherwise ->          otherwise
- where operation x y f g = if calc x y f strict == g x y
+ where operation x y f g = if calc x y f (strict settings) == g x y
                            then g (eval' x) (eval' y)
-                           else calc x y f strict
+                           else calc x y f (strict settings)
                              
        allTrue [] = True
        allTrue (h:t) = case eval' h of
@@ -293,7 +294,7 @@ eval oexp vars strict rw =
        exp = if rw
              then rewrite (evalArgs oexp) (vars !! exprHash oexp) (vars !! exprHash oexp) eval'
              else oexp
-       eval' expr = eval expr vars strict rw
+       eval' expr = eval expr vars settings rw
        
 
 totalProd [] = Val (NumInt 1)       
@@ -309,21 +310,21 @@ iolist (h:t) = do item <- h
                   return (item:rest)
 
 -- ieval: evaluates an expression completely, replacing I/O operations as necessary
-ieval :: Bool -> Expr -> VarDict -> Bool -> [Expr] -> IO Expr
-ieval verbose expr vars strict last =
-  do result <- subfile (eval expr vars strict True) vars
+ieval :: InterpreterSettings -> Expr -> VarDict -> [Expr] -> IO Expr
+ieval settings expr vars last =
+  do result <- subfile (eval expr vars settings True) vars
      --putStrLn $ "result: " ++ show result
      if isInfixOf [result] last
       then return (last !! 0)
-      else do if verbose && length last > 0 
+      else do if (verbose settings) && length last > 0 
                 then putStrLn (show (last !! 0))
                 else return ()
               vars' <- case expr of
                          Def id x y -> do return $ makeVarDict [(id, x)] vars
-                         EagerDef id x y -> do x' <- ieval verbose x vars strict (expr : last)
+                         EagerDef id x y -> do x' <- ieval settings x vars (expr : last)
                                                return $ makeVarDict [(id, x')] vars
                          otherwise -> do return vars
-              ieval verbose result vars' strict (expr : last)
+              ieval settings result vars' (expr : last)
 
 -- subfile: substitutes values for delayed I/O operations
 subfile :: Expr -> VarDict -> IO Expr

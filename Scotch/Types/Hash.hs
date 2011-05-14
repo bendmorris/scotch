@@ -19,7 +19,7 @@ module Scotch.Types.Hash where
 import Data.Char
 import Scotch.Types.Types
 
-hashSize = 100
+hashSize = 200
 
 type HashFunction a = (a -> Int)
 
