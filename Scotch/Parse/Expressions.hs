@@ -31,7 +31,7 @@ import Scotch.Parse.ParseBase
 -- expression parsers
 
 sws col = do pos <- getPosition
-             if (sourceColumn pos) < col then fail "" else return ()
+             if (sourceColumn pos) <= col then fail "" else return ()
 
 expression col = try (stmt col) <|> 
                  try (operation col) <|> 
@@ -122,7 +122,7 @@ caseStmt col =
      cases <- sepBy1 (do cond <- whiteSpace >> expression col
                          reservedOp "->"
                          pos <- getPosition
-                         expr <- whiteSpace >> expression (sourceColumn pos)
+                         expr <- whiteSpace >> expression (sourceColumn pos - 1)
                          return $ (cond, expr)
                          ) (oneOf ",")
      return $ Case check cases
@@ -317,7 +317,7 @@ procStmt col =
   do sws col
      reserved "do"
      pos <- getPosition
-     let col' = sourceColumn pos
+     let col' = (sourceColumn pos) - 1
      exprs <- many $ expression col'
      return $ Val $ Proc exprs
 
@@ -356,11 +356,13 @@ varcallStmt col =
   ) <|> (
   do sws col
      n <- intStmt col
+     sws col
      var <- identifier
      return $ Prod n (Var var)
   ) <|> (
   do sws col
      n <- floatStmt col
+     sws col
      var <- identifier
      return $ Prod n (Var var)
   )
@@ -426,8 +428,8 @@ appendStmt col =
 
 -- operator table
 
-ltEq x y = Not (Gt x y)
-gtEq x y = Not (Lt x y)
+ltEq x y = Or (Lt x y) (Eq x y)
+gtEq x y = Or (Gt x y) (Eq x y)
 subs x y = Subs y x
 
 nestwhere [] wexpr = wexpr
@@ -497,7 +499,7 @@ operators col =
     Infix  (rsvdOp col "&"   >> return (And             )) AssocLeft,
     Infix  (rsvdOp col "|"   >> return (Or              )) AssocLeft],
    [Prefix (rsvdOp col "-"   >> return (Prod (Val (NumInt (-1)))))],
-   [Postfix(do { w <- whereStmt col;return (w          )})          ],
+   [Postfix(do { w <- whereStmt (col - 1);return (w          )})          ],
    assignments col,
    [Infix  (do { op <- customOp col;return (opCall op   )}) AssocLeft]
    ]

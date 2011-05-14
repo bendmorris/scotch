@@ -40,7 +40,10 @@ nameMatch x y = x == y || isSuffixOf ("." ++ y) ("." ++ x)
 patternMatch :: Expr -> Expr -> (Expr -> Expr) -> Bool -> (Bool, [Binding])
 patternMatch x y evalFunc tl =
   case (x, y) of
-    (a, Call (Var v2) []) ->    if a == fullEval (Var v2) evalFunc
+    (a, Call (Var v2) []) ->    if (calc a 
+                                         (fullEval (Var v2) evalFunc) 
+                                         veq False) 
+                                    == Val (Bit True)
                                 then (True, [])
                                 else (False, [])
     (_, Var v2) ->              case tl of

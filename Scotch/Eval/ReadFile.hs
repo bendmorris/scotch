@@ -36,11 +36,11 @@ wexecute _ [] bindings = do return bindings
 wexecute (verbose, interpret, strict) (h:t) bindings = 
   do parsed <- subfile (snd h) bindings
      -- evaluate the parsed code
-     result <- do ieval verbose parsed bindings strict Nothing
+     result <- do ieval verbose parsed bindings strict []
      -- get new bindings if any definitions/imports were made
      newBindings <- case parsed of
                       Def id x Skip -> do return [(localVar id, x)]
-                      EagerDef id x Skip -> do evaluated <- ieval verbose x bindings strict Nothing
+                      EagerDef id x Skip -> do evaluated <- ieval verbose x bindings strict []
                                                case evaluated of
                                                  Exception e -> do putStrLn $ show $ Exception e
                                                                    return []

@@ -34,14 +34,16 @@ parser = many (whiteSpace >> statement)
 summary [] = []
 summary (h:t) = if h == '\n' then "" else h : summary t
 
-statement = try (do pos <- getPosition
+statement = try (do whiteSpace
+                    pos <- getPosition
                     let col = sourceColumn pos
-                    expr <- expression col
+                    let col' = if col == 1 then 0 else col
+                    expr <- expression col'
                     return (Just (sourceName pos, (sourceLine pos, sourceColumn pos)), expr))
             <|> (do pos <- getPosition
                     chars <- many1 (noneOf "")
                     return (Just (sourceName pos, (sourceLine pos, sourceColumn pos)), 
-                            Exception $ "Parse error: Unable to parse text starting with \"" ++ summary (Prelude.take 30 chars) ++ "\""))
+                            Exception $ "Parse error: Unable to parse text starting with \"" ++ summary (Prelude.take 40 chars) ++ "\""))
                            
 read name s = case (parse parser name s) of
                 Right r -> r

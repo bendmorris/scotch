@@ -291,10 +291,9 @@ eval oexp vars strict rw =
                       Call a b -> Call (evalArgs a) ([fullEval i eval' | i <- b])
                       otherwise -> otherwise
        exp = if rw
-             then rewrite (evalArgs oexp) (vars !! exprHash oexp) (vars !! exprHash oexp) eval''
+             then rewrite (evalArgs oexp) (vars !! exprHash oexp) (vars !! exprHash oexp) eval'
              else oexp
        eval' expr = eval expr vars strict rw
-       eval'' expr = eval expr vars strict False
        
 
 totalProd [] = Val (NumInt 1)       
@@ -310,22 +309,21 @@ iolist (h:t) = do item <- h
                   return (item:rest)
 
 -- ieval: evaluates an expression completely, replacing I/O operations as necessary
-ieval :: Bool -> Expr -> VarDict -> Bool -> Maybe Expr -> IO Expr
+ieval :: Bool -> Expr -> VarDict -> Bool -> [Expr] -> IO Expr
 ieval verbose expr vars strict last =
   do result <- subfile (eval expr vars strict True) vars
      --putStrLn $ "result: " ++ show result
-     if Just result == last
-      then return result
-      else do if verbose then case last of
-                           Just x -> putStrLn (show x)
-                           otherwise -> return ()
-                         else return ()
+     if isInfixOf [result] last
+      then return (last !! 0)
+      else do if verbose && length last > 0 
+                then putStrLn (show (last !! 0))
+                else return ()
               vars' <- case expr of
                          Def id x y -> do return $ makeVarDict [(id, x)] vars
-                         EagerDef id x y -> do x' <- ieval verbose x vars strict (Just expr)
+                         EagerDef id x y -> do x' <- ieval verbose x vars strict (expr : last)
                                                return $ makeVarDict [(id, x')] vars
                          otherwise -> do return vars
-              ieval verbose result vars' strict (Just expr)
+              ieval verbose result vars' strict (expr : last)
 
 -- subfile: substitutes values for delayed I/O operations
 subfile :: Expr -> VarDict -> IO Expr

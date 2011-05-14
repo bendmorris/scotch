@@ -23,8 +23,8 @@ import Scotch.Types.Exceptions
 -- calc: gives the result of a binary operation, resulting in an exception if
 --       either side of the expression is an exception
 calc :: Expr -> Expr -> (Bool -> Expr -> Expr -> Expr) -> Bool -> Expr
-calc _ (Exception s) _ _ = Exception s
 calc (Exception s) _ _ _ = Exception s
+calc _ (Exception s) _ _ = Exception s
 calc a b f strict = f strict a b
 
 -- the following functions represent all built-in binary operation definitions
