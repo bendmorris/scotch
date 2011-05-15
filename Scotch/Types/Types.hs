@@ -152,7 +152,7 @@ data Expr = Exception String                -- undefined
           deriving Eq
 instance Show(Expr) where
     show (Exception s) = "Exception: " ++ s
-    show Skip = "*nothing*"
+    show Skip = ""
     show (Val v) = show v
     show (List l) = show l
     show (Take a b) = "take " ++ show a ++ " from " ++ show b

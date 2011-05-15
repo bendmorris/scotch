@@ -14,7 +14,7 @@
     along with Scotch.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
-module Scotch.Eval.Eval where
+module Scotch.Eval.Eval (ieval, subfile) where
 
 import Data.List
 import Numeric
@@ -133,27 +133,28 @@ eval oexp vars settings rw =
                           Val v -> List [Val v]
                           otherwise -> ToList $ eval' otherwise
   Subs n x ->           case x of
-                          List l ->       case fullEval n eval' of
+                          List l ->       case n' of
                                             Val (NumInt n) -> if n >= 0
                                                               then l !! (fromIntegral n)
                                                               else l !! ((length l) + (fromIntegral n))
                                             List l' ->        List [Subs i (List l) | i <- l']
                                             otherwise ->      exNonNumSubs otherwise
-                          Val (Str s) ->  case fullEval n eval' of
+                          Val (Str s) ->  case n' of
                                             Val (NumInt n) -> if n >= 0
                                                               then Val (Str ([s !! (fromIntegral n)]))
                                                               else Val (Str ([s !! ((length s) + (fromIntegral n))]))
                                             List l' ->        List [Subs i (Val (Str s)) | i <- l']
                                             otherwise ->      exNonNumSubs otherwise
-                          Val (Hash l) -> case fullEval n eval' of
+                          Val (Hash l) -> case n' of
                                             Exception e -> Exception e
+                                            List l' ->        List [Subs i (Val (Hash l)) | i <- l']
                                             otherwise -> case fullEval (ToStr otherwise) eval' of
                                                            Val (Str s) ->    case hashMember strHash s l of
                                                                                Just x -> x
                                                                                Nothing -> exNotInHash s
                                                            Exception e ->    Exception e
                                                            otherwise ->      Subs otherwise (Val (Hash l))
-                          Call (Var f) args ->  case fullEval n eval' of
+                          Call (Var f) args ->  case n' of
                                                   Val (NumInt n) -> if n >= 0
                                                                     then eval' $ Subs (Val (NumInt n)) (eval' (Take (Val (NumInt ((fromIntegral n) + 1))) (Call (Var f) args)))
                                                                     else Subs (Val (NumInt n)) (eval' x)
@@ -161,6 +162,7 @@ eval oexp vars settings rw =
                                                                     where f' = (Call (Var f) args)
                                                   otherwise ->      Subs otherwise (eval' x)
                           otherwise ->    Subs n (eval' otherwise)
+                        where n' = fullEval n eval'
   Concat x y ->         eval' (Add x y)
   Add x y ->            case x of
                           Exception e ->    Exception e
@@ -175,9 +177,9 @@ eval oexp vars settings rw =
                                               List l -> vadd (strict settings) x y
                                               Val v -> vadd (strict settings) x y
                                               otherwise -> nextOp
-                          Add a b ->        if (eval' x) == x
+                          Add a b ->        {-if (eval' x) == x
                                             then Add a (Add b y)
-                                            else nextOp
+                                            else -}nextOp
                           otherwise ->      nextOp
                         where nextOp = if vadd (strict settings) x y == Add x y
                                        then Add (eval' x) (eval' y)
@@ -321,10 +323,11 @@ ieval settings expr vars last =
                 else return ()
               vars' <- case expr of
                          Def id x y -> do return $ makeVarDict [(id, x)] vars
-                         EagerDef id x y -> do x' <- ieval settings x vars (expr : last)
+                         EagerDef id x y -> do x' <- ieval settings x vars (expr : last')
                                                return $ makeVarDict [(id, x')] vars
                          otherwise -> do return vars
-              ieval settings result vars' (expr : last)
+              ieval settings result vars' (expr : last')
+              where last' = take 4 last
 
 -- subfile: substitutes values for delayed I/O operations
 subfile :: Expr -> VarDict -> IO Expr

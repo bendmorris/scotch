@@ -14,7 +14,7 @@
     along with Scotch.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
-module Scotch.Eval.Substitute where
+module Scotch.Eval.Substitute (rewrite, fullEval, substitute) where
 
 import Scotch.Types.Types
 import Scotch.Types.Bindings
@@ -22,7 +22,10 @@ import Scotch.Types.Hash
 import Scotch.Eval.Calc
 import Data.List
 
-fullEval x evalFunc = if evalFunc x == x then x else fullEval (evalFunc x) evalFunc
+fullEval x evalFunc = case x of
+                        List l -> List l
+                        For a b c d -> For a b c d
+                        otherwise -> if evalFunc x == x then x else fullEval (evalFunc x) evalFunc
 
 -- if expression x should be rewritten, return the rewritten expression;
 -- otherwise, returns an InvalidValue
@@ -64,14 +67,14 @@ patternMatch x y evalFunc tl =
                                 where a1 = [fullEval a evalFunc | a <- args1]
     (_, Concat (Var v1) 
                (Var v2)) ->     case x of
-                                  List l ->         if length l > 0 
-                                                    then (True, [(Var v1, head l),
+                                  List l ->         if l == []
+                                                    then (False, []) 
+                                                    else (True, [(Var v1, head l),
                                                                  (Var v2, List (tail l))])
-                                                    else (False, [])
-                                  Val (Str l) ->    if length l > 0 
-                                                    then (True, [(Var v1, Val (Str [head l])),
+                                  Val (Str l) ->    if l == []
+                                                    then (False, [])
+                                                    else (True, [(Var v1, Val (Str [head l])),
                                                                  (Var v2, Val (Str (tail l)))])
-                                                    else (False, [])
                                   otherwise -> (False, [])
     (List a, List b) ->         if length a == length b 
                                 then trySubs [patternMatch' (a !! n) (b !! n) | n <- [0 .. (length a) - 1]]

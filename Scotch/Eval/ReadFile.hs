@@ -14,7 +14,7 @@
     along with Scotch.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
-module Scotch.Eval.ReadFile where
+module Scotch.Eval.ReadFile (importFile, execute, wexecute) where
 
 import Data.List
 import Data.ByteString.Lazy (readFile)

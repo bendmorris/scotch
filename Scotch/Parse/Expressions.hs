@@ -355,14 +355,18 @@ varcallStmt col =
      return $ Var var
   ) <|> (
   do sws col
+     whiteSpace
+     pos <- getPosition
      n <- intStmt col
-     sws col
+     sws ((sourceColumn pos) - 1)
      var <- identifier
      return $ Prod n (Var var)
   ) <|> (
   do sws col
+     whiteSpace
+     pos <- getPosition
      n <- floatStmt col
-     sws col
+     sws ((sourceColumn pos) - 1)
      var <- identifier
      return $ Prod n (Var var)
   )
@@ -385,7 +389,7 @@ semicolon =
 printStmt col =
   do sws col
      reserved "print"
-     expr <- expression col
+     expr <- try (expression col) <|> do return Skip
      return $ Output (expr)
 
 moduleName col =
