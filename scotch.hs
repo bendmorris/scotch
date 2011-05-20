@@ -58,7 +58,7 @@ modNameMatch str name = if isPrefixOf str name then True
 
 main = do args <- getArgs
           let (verbose, interpret', strict, evaluate) = getFlags args (False, False, False, False)
-          let interpret = if evaluate == False then True else interpret'
+          let interpret = if length args == 0 || take 1 (args !! 0) == "-" then True else interpret'
           -- import std.lib
           exePath <- getExecutablePath
           exeMod <- getModificationTime (exePath)
