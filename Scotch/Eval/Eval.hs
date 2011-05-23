@@ -70,7 +70,7 @@ eval oexp vars settings rw =
                           Val (Str s) -> case length evaled of
                                            0 -> Skip
                                            1 -> evaled !! 0
-                                           2 -> Val $ Proc $ evaled
+                                           otherwise -> Val $ Proc $ evaled
                                          where evaled = [snd i | i <- Parse.read "" s]
                           otherwise -> EvalExpr otherwise
   Import s t ->         Import s t
