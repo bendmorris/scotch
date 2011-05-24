@@ -153,6 +153,7 @@ eval oexp vars settings rw =
                                                                                Just x -> x
                                                                                Nothing -> exNotInHash s
                                                            Exception e ->    Exception e
+                                                           ToStr s ->        Subs s x
                                                            otherwise ->      Subs otherwise (Val (Hash l))
                           Call (Var f) args ->  case n' of
                                                   Val (NumInt n) -> if n >= 0
