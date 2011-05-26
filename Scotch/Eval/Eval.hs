@@ -60,7 +60,7 @@ eval oexp vars settings rw =
                           Val (Str s) -> case length evaled of
                                            0 -> Skip
                                            1 -> evaled !! 0
-                                           2 -> Val $ Proc $ evaled
+                                           otherwise -> Val $ Proc $ evaled
                                          where evaled = [snd i | i <- Parse.read "" s]
                           otherwise -> EvalExpr otherwise
   Import s t ->         Import s t
@@ -143,6 +143,7 @@ eval oexp vars settings rw =
                                                                                Just x -> x
                                                                                Nothing -> exNotInHash s
                                                            Exception e ->    Exception e
+                                                           ToStr s ->        Subs s x
                                                            otherwise ->      Subs otherwise (Val (Hash l))
                           Call (Var f) args ->  case n' of
                                                   Val (NumInt n) -> if n >= 0
