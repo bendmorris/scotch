@@ -40,21 +40,11 @@ eval oexp vars settings rw =
   if exp /= oexp 
   then exp
   else case exp of
-  Var id ->             if length (qualHashDict id) > 0
-                        then Val $ Hash $ makeHash strHash (qualHashDict id) emptyHash
-                        else if length (qualHashDict ("local." ++ id)) > 0
-                             then Val $ Hash $ makeHash strHash (qualHashDict ("local." ++ id)) emptyHash
+  Var id ->             if length (qualVarHash id vars) > 0
+                        then Val $ Hash $ makeHash strHash (qualVarHash id vars) emptyHash
+                        else if length (qualVarHash ("local." ++ id) vars) > 0
+                             then Val $ Hash $ makeHash strHash (qualVarHash ("local." ++ id) vars) emptyHash
                              else Var id
-                        where v' v = case fst v of
-                                       Call (Var var) args -> (Var var, Var var)
-                                       otherwise -> v
-                              qualHashDict id = [([show (fst (v' v)) !! n | n <- [length id + 1 .. length (show (fst (v' v))) - 1]], 
-                                                   snd (v' v))
-                                                | i <- vars, v <- i,
-                                                  (case fst v of
-                                                     Var id' -> isPrefixOf (id ++ ".") id'
-                                                     Call (Var id') _ -> isPrefixOf (id ++ ".") id'
-                                                     otherwise -> False)]
   Call (Call id args) args' -> eval' $ Call id (args ++ args')
   Call (Var id) args -> if fullEval (Var id) eval' == Var id
                         then Call (Var id) [fullEval arg eval' | arg <- args]
@@ -315,7 +305,6 @@ iolist (h:t) = do item <- h
 ieval :: InterpreterSettings -> Expr -> VarDict -> [Expr] -> IO Expr
 ieval settings expr vars last =
   do result <- subfile (eval expr vars settings True) vars
-     --putStrLn $ "result: " ++ show result
      if isInfixOf [result] last
       then return (last !! 0)
       else do if (verbose settings) && length last > 0 

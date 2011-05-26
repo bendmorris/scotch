@@ -17,6 +17,7 @@
 module Scotch.Types.Types where
 
 import Data.Binary
+import Data.List
 import Numeric
 
 formatString [] = []

@@ -76,10 +76,11 @@ main = do args <- getArgs
                                               exeMod = exeMod,
                                               stdlib = stdlib
                                               }
-          let completionFunction str = do return $ [Completion { replacement = binding,
-                                                                 display = binding,
-                                                                 isFinished = False }
-                                                    | i <- stdlib, binding <- sort (nub [show (fst a) | a <- i]), modNameMatch str binding]
+          let completionFunction str = do return $ [Completion { replacement = str' ++ "." ++ binding,
+                                                                    display = str' ++ "." ++ binding,
+                                                                    isFinished = False }
+                                                    | binding <- sort (nub [fst i | i <- qualVarHash str' stdlib])]
+                                           where str' = if last str == '.' then take ((length str) - 1) str else str
 
           state <- initializeInput (setComplete (completeWord Nothing " " (completionFunction)) defaultSettings)
           if verbose then putStrLn "-v Verbose mode on" else return ()

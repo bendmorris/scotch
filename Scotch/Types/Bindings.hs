@@ -66,3 +66,15 @@ emptyVarDict = [[] | n <- [1..hashSize]]
 
 makeVarDict :: [Binding] -> VarDict -> VarDict
 makeVarDict = makeHash exprHash
+
+qualVarHash :: String -> VarDict -> [(String, Expr)]
+qualVarHash id vars = [([show (fst (v' v)) !! n | n <- [length id + 1 .. length (show (fst (v' v))) - 1]], 
+                         snd (v' v))
+                      | i <- vars, v <- i,
+                        (case fst v of
+                           Var id' -> isPrefixOf (id ++ ".") id'
+                           Call (Var id') _ -> isPrefixOf (id ++ ".") id'
+                           otherwise -> False)]
+                      where v' v = case fst v of
+                                      Call (Var var) args -> (Var var, Var var)
+                                      otherwise -> v
