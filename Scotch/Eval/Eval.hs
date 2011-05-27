@@ -112,7 +112,10 @@ eval oexp vars settings rw =
                           Val (Undefined u) -> Exception u
                           Val v -> Val $ Str (show v)
                           Exception e -> Exception e
-                          otherwise -> ToStr $ eval' otherwise
+                          ToStr y -> ToStr y
+                          otherwise -> if otherwise == x
+                                       then Val $ Str $ show x
+                                       else ToStr $ eval' otherwise
   ToList x ->           case eval' x of
                           List l -> List l
                           Val (Str s) -> List [Val (Str [c]) | c <- s]
@@ -305,7 +308,8 @@ iolist (h:t) = do item <- h
 -- ieval: evaluates an expression completely, replacing I/O operations as necessary
 ieval :: InterpreterSettings -> Expr -> VarDict -> [Expr] -> IO Expr
 ieval settings expr vars last =
-  do result <- subfile (eval expr vars settings True) vars
+  do subbed <- subfile expr vars
+     let result = eval subbed vars settings True
      if isInfixOf [result] last
       then return (last !! 0)
       else do if (verbose settings) && length last > 0 
