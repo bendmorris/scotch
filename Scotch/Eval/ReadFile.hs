@@ -54,16 +54,17 @@ wexecute settings (h:t) bindings =
                                               (True, i) -> do return $ reverse [e | j <- i, e <- j]
                                        return b
                                      
-                      otherwise -> case result of
-                                     Val (Proc p) -> do e <- wexecute settings [(position, e) | e <- p] bindings
-                                                        return [i | j <- e, i <- j]
-                                     Import s t -> do i <- importFile settings s t
-                                                      b <- case i of
-                                                             (False, _) -> do putStrLn ("Failed to import module " ++ show s)
-                                                                              return []
-                                                             (True, i) -> do return [e | j <- i, e <- j]
-                                                      return b
-                                     otherwise -> do return []
+                      otherwise -> do l <- case result of
+                                             Val (Proc p) -> do e <- wexecute settings [(position, e) | e <- p] bindings
+                                                                return [i | j <- e, i <- j]
+                                             Import s t -> do i <- importFile settings s t
+                                                              b <- case i of
+                                                                     (False, _) -> do putStrLn ("Failed to import module " ++ show s)
+                                                                                      return []
+                                                                     (True, i) -> do return [e | j <- i, e <- j]
+                                                              return b
+                                             otherwise -> do return []
+                                      return $ l ++ [(Var "ans", result)]
      -- output, if necessary
      case result of
        Exception e -> do putStrLn ("\nException in " ++ (showPosition) ++ "\n" ++ e ++ "\n")
