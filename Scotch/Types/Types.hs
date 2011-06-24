@@ -23,8 +23,13 @@ import Numeric
 formatString [] = []
 formatString (h:t) = if h == '"' then "\\\"" ++ formatString t
                      else h : formatString t
+                     
+                     
+-- binds a left term to a right term
+type Binding = (Expr, Expr)
+                     
 
--- a bindable identifier
+-- a value identifier
 type Id = String
 -- a value with its corresponding type
 data Value = NumInt Integer
@@ -150,6 +155,8 @@ data Expr = Exception String                -- undefined
           | FileWrite Expr Expr             -- write to file
           | FileAppend Expr Expr            -- append to file
           | EvalExpr Expr                   -- eval for metaprogramming
+          | Rule [Expr]                     -- a rule (list of definitions)
+          | UseRule (Expr) (Expr)           -- evaluate using a rule
           deriving Eq
 instance Show(Expr) where
     show (Exception s) = "Exception: " ++ s
@@ -184,6 +191,8 @@ instance Show(Expr) where
     show (And x y) = "(" ++ show x ++ " & " ++ show y ++ ")"
     show (Or x y) = "(" ++ show x ++ " | " ++ show y ++ ")"
     show (Not x) = "not " ++ show x
+    show (Def a (Rule r) Skip) = "rule " ++ show a ++ " =" ++ show (Rule r)
+    show (Rule r) = tail (foldl (++) "" [", " ++ show i | i <- r])
     show (Def a b Skip) = show a ++ " = " ++ show b
     show (Def a b c) = "(" ++ show c ++ " where " ++ show a ++ " = " ++ show b ++ ")"
     show (EagerDef a b Skip) = show a ++ " := " ++ show b
@@ -194,7 +203,7 @@ instance Show(Expr) where
     show (Case c o) = "case " ++ show c ++ " of" ++ tail (foldl (++) "" [", " ++ show (fst i) ++ " -> " ++ show (snd i) | i <- o])
     show (For x y z w) = "[for " ++ show x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
     show (Range x y z) = "[" ++ show x ++ ".." ++ show y ++ (if z == (Val (NumInt 1)) then "" else "," ++ show z) ++ "]"
-    show (Output x) = "print " ++ show x
+    show (Output x) = "print(" ++ show x ++ ")"
     show Input = "input"
     show (Import s t) = "import " ++ (show s) ++ (if s == t then "" 
                                                   else " as " ++ show t)
@@ -315,6 +324,11 @@ instance Binary(Expr) where
                                put b
     put (EvalExpr a) =      do put (61 :: Word8)
                                put a
+    put (Rule a) =          do put (62 :: Word8)
+                               put a
+    put (UseRule a b) =     do put (63 :: Word8)
+                               put a
+                               put b
     get = do t <- get :: Get Word8
              case t of 
                18 ->    do s <- get
@@ -428,6 +442,11 @@ instance Binary(Expr) where
                            return $ FileAppend a b
                61 ->    do a <- get
                            return $ EvalExpr a
+               62 ->    do a <- get
+                           return $ Rule a
+               63 ->    do a <- get
+                           b <- get
+                           return $ UseRule a b
 type ExprPosition = (String, (Int, Int))
 type PosExpr = (Maybe ExprPosition, Expr)
 

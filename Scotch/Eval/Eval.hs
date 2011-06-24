@@ -45,6 +45,7 @@ eval oexp vars settings rw =
                         else if length (qualVarHash ("local." ++ id) vars) > 0
                              then Val $ Hash $ makeHash strHash (qualVarHash ("local." ++ id) vars) emptyHash
                              else Var id
+  Call x [] -> x
   Call (Call id args) args' -> eval' $ Call id (args ++ args')
   Call (Var id) args -> if fullEval (Var id) eval' == Var id
                         then Call (Var id) [fullEval arg eval' | arg <- args]
@@ -219,9 +220,9 @@ eval oexp vars settings rw =
                           Exception s -> Exception s
                           Val (Bit b) -> Val $ Bit $ not b
                           otherwise -> Not otherwise
-  Def f x y ->          substitute y [(f, x)]
+  Def f x y ->          Def f x y
   EagerDef f x y ->     if eval' x == x
-                        then substitute y [(f, x)]
+                        then EagerDef f x y
                         else EagerDef f (eval' x) y
   If cond x y ->        case eval' cond of
                           Val (Bit True) -> x
@@ -271,6 +272,23 @@ eval oexp vars settings rw =
                                             Val (Str s) -> FileAppend (Val (File f)) (Val (Str s))
                                             otherwise -> FileAppend (Val (File f)) otherwise
                           otherwise -> FileAppend otherwise x
+  UseRule r x ->        case r of
+                          Rule r -> eval' (rule x r)
+                          List l -> if all ((/=) [Skip]) l'
+                                    then UseRule (Rule (allRules l' [])) x
+                                    else exInvalidRule r
+                                    where l' = [case fullEval i eval' of
+                                                  Rule r' -> r'
+                                                  otherwise -> [Skip]
+                                                | i <- l]
+                          otherwise -> UseRule (eval' r) x
+                        where rule x (h:t) = case h of
+                                               Def a b c -> Def a b (rule x t)
+                                               EagerDef a b c -> EagerDef a b (rule x t)
+                                               otherwise -> rule x t
+                              rule x [] = x
+                              allRules (h:t) a = allRules t (a ++ h)
+                              allRules [] a = a
   otherwise ->          otherwise
  where operation x y f g = if calc x y f (strict settings) == g x y
                            then g (eval' x) (eval' y)
@@ -315,12 +333,12 @@ ieval settings expr vars last =
       else do if (verbose settings) && length last > 0 
                 then putStrLn (show (last !! 0))
                 else return ()
-              vars' <- case expr of
-                         Def id x y -> do return $ makeVarDict [(id, x)] vars
-                         EagerDef id x y -> do x' <- ieval settings x vars (expr : last')
-                                               return $ makeVarDict [(id, x')] vars
-                         otherwise -> do return vars
-              ieval settings result vars' (expr : last')
+              result' <- case expr of
+                           Def id x y -> do return $ (y, makeVarDict [(id, x)] vars)
+                           EagerDef id x y -> do x' <- ieval settings x vars (expr : last')
+                                                 return $ (y, makeVarDict [(id, x')] vars)
+                           otherwise -> do return (result, vars)
+              ieval settings (fst result') (snd result') (expr : last')
               where last' = take 4 last
 
 -- subfile: substitutes values for delayed I/O operations

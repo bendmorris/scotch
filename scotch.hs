@@ -76,13 +76,8 @@ main = do args <- getArgs
                                               exeMod = exeMod,
                                               stdlib = stdlib
                                               }
-          let completionFunction str = do return $ [Completion { replacement = str' ++ "." ++ binding,
-                                                                    display = str' ++ "." ++ binding,
-                                                                    isFinished = False }
-                                                    | binding <- sort (nub [fst i | i <- qualVarHash str' stdlib])]
-                                           where str' = if last str == '.' then take ((length str) - 1) str else str
 
-          state <- initializeInput (setComplete (completeWord Nothing " " (completionFunction)) defaultSettings)
+          state <- initializeInput (setComplete (completeWord Nothing " " (completionFunction stdlib)) defaultSettings)
           if verbose then putStrLn "-v Verbose mode on" else return ()
           if (length args) > 0 && not (isPrefixOf "-" (args !! 0))
             -- if a .sco filename is given as the first argument, interpret that file
@@ -137,6 +132,17 @@ loop settings bindings state =
                                           1 -> wexecute settings parsed bindings
                                           otherwise -> do putStrLn (show exEvalMultiple)
                                                           return []
+                         let newVars = (makeVarDict (reverse [i | j <- newBindings, i <- j]) bindings)
+                         --closeInput state
+                         --state' <- initializeInput (setComplete (completeWord Nothing " " (completionFunction newVars)) defaultSettings)
                          loop settings
-                              (makeVarDict (reverse [i | j <- newBindings, i <- j]) bindings)
-                              state
+                              newVars
+                              state --state'
+                              
+                              
+completionFunction :: VarDict -> String -> IO [Completion]
+completionFunction vars str = do return $ [Completion { replacement = str' ++ "." ++ binding,
+                                                        display = str' ++ "." ++ binding,
+                                                        isFinished = False }
+                                          | binding <- sort (nub [fst i | i <- qualVarHash str' vars])]
+                                 where str' = if last str == '.' then take ((length str) - 1) str else str

@@ -22,8 +22,6 @@ import Scotch.Types.Types
 import Scotch.Types.Hash
 import Scotch.Types.Exceptions
 
--- binds a left term to a right term
-type Binding = (Expr, Expr)
 type VarDict = [[Binding]]
 
 split :: String -> Char -> [String]

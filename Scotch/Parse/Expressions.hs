@@ -40,6 +40,7 @@ expression col = try (stmt col) <|>
 operation col = buildExpressionParser (operators col) ((term col) <|> parens (term col))
 
 term col = try (valueExpr col) <|>
+           try (stmt col) <|>
            try (parens (expression col))
 
 reservedWord col = try (do sws col
@@ -73,6 +74,8 @@ valueStmt col =
   try (floatStmt col) <|>
   try (intStmt col)
 valueExpr col = 
+  try (ruleStmt col) <|>
+  try (useRuleStmt col) <|>
   try (fileStmt col) <|>
   try (ifStmt col) <|>
   try (caseStmt col) <|>
@@ -248,6 +251,36 @@ lambdaStmt col =
      reservedOp "->"
      expr <- expression col
      return $ Val $ Lambda ids expr
+     
+ruleStmt col = 
+  do sws col
+     symbol "rule"
+     id <- whiteSpace >> identifier
+     symbol "=>"
+     whiteSpace
+     pos <- getPosition
+     let col' = (sourceColumn pos) - 1
+     binds <- sepBy (rule col') (oneOf ",") 
+     return $ Def (Var id) (Rule binds) Skip
+
+rule col =
+  do x <- whiteSpace >> expression col
+     y <- case x of
+            Def a b Skip -> do return x
+            EagerDef a b Skip -> do return x
+            otherwise -> do fail ""
+                            return Skip
+     return y
+     
+useRuleStmt col =
+  do sws col
+     symbol "using"
+     x <- expression col
+     symbol "=>"
+     pos <- getPosition
+     let col' = (sourceColumn pos) - 1
+     y <- expression col'
+     return $ UseRule x y
 
 fileStmt col =
   do sws col
@@ -375,7 +408,6 @@ varcallStmt col =
 -- statements
 stmt col = 
   try (semicolon) <|>
-  try (fileStmt col) <|>
   try (printStmt col) <|>
   try (importStmt col) <|>
   try (writeStmt col) <|>
@@ -389,7 +421,7 @@ semicolon =
 printStmt col =
   do sws col
      reserved "print"
-     expr <- try (expression col) <|> do return Skip
+     expr <- try (parens $ expression col) <|> do return Skip
      return $ Output (expr)
 
 moduleName col =
@@ -504,6 +536,6 @@ operators col =
     Infix  (rsvdOp col "|"   >> return (Or              )) AssocLeft],
    [Prefix (rsvdOp col "-"   >> return (Prod (Val (NumInt (-1)))))],
    [Postfix(do { w <- whereStmt (col - 1);return (w          )})          ],
-   assignments col,
-   [Infix  (do { op <- customOp col;return (opCall op   )}) AssocLeft]
+   assignments col{-,
+   [Infix  (do { op <- customOp col;return (opCall op   )}) AssocLeft]-}
    ]

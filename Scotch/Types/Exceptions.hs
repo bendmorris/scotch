@@ -40,3 +40,4 @@ exImproperCall v = Exception $ show v ++ " is not a function"
 exWrongNumArgs = Exception $ "Wrong number of arguments for lambda call"
 exEvalMultiple = Exception "Can't interpret multiple expressions simultaneously"
 exNonTerminatingFunction f args = Exception $ "Non-terminating function: " ++ show f ++ " " ++ show args
+exInvalidRule x = Exception $ show x ++ " is not a valid rule"
