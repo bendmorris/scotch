@@ -260,7 +260,7 @@ ruleStmt col =
      whiteSpace
      pos <- getPosition
      let col' = (sourceColumn pos) - 1
-     binds <- sepBy (rule col') (oneOf ",") 
+     binds <- sepBy1 (rule col') (oneOf ",") 
      return $ Def (Var id) (Rule binds) Skip
 
 rule col =
@@ -512,7 +512,8 @@ assignments col =
     Infix  (rsvdOp col "+="  >> return (accumulate      )) AssocNone]
 
 operators col = 
-  [[Postfix(do { c <- callStmt col; return (c          )})          ],
+  [[Prefix (rsvdOp col "-"   >> return (Prod (Val (NumInt (-1)))))],
+   [Postfix(do { c <- callStmt col; return (c          )})          ],
    [Infix  (rsvdOp col "@"   >> return (subs            )) AssocLeft],
    [Infix  (rsvdOp col "^"   >> return (Exp             )) AssocLeft],
    [Infix  (rsvdOp col "mod" >> return (Mod             )) AssocLeft,
@@ -534,7 +535,6 @@ operators col =
     Infix  (rsvdOp col "or"  >> return (Or              )) AssocLeft,
     Infix  (rsvdOp col "&"   >> return (And             )) AssocLeft,
     Infix  (rsvdOp col "|"   >> return (Or              )) AssocLeft],
-   [Prefix (rsvdOp col "-"   >> return (Prod (Val (NumInt (-1)))))],
    [Postfix(do { w <- whereStmt (col - 1);return (w          )})          ],
    assignments col{-,
    [Infix  (do { op <- customOp col;return (opCall op   )}) AssocLeft]-}
