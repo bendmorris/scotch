@@ -18,6 +18,7 @@ module Scotch.Parse.Parse where
 
 import Data.ByteString.Lazy
 import Data.Binary
+import Codec.Compression.GZip
 import Text.Parsec.ByteString
 import Text.Parsec.Expr
 import Text.Parsec.Char
@@ -49,5 +50,5 @@ read name s = case (parse parser name s) of
                 Right r -> r
                 otherwise -> [(Nothing, Exception "Parse error")]
                 
-serialize file exprs = Data.ByteString.Lazy.writeFile file (encode (exprs :: [PosExpr]))
-readBinary bytes = decode bytes :: [PosExpr]
+serialize file exprs = Data.ByteString.Lazy.writeFile file (compress (encode (exprs :: [PosExpr])))
+readBinary bytes = decode (decompress bytes) :: [PosExpr]
