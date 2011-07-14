@@ -121,6 +121,7 @@ data Expr = Exception String                -- undefined
           | ToFloat (Expr)                  -- conversion to float
           | ToStr (Expr)                    -- conversion to string
           | ToList (Expr)                   -- conversion to list
+          | ToBool (Expr)                   -- conversion to boolean
           | Subs Expr Expr                  -- list subscript
           | Concat Expr Expr                -- list concatenation
           | Add Expr Expr                   -- addition
@@ -173,6 +174,7 @@ instance Show(Expr) where
     show (ToFloat f) = "float(" ++ show f ++ ")"
     show (ToStr s) = "str(" ++ show s ++ ")"
     show (ToList l) = "list(" ++ show l ++ ")"
+    show (ToBool b) = "bool(" ++ show b ++ ")"
     show (Concat a b) = "(" ++ show a ++ " : " ++ show b ++ ")"
     show (Subs n s) = show s ++ " @" ++ show n
     show (Add x y) = "(" ++ show x ++ " + " ++ show y ++ ")"
@@ -200,6 +202,7 @@ instance Show(Expr) where
     show (UseRule r x) = "using " ++ show r ++ " => " ++ show x
     show (Var f) = f
     show (Call f args) = show f ++ removeBrackets (show args)
+    show (If (ToBool cond) x y) = "if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y
     show (If cond x y) = "if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y
     show (Case c o) = "case " ++ show c ++ " of" ++ tail (foldl (++) "" [", " ++ show (fst i) ++ " -> " ++ show (snd i) | i <- o])
     show (For x y z w) = "[for " ++ show x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
@@ -234,6 +237,8 @@ instance Binary(Expr) where
                                put s
     put (ToList l) =        do put (27 :: Word8)
                                put l
+    put (ToBool b) =        do put (45 :: Word8)
+                               put b
     put (Subs n s) =        do put (28 :: Word8)
                                put n
                                put s
@@ -352,6 +357,8 @@ instance Binary(Expr) where
                            return $ ToStr s
                27 ->    do l <- get
                            return $ ToList l
+               45 ->    do b <- get
+                           return $ ToBool b
                28 ->    do a <- get
                            b <- get
                            return $ Subs a b

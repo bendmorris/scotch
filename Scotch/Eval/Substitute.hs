@@ -114,6 +114,7 @@ parseExpr exp f =
     ToFloat x -> ToFloat (f x)
     ToStr x -> ToStr (f x)
     ToList l -> ToList (f l)
+    ToBool b -> ToBool (f b)
     List l -> List [f e | e <- l]    
     HashExpr l -> HashExpr [(f (fst kv), f (snd kv)) | kv <- l]
     Subs n x -> Subs (f n) (f x)

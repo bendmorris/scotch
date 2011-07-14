@@ -88,8 +88,8 @@ valueExpr col =
   try (forStmt col) <|>
   try (notStmt col) <|>
   try (conversionStmt col) <|>
-  try (varcallStmt col) <|>
-  try (valueStmt col)
+  try (valueStmt col) <|>
+  try (varcallStmt col)
 
 
 
@@ -106,7 +106,7 @@ ifStmt col =
       let col3 = sourceColumn pos3
       reserved "else"
       expr2 <- expression col3
-      return $ If cond expr1 expr2)
+      return $ If (ToBool cond) expr1 expr2)
   <|>
   (do sws col
       reserved "if"
@@ -215,7 +215,12 @@ notStmt col =
      expr <- expression col
      return $ Not expr
      
-conversionStmt col = try (toIntStmt col) <|> try (toFloatStmt col) <|> try (toStrStmt col) <|> (toListStmt col)
+conversionStmt col = 
+  try (toIntStmt col) <|> 
+  try (toFloatStmt col) <|> 
+  try (toStrStmt col) <|> 
+  try (toListStmt col) <|> 
+  try (toBoolStmt col)
 
 toIntStmt col =
   do sws col
@@ -237,6 +242,11 @@ toListStmt col =
      reserved "list"
      expr <- parens (expression col)
      return $ ToList expr
+toBoolStmt col =
+  do sws col 
+     reserved "bool"
+     expr <- parens (expression col)
+     return $ ToBool expr
      
 -- value parsers
 

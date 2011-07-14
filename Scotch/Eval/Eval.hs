@@ -126,6 +126,14 @@ eval oexp vars settings rw =
                           Exception e -> Exception e
                           Val v -> List [Val v]
                           otherwise -> ToList $ eval' otherwise
+  ToBool x ->           case eval' x of
+                          Val Null -> Val (Bit False)
+                          Val (Bit b) -> Val (Bit b)
+                          Val (NumInt n) -> Val (Bit (n /= 0))
+                          Val (NumFloat n) -> Val (Bit (n /= 0))
+                          Val (Str s) -> Val (Bit (s /= ""))
+                          List l -> Val (Bit (l /= []))
+                          otherwise -> ToBool otherwise
   Subs n x ->           case x of
                           List l ->       case n' of
                                             Val (NumInt n) -> if n >= 0
@@ -364,8 +372,10 @@ subfile exp vars =
                   return $ ToStr x'
     ToList l -> do l' <- subfile l vars
                    return $ ToList l'
-    List l ->     do list <- iolist [subfile e vars | e <- l]
-                     return $ List list
+    ToBool x -> do x' <- subfile x vars
+                   return $ ToBool x'
+    List l ->      do list <- iolist [subfile e vars | e <- l]
+                      return $ List list
     HashExpr l -> do list1 <- iolist [subfile (fst e) vars | e <- l]
                      list2 <- iolist [subfile (snd e) vars | e <- l]
                      return $ HashExpr (zip list1 list2)

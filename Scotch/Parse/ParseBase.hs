@@ -46,7 +46,7 @@ languageDef =
                                       "and", "or", "not",
                                       "where", "case", "of",
                                       "do",
-                                      "int", "float", "str", "list",
+                                      "int", "float", "str", "list", "bool",
                                       "read", "write", "append", "input",
                                       "thread",
                                       "lambda",
