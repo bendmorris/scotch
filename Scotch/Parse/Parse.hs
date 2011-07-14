@@ -65,10 +65,12 @@ connectLines (l:m) (h:t) a = if countElem (fst l) h > countElem (snd l) h
                              else connectLines m (h:t) a
 
                            
-read name text = [case (parse parser name l) of
-                    Right r -> r
-                    otherwise -> (Nothing, Exception $ "Parse error" ++ (show otherwise))
-                  | l <- realLines text]
+read name text = [result l
+                  | l <- realLines text,
+                    result l /= (Nothing, Skip)]
+                 where result l = case parse parser name l of
+                                    Right r -> r
+                                    Left l -> (Nothing, Exception $ "Parse error: " ++ show otherwise)
 realLines text = connectLines leadons (splitLines (splitOn "\n" (replace "\\\n" "" text)) []) []
                   
                 

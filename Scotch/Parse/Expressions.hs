@@ -31,7 +31,7 @@ import Scotch.Parse.ParseBase
 -- expression parsers
 assign op f =
   do a <- expression
-     reservedOp op
+     symbol op
      b <- expression
      return $ f a b
 normalAssign a b = Def a b Skip
@@ -106,8 +106,8 @@ valueExpr =
   try forStmt <|>
   try notStmt <|>
   try conversionStmt <|>
-  try valueStmt <|>
-  try varcallStmt
+  try varcallStmt <|>
+  try valueStmt
 
 
 
@@ -478,6 +478,6 @@ operators =
     Infix  (reservedOp "or"  >> return (Or              )) AssocLeft,
     Infix  (reservedOp "&"   >> return (And             )) AssocLeft,
     Infix  (reservedOp "|"   >> return (Or              )) AssocLeft],
-   [Postfix(do { w <- whereStmt;return (w          )})          ],
-   [Infix  (do { op <- customOp;return (opCall op   )}) AssocLeft]
+   [Postfix(do { w <- whereStmt;return (w          )})          ]
+   --[Infix  (do { op <- customOp;return (opCall op   )}) AssocLeft]
    ]
