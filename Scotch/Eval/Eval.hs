@@ -205,7 +205,19 @@ eval oexp vars settings rw =
   Div x y ->            operation x y vdiv Div
   Mod x y ->            operation x y vmod Mod
   Exp x y ->            operation x y vexp Exp
-  Eq x y ->             operation (fullEval x eval') (fullEval y eval') veq Eq
+  Eq x y ->             case operation (fullEval x eval') (fullEval y eval') veq Eq of
+                          Eq (List a) (List b) -> if length a == length b
+                                                  then Val $ Bit $
+                                                        allTrue [fullEval (Eq (a !! n) 
+                                                                              (b !! n))
+                                                                          eval'
+                                                                 | n <- [0 .. (length a - 2)]]
+                                                  else Val (Bit False)
+                                                  where allTrue [] = True
+                                                        allTrue (h:t) = case h of 
+                                                                          Val (Bit True) -> allTrue t
+                                                                          otherwise -> False
+                          otherwise -> otherwise
   InEq x y ->           eval' (Prod (operation x y veq Eq) (Val (NumInt (-1))))
   Gt x y ->             operation x y vgt Gt
   Lt x y ->             operation x y vlt Lt
