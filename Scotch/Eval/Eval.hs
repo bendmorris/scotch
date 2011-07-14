@@ -284,6 +284,7 @@ eval oexp vars settings rw =
                           Val (Hash h) -> UseRule (Rule r') x
                                           where r' = [Def (Var (fst i)) (snd i) Skip
                                                       | j <- h, i <- j]
+                          Val v -> exInvalidRule r
                           otherwise -> UseRule (eval' r) x
                         where rule x (h:t) = case h of
                                                Def a b c -> Def a b (rule x t)
