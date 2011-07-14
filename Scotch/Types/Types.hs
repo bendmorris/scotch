@@ -197,6 +197,7 @@ instance Show(Expr) where
     show (Def a b c) = "(" ++ show c ++ " where " ++ show a ++ " = " ++ show b ++ ")"
     show (EagerDef a b Skip) = show a ++ " := " ++ show b
     show (EagerDef a b c) = "(" ++ show c ++ " where " ++ show a ++ " := " ++ show b ++ ")"
+    show (UseRule r x) = "using " ++ show r ++ " => " ++ show x
     show (Var f) = f
     show (Call f args) = show f ++ removeBrackets (show args)
     show (If cond x y) = "if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y
