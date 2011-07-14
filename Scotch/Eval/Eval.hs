@@ -205,11 +205,11 @@ eval oexp vars settings rw =
   Div x y ->            operation x y vdiv Div
   Mod x y ->            operation x y vmod Mod
   Exp x y ->            operation x y vexp Exp
-  Eq x y ->             case operation (fullEval x eval') (fullEval y eval') veq Eq of
-                          Eq (List a) (List b) -> if length a == length b
-                                                  then Val $ Bit $
-                                                        allTrue [fullEval (Eq (a !! n) 
-                                                                              (b !! n))
+  Eq x y ->             case operation x' y' veq Eq of
+                          Eq (List a) (List b) -> if length a' == length b'
+                                                  then Val $ Bit $ 
+                                                        allTrue [fullEval (Eq (a' !! n) 
+                                                                              (b' !! n))
                                                                           eval'
                                                                  | n <- [0 .. (length a - 2)]]
                                                   else Val (Bit False)
@@ -217,7 +217,15 @@ eval oexp vars settings rw =
                                                         allTrue (h:t) = case h of 
                                                                           Val (Bit True) -> allTrue t
                                                                           otherwise -> False
-                          otherwise -> otherwise
+                                                        list' l = case fullEval (List l) eval' of
+                                                                    List l -> l
+                                                                    otherwise -> []
+                                                        a' = list' a
+                                                        b' = list' b
+                          otherwise -> if x' == y' then Val (Bit True) 
+                                       else otherwise
+                        where x' = fullEval x eval'
+                              y' = fullEval y eval'
   InEq x y ->           eval' (Prod (operation x y veq Eq) (Val (NumInt (-1))))
   Gt x y ->             operation x y vgt Gt
   Lt x y ->             operation x y vlt Lt
@@ -240,10 +248,10 @@ eval oexp vars settings rw =
                           Exception s -> Exception s
                           Val (Bit b) -> Val $ Bit $ not b
                           otherwise -> Not otherwise
-  Def f x y ->          Def f x y
-  EagerDef f x y ->     if eval' x == x
-                        then EagerDef f x y
-                        else EagerDef f (eval' x) y
+  Def f x Skip ->       Def f x Skip
+  Def f x y ->          evalWithNewDefs y [(f, x)]
+  EagerDef f x Skip ->  EagerDef f (fullEval x eval') Skip
+  EagerDef f x y ->     evalWithNewDefs y [(f, fullEval x eval')]
   If cond x y ->        case eval' cond of
                           Val (Bit True) -> x
                           Val (Bit False) -> y
@@ -314,9 +322,11 @@ eval oexp vars settings rw =
                               allRules (h:t) a = allRules t (a ++ h)
                               allRules [] a = a
   otherwise ->          otherwise
- where operation x y f g = if calc x y f (strict settings) == g x y
-                           then g (eval' x) (eval' y)
-                           else calc x y f (strict settings)
+ where operation x y f g = if calc x' y' f (strict settings) == g x' y'
+                           then g x' y'
+                           else calc x' y' f (strict settings)
+                           where x' = fullEval x eval'
+                                 y' = fullEval y eval'
                              
        allTrue [] = True
        allTrue (h:t) = case eval' h of
@@ -333,6 +343,7 @@ eval oexp vars settings rw =
              then rewrite (evalArgs oexp) (vars !! exprHash oexp) (vars !! exprHash oexp) eval'
              else oexp
        eval' expr = eval expr vars settings rw
+       evalWithNewDefs expr defs = eval expr (makeVarDict defs vars) settings rw
        
 
 totalProd [] = Val (NumInt 1)       

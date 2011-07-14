@@ -205,6 +205,7 @@ instance Show(Expr) where
     show (If (ToBool cond) x y) = "if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y
     show (If cond x y) = "if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y
     show (Case c o) = "case " ++ show c ++ " of" ++ tail (foldl (++) "" [", " ++ show (fst i) ++ " -> " ++ show (snd i) | i <- o])
+    show (For x (ToList y) z w) = "[for " ++ show x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
     show (For x y z w) = "[for " ++ show x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
     show (Range x y z) = "[" ++ show x ++ ".." ++ show y ++ (if z == (Val (NumInt 1)) then "" else "," ++ show z) ++ "]"
     show (Output x) = "print(" ++ show x ++ ")"

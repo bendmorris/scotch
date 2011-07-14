@@ -49,7 +49,7 @@ languageDef =
                                       "for", "in",
                                       "print", "skip",
                                       "true", "false",
-                                      "and", "or", "not",
+                                      "and", "or", "not", "mod",
                                       "where", "case", "of",
                                       "do",
                                       "int", "float", "str", "list", "bool",
