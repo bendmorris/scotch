@@ -40,8 +40,8 @@ forbiddenOps = ["+", "-", "*", "/", "^", "=", ":=", "==",
                 ]
 
 languageDef =
-  emptyDef { Token.commentStart    = "{-",
-             Token.commentEnd      = "-}",
+  emptyDef { Token.commentStart    = "",
+             Token.commentEnd      = "",
              Token.commentLine     = "#",
              Token.identStart      = oneOf ("_" ++ lowerCase ++ upperCase),
              Token.identLetter     = oneOf (lowerCase ++ upperCase ++ numeric ++ idSymbol),

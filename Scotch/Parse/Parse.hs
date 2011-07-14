@@ -59,7 +59,8 @@ leadons = [('(', ')'), ('{', '}'), ('\"', '\"'), ('\'', '\'')]
 connectLines _ [] a = a
 connectLines _ (h:[]) a = a ++ [h]
 connectLines [] (h:t) a = connectLines leadons t (a ++ [h])
-connectLines (l:m) (h:t) a = if countElem (fst l) h > countElem (snd l) h
+connectLines (l:m) (h:t) a = if (fst l == snd l && mod (countElem (fst l) h) 2 /= 0) || 
+                                (fst l /= snd l && countElem (fst l) h > countElem (snd l) h)
                              then connectLines leadons ([h ++ "\n" ++ Prelude.head t] ++ 
                                                         Prelude.tail t) a
                              else connectLines m (h:t) a
