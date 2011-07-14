@@ -31,7 +31,13 @@ lowerCase = "abcdefghijklmnopqrstuvwxyz"
 numeric = "0123456789"
 idSymbol = "_!'."
 operatorSymbol = "!@#$%^&*+-*/=<>?|`"
-forbiddenOps = ["=", ":=", ":", "->", "<-", "=>"]
+forbiddenOps = ["+", "-", "*", "/", "^", "=", ":=", "==",
+                "!=", "<", ">", "and", "or", "not", ":", 
+                "<=", ">=", "+=", "<<", ">>", "..", "::",
+                "@", "mod", "%", "->", "<-", "=>",
+                "+=", "-=", "*=", "/=", "^=", "%=",
+                "&", "|"
+                ]
 
 languageDef =
   emptyDef { Token.commentStart    = "{-",
@@ -52,25 +58,23 @@ languageDef =
                                       "lambda",
                                       "import", "as",
                                       "take", "from",
-                                      "eval"
+                                      "eval",
+                                      "using", "rule"
                                      ],
-             Token.reservedOpNames = ["+", "-", "*", "/", "^", "=", ":=", "==",
-                                      "!=", "<", ">", "and", "or", "not", ":", 
-                                      "<=", ">=", "+=", "<<", ">>", "..", "::",
-                                      "@", "mod", "%", "->", "<-"
-                                     ]
+             Token.reservedOpNames = forbiddenOps
            }
            
 lexer = Token.makeTokenParser languageDef
 
-identifier = Token.identifier       lexer -- parses an identifier
-symbol     = Token.symbol           lexer -- parses a symbol
-reserved   = Token.reserved         lexer -- parses a reserved name
-reservedOp = Token.reservedOp       lexer -- parses an operator
-parens     = Token.parens           lexer -- parses ( )
-brackets   = Token.brackets         lexer -- parses [ ]
-braces     = Token.braces           lexer -- parses { }
-angles     = Token.angles           lexer -- parses < >
-integer    = Token.integer          lexer -- parses an integer
-float      = Token.float            lexer -- parses a float
-whiteSpace = Token.whiteSpace       lexer -- parses whitespace
+identifier = Token.identifier       lexer -- an identifier
+symbol     = Token.symbol           lexer -- a symbol
+reserved   = Token.reserved         lexer -- a reserved name
+reservedOp = Token.reservedOp       lexer -- an operator
+parens     = Token.parens           lexer -- ( )
+brackets   = Token.brackets         lexer -- [ ]
+braces     = Token.braces           lexer -- { }
+angles     = Token.angles           lexer -- < >
+integer    = Token.integer          lexer -- an integer
+float      = Token.float            lexer -- a float
+whiteSpace = Token.whiteSpace       lexer -- whitespace
+comment    = Token.commentLine      languageDef -- line comment

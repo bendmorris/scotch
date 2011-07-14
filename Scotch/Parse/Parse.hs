@@ -18,6 +18,9 @@ module Scotch.Parse.Parse where
 
 import Data.ByteString.Lazy
 import Data.Binary
+import Data.List
+import Data.List.Utils
+import Data.List.Split
 import Codec.Compression.GZip
 import Text.Parsec.ByteString
 import Text.Parsec.Expr
@@ -30,25 +33,44 @@ import Scotch.Types.Hash
 import Scotch.Parse.Expressions
 import Scotch.Parse.ParseBase
 
-parser = many (whiteSpace >> statement)
+parser = try (do whiteSpace
+                 pos <- getPosition
+                 expr <- statement
+                 return (Just (sourceName pos, (sourceLine pos, sourceColumn pos)), expr))
+         <|> 
+         try (do whiteSpace
+                 pos <- getPosition
+                 chars <- many1 (noneOf "")
+                 return (Just (sourceName pos, (sourceLine pos, sourceColumn pos)), 
+                         Exception $ "Parse error: Unable to parse text starting with \"" ++ summary (Prelude.take 40 chars) ++ "\""))
+         <|> do return (Nothing, Skip)
 
 summary [] = []
 summary (h:t) = if h == '\n' then "" else h : summary t
 
-statement = try (do whiteSpace
-                    pos <- getPosition
-                    let col = sourceColumn pos
-                    let col' = if col == 1 then 0 else col
-                    expr <- expression col'
-                    return (Just (sourceName pos, (sourceLine pos, sourceColumn pos)), expr))
-            <|> (do pos <- getPosition
-                    chars <- many1 (noneOf "")
-                    return (Just (sourceName pos, (sourceLine pos, sourceColumn pos)), 
-                            Exception $ "Parse error: Unable to parse text starting with \"" ++ summary (Prelude.take 40 chars) ++ "\""))
+splitLines :: [String] -> [String] -> [String]
+splitLines [] a = a
+splitLines (h:[]) a = a ++ [h]
+splitLines (h:t) a = if Prelude.length (Prelude.head t) > 0 && 
+                        Prelude.head (Prelude.head t) == ' '
+                     then splitLines ((h ++ "\n" ++ Prelude.head t) : Prelude.tail t) a
+                     else splitLines t (a ++ [h])
+leadons = [('(', ')'), ('{', '}'), ('\"', '\"'), ('\'', '\'')]
+connectLines _ [] a = a
+connectLines _ (h:[]) a = a ++ [h]
+connectLines [] (h:t) a = connectLines leadons t (a ++ [h])
+connectLines (l:m) (h:t) a = if countElem (fst l) h > countElem (snd l) h
+                             then connectLines leadons ([h ++ "\n" ++ Prelude.head t] ++ 
+                                                        Prelude.tail t) a
+                             else connectLines m (h:t) a
+
                            
-read name s = case (parse parser name s) of
-                Right r -> r
-                otherwise -> [(Nothing, Exception "Parse error")]
+read name text = [case (parse parser name l) of
+                    Right r -> r
+                    otherwise -> (Nothing, Exception $ "Parse error" ++ (show otherwise))
+                  | l <- realLines text]
+realLines text = connectLines leadons (splitLines (splitOn "\n" (replace "\\\n" "" text)) []) []
+                  
                 
 serialize file exprs = Data.ByteString.Lazy.writeFile file (compress (encode (exprs :: [PosExpr])))
 readBinary bytes = decode (decompress bytes) :: [PosExpr]

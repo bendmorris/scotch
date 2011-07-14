@@ -16,8 +16,10 @@ Executable scotch
                     binary,
                     executable-path,
                     parsec >= 3.1.0,
+                    indentparser,
                     directory,
                     haskeline >= 0.6.3.2,
                     haskell98,
                     zlib,
+                    split,
                     old-time >= 1.0.0.5
