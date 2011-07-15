@@ -1,0 +1,12 @@
+deriv(a) = 0
+deriv(a + b) = deriv(a) + deriv(b)
+deriv(a - b) = deriv(a) - deriv(b)
+deriv(x ^ n) = n * (x ^ (n - 1))
+deriv(a * (x ^ n)) = a * deriv(x ^ n)
+deriv(a * x()) = a
+deriv(x()) = 1
+deriv(sin(x)) = cos(x) * deriv(x)
+deriv(cos(x)) = -sin(x) * deriv(x)
+deriv(e() ^ x()) = e ^ x
+deriv(e() ^ (a * x())) = deriv(a * x) * e ^ (a * x)
+deriv(ln(x)) = 1 / x

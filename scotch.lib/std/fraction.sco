@@ -1,20 +1,20 @@
 # std.fraction
 # Fraction(a, b) represents a / b as a fraction.
 
-show(Fraction(a,b)) = a + "/" + b
+print(Fraction(a,b)) = print(a + "/" + b)
 
-read_fraction(h + t, a) = case h of
-                            "/": Fraction(int(a), int(t)),
-                            otherwise: read_fraction(t, a + h)
+read_fraction(h:t, a) = case h of
+                          "/" -> Fraction(int(a), int(t)),
+                          otherwise -> read_fraction(t, a + h)
 read_fraction([], a) = Fraction(int(a), 1)
 fraction(s) = read_fraction(s, "0")
 
-to_float(Fraction(a,b)) = float(a) / b
+float(Fraction(a,b)) = float(a) / b
 
 reduce_fraction(Fraction(a,b)) = 
   case len(take 1 from divisors) of
-     0: Fraction(a,b),
-     otherwise: reduce_fraction(Fraction(a / divisors @ 0, b / divisors @ 0))
+     0 -> Fraction(a,b),
+     otherwise -> reduce_fraction(Fraction(a / divisors @ 0, b / divisors @ 0))
   where divisors := [for i in reverse([2..b]), i, a mod i == 0, b mod i == 0]
   
 numerator(Fraction(a,b)) = a

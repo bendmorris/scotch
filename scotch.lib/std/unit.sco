@@ -1,10 +1,11 @@
 tests = []
 
-assert_equal(a, b) = [if a == b then "pass" else (str(a) + " != " + str(b))]
+assert_equal(a, b) = if a == b then [[n, "pass"]] else [[n, (str(a) + " != " + str(b))]]
+                     where n := len(tests) + 1
 
 run_tests(tests) =
-  do print if all([for test in tests, test == "pass"])
+  do print(if [for test in tests, test @ 1] == (["pass"] * len(tests))
            then "All " + str(len(tests)) + " tests passed."
-           else show([for test in tests, test, test != "pass"]) + "\nSome tests failed."
+           else show([for test in tests, test, test @ 1 != "pass"]) + "\nSome tests failed.");
              
-     print "Done!"
+     print("Done!")
