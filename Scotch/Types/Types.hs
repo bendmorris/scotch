@@ -194,7 +194,7 @@ instance Show(Expr) where
     show (Or x y) = "(" ++ show x ++ " | " ++ show y ++ ")"
     show (Not x) = "not " ++ show x
     show (Def a (Rule r) Skip) = "rule " ++ show a ++ " =" ++ show (Rule r)
-    show (Rule r) = tail (foldl (++) "" [", " ++ show i | i <- r])
+    show (Rule r) = tail $ tail (foldl (++) "" [", " ++ show i | i <- r])
     show (Def a b Skip) = show a ++ " = " ++ show b
     show (Def a b c) = "(" ++ show c ++ " where " ++ show a ++ " = " ++ show b ++ ")"
     show (EagerDef a b Skip) = show a ++ " := " ++ show b

@@ -53,7 +53,11 @@ assignment =
   try (assign "^=" expAssign) <|>
   try (assign "%=" modAssign)
 
-statement = assignment <|> expression
+statement = do exp <- sepBy1 (whiteSpace >> (assignment <|> expression)) (oneOf ",")
+               if length exp == 1 
+                then return (exp !! 0)
+                else return $ Val $ Proc $ exp
+               
 
 expression = try (operation True) <|> 
              term
