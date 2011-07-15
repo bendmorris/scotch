@@ -55,10 +55,12 @@ assignment =
 
 statement = assignment <|> expression
 
-expression = try operation <|> 
-             try term
+expression = try (operation True) <|> 
+             term
+nonCurryExpression = try (operation False) <|>
+                     term
            
-operation = buildExpressionParser operators (term <|> parens term)
+operation b = buildExpressionParser (operators b) (term <|> parens term)
 
 term = try valueExpr <|>
        try stmt <|>
@@ -331,11 +333,13 @@ evalStmt =
 procStmt =
   do reserved "do"
      initialPos <- getPosition
-     exprs <- many1 $ (do whiteSpace
-                          pos <- getPosition
-                          expr <- expression
-                          if sourceColumn pos < sourceColumn initialPos then fail "" else do return ()
-                          return (sourceLine pos, expr))
+     exprs <- sepBy1 (do whiteSpace
+                         pos <- getPosition
+                         expr <- statement   
+                         if sourceColumn pos < sourceColumn initialPos then fail "" else do return ()
+                         return (sourceLine pos, expr))
+                     (oneOf ";")
+                       
      if length (nub [fst expr | expr <- exprs]) /= length (exprs) then fail "" else do return ()
      return $ Val $ Proc [snd expr | expr <- exprs]
 
@@ -378,15 +382,10 @@ varcallStmt =
 
 -- statements
 stmt = 
-  try semicolon <|>
   try printStmt <|>
   try importStmt <|>
   try writeStmt <|>
   try appendStmt
-  
-semicolon =
-  do reserved ";"
-     return $ Skip
   
 
 printStmt =
@@ -447,6 +446,10 @@ whereStmt =
 callStmt =
   do args <- many1 (parens exprList)
      return $ callPostfix args
+curryStmt =
+  do args <- many1 (nonCurryExpression)
+     return $ callPostfix [args]
+     
 callPostfix [] id = id
 callPostfix (h:t) id = callPostfix t (Call id h)
 
@@ -460,7 +463,7 @@ customOp =
 
 opCall op expr1 expr2 = Call (Var op) [expr1, expr2]
 
-operators = 
+operators b = 
   [[Prefix (reservedOp "-"   >> return (Prod (Val (NumInt (-1)))))],
    [Postfix(do { c <- callStmt; return (c          )})          ],
    [Infix  (reservedOp "@"   >> return (subs            )) AssocLeft],
@@ -486,4 +489,6 @@ operators =
     Infix  (reservedOp "|"   >> return (Or              )) AssocLeft],
    [Postfix(do { w <- whereStmt;return (w          )})          ]
    --[Infix  (do { op <- customOp;return (opCall op   )}) AssocLeft]
-   ]
+   ] ++ if b 
+        then [[Postfix(do { c <- curryStmt;return (c          )})          ]]
+        else []

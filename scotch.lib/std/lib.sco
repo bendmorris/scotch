@@ -1,10 +1,10 @@
 # these functions will be imported by the Scotch interpreter automatically
 
-version = do import std.version;
-copyright = do import std.copyright;
-license = do import std.license;
-startup = do import std.startup;
-about = do import std.about;
+version = do import std.version
+copyright = do import std.copyright
+license = do import std.license
+startup = do import std.startup
+about = do import std.about
 
 # Returns the length of a string or list.
 len(h:t, a) = len(t, a + 1)
@@ -18,10 +18,10 @@ head([]) = []
 tail(h:t) = t
 tail([]) = []
 # Returns the last element in a list
-last(h:t) = (l) @ (len(l) - 1)
-            where (l := h:t)
+last(h:t) = (l) @ (len(l) - 1) 
+            where l := (h:t)
 # Returns a list or string in reverse order.
-reverse(h:t) = reverse(t) + [h]
+reverse(h:t) = reverse(t) + h
 reverse([]) = []
 
 # Joins the members of a list, separating them by string \s.
@@ -115,8 +115,9 @@ insert(x, [], a) = a + x
 insort(h:t) = insert(h, (insort(t)))
 insort([]) = []
 
-execute(h:t) = do h; execute(t)
-execute([]) = []
+execute(h:t) = do h;
+                  execute(t)
+execute([]) = skip
 
 repeat(f, r, n) = repeat(f, f(r), n-1)
 repeat(f, r, 0) = r
@@ -131,12 +132,12 @@ zip([], c:d, f) = []
 zip(a:b, [], f) = []
 
 
-do (+)(x, y) = x + y;
-   (-)(x, y) = x - y;
-   (*)(x, y) = x * y;
-   (/)(x, y) = x / y;
-   (^)(x, y) = x ^ y;
-   (&)(x, y) = x & y;
-   (|)(x, y) = x | y;
-   (==)(x, y) = x == y;
-   (!=)(x, y) = x != y;
+"do (+)(x, y) = x + y
+   (-)(x, y) = x - y
+   (*)(x, y) = x * y
+   (/)(x, y) = x / y
+   (^)(x, y) = x ^ y
+   (&)(x, y) = x & y
+   (|)(x, y) = x | y
+   (==)(x, y) = x == y
+   (!=)(x, y) = x != y"
