@@ -19,6 +19,7 @@ module Scotch.Types.Bindings where
 import Data.List
 import Scotch.Eval.Calc
 import Scotch.Types.Types
+import Scotch.Types.Show
 import Scotch.Types.Hash
 import Scotch.Types.Exceptions
 
