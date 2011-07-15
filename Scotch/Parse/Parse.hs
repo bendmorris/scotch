@@ -44,7 +44,7 @@ parser n =
   try (do whiteSpace
           pos <- getPosition
           chars <- many1 (noneOf "")
-          return (Just (sourceName pos, (sourceLine pos, sourceColumn pos)), 
+          return (Just (sourceName pos, ((sourceLine pos) + n - 1, sourceColumn pos)), 
                   Exception $ "Parse error: Unable to parse text starting with \"" ++ summary (Prelude.take 40 chars) ++ "\"")))
 
 summary [] = []
@@ -77,7 +77,7 @@ read name text = [result l
                                     Right r -> case Prelude.length r of
                                                  0 -> (Nothing, Skip)
                                                  1 -> r !! 0
-                                                 otherwise -> (fst (r !! 0), exEvalMultiple)
+                                                 otherwise -> (fst (r !! 1), exEvalMultiple (snd $ r !! 0) (snd $ r !! 1))
                                     Left l -> (Nothing, Exception $ "Parse error: " ++ show otherwise)
                                     
 realLines text = connectLines leadons (splitLines (splitOn "\n" (replace "\\\n" "" text)) []) []

@@ -38,6 +38,9 @@ exInvalidFile = Exception "Invalid file"
 exUnableToEval a = Exception $ "Unable to evaluate: " ++ show a
 exImproperCall v = Exception $ show v ++ " is not a function"
 exWrongNumArgs = Exception $ "Wrong number of arguments for lambda call"
-exEvalMultiple = Exception "Multiple expressions on the same line"
+exEvalMultiple a b = Exception $ "Multiple expressions on the same line: " ++ 
+                                 show a
+                                 ++ "; " ++ 
+                                 show b
 exNonTerminatingFunction f args = Exception $ "Non-terminating function: " ++ show f ++ " " ++ show args
 exInvalidRule x = Exception $ show x ++ " is not a valid rule"
