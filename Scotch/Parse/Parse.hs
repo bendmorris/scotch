@@ -34,24 +34,25 @@ import Scotch.Types.Exceptions
 import Scotch.Parse.Expressions
 import Scotch.Parse.ParseBase
 
-parser = many (
-         try (do whiteSpace
-                 pos <- getPosition
-                 expr <- statement
-                 return (Just (sourceName pos, (sourceLine pos, sourceColumn pos)), expr))
-         <|> 
-         try (do whiteSpace
-                 pos <- getPosition
-                 chars <- many1 (noneOf "")
-                 return (Just (sourceName pos, (sourceLine pos, sourceColumn pos)), 
-                         Exception $ "Parse error: Unable to parse text starting with \"" ++ summary (Prelude.take 40 chars) ++ "\"")))
+parser n = 
+  many (
+  try (do whiteSpace
+          pos <- getPosition
+          expr <- statement
+          return (Just (sourceName pos, ((sourceLine pos) + n - 1, sourceColumn pos)), expr))
+  <|> 
+  try (do whiteSpace
+          pos <- getPosition
+          chars <- many1 (noneOf "")
+          return (Just (sourceName pos, (sourceLine pos, sourceColumn pos)), 
+                  Exception $ "Parse error: Unable to parse text starting with \"" ++ summary (Prelude.take 40 chars) ++ "\"")))
 
 summary [] = []
 summary (h:t) = if h == '\n' then "" else h : summary t
 
-splitLines :: [String] -> [String] -> [String]
-splitLines [] a = a
-splitLines (h:[]) a = a ++ [h]
+splitLines :: [String] -> [String] -> [(Int, String)]
+splitLines [] a = Data.List.zip [1..] a
+splitLines (h:[]) a = Data.List.zip [1..] (a ++ [h])
 splitLines (h:t) a = if Prelude.length (Prelude.head t) > 0 && 
                         Prelude.head (Prelude.head t) == ' '
                      then splitLines ((h ++ "\n" ++ Prelude.head t) : Prelude.tail t) a
@@ -60,9 +61,9 @@ leadons = [('(', ')'), ('{', '}'), ('\"', '\"')]
 connectLines _ [] a = a
 connectLines _ (h:[]) a = a ++ [h]
 connectLines [] (h:t) a = connectLines leadons t (a ++ [h])
-connectLines (l:m) (h:t) a = if (fst l == snd l && mod ((countElem (fst l) h) - (countSeq ['\\', fst l] h 0)) 2 /= 0) || 
-                                (fst l /= snd l && countElem (fst l) h > countElem (snd l) h)
-                             then connectLines leadons ([h ++ "\n" ++ Prelude.head t] ++ 
+connectLines (l:m) (h:t) a = if (fst l == snd l && mod ((countElem (fst l) (snd h)) - (countSeq ['\\', fst l] (snd h) 0)) 2 /= 0) || 
+                                (fst l /= snd l && countElem (fst l) (snd h) > countElem (snd l) (snd h))
+                             then connectLines leadons ((fst h, snd h ++ "\n" ++ snd (Prelude.head t)) : 
                                                         Prelude.tail t) a
                              else connectLines m (h:t) a
 
@@ -72,11 +73,11 @@ countSeq seq (h:t) a = if Data.List.isPrefixOf seq (h:t) then countSeq seq t (a 
 read name text = [result l
                   | l <- realLines text,
                     snd (result l) /= Skip]
-                 where result l = case parse parser name l of
+                 where result l = case parse (parser $ fst l) name (snd l) of
                                     Right r -> case Prelude.length r of
                                                  0 -> (Nothing, Skip)
                                                  1 -> r !! 0
-                                                 otherwise -> (Nothing, exEvalMultiple)
+                                                 otherwise -> (fst (r !! 0), exEvalMultiple)
                                     Left l -> (Nothing, Exception $ "Parse error: " ++ show otherwise)
                                     
 realLines text = connectLines leadons (splitLines (splitOn "\n" (replace "\\\n" "" text)) []) []
