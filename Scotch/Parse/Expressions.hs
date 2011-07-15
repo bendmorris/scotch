@@ -330,8 +330,14 @@ evalStmt =
 
 procStmt =
   do reserved "do"
-     exprs <- many $ expression
-     return $ Val $ Proc exprs
+     initialPos <- getPosition
+     exprs <- many1 $ (do whiteSpace
+                          pos <- getPosition
+                          expr <- expression
+                          if sourceColumn pos < sourceColumn initialPos then fail "" else do return ()
+                          return (sourceLine pos, expr))
+     if length (nub [fst expr | expr <- exprs]) /= length (exprs) then fail "" else do return ()
+     return $ Val $ Proc [snd expr | expr <- exprs]
 
 listStmt =
   do exprs <- brackets exprList

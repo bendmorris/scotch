@@ -130,7 +130,7 @@ loop settings bindings state =
                          newBindings <- case length parsed of
                                           0 -> do return []
                                           1 -> wexecute settings parsed bindings
-                                          otherwise -> do putStrLn (show exEvalMultiple)
+                                          otherwise -> do putStrLn (show $ exEvalMultiple (Just $ parsed !! 0) (Just $ parsed !! 1))
                                                           return []
                          let newVars = (makeVarDict (reverse [i | j <- newBindings, i <- j]) bindings)
                          --closeInput state
