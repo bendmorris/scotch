@@ -361,7 +361,7 @@ iolist (h:t) = do item <- h
 -- ieval: evaluates an expression completely, replacing I/O operations as necessary
 ieval :: InterpreterSettings -> Expr -> VarDict -> [Expr] -> IO Expr
 ieval settings expr vars last =
-  do subbed <- subfile expr vars
+  do subbed <- subfile expr
      let result = eval subbed vars settings True
      if isInfixOf [result] last
       then return (last !! 0)
@@ -376,93 +376,61 @@ ieval settings expr vars last =
               ieval settings (fst result') (snd result') (expr : last')
               where last' = take 4 last
 
+oneArg f a = do a' <- subfile a
+                return $ f a'
+twoArgs f a b = do a' <- subfile a
+                   b' <- subfile b
+                   return $ f a' b'
+threeArgs f a b c = do a' <- subfile a
+                       b' <- subfile b
+                       c' <- subfile c
+                       return $ f a' b' c'
+
 -- subfile: substitutes values for delayed I/O operations
-subfile :: Expr -> VarDict -> IO Expr
-subfile exp vars =
+subfile :: Expr -> IO Expr
+subfile exp =
   case exp of
-    Take n x -> do n' <- subfile n vars
-                   x' <- subfile x vars
-                   return $ Take n' x'
-    TakeFor a b c d e -> do b' <- subfile b vars
-                            c' <- subfile c vars
-                            d' <- iolist [subfile i vars | i <- d]
+    Take a b -> twoArgs Take a b
+    TakeFor a b c d e -> do b' <- subfile b
+                            c' <- subfile c
+                            d' <- iolist [subfile i | i <- d]
                             return $ TakeFor a b' c' d' e
-    ToInt x -> do x' <- subfile x vars
-                  return $ ToInt x'
-    ToFloat x -> do x' <- subfile x vars
-                    return $ ToFloat x'
-    ToStr x -> do x' <- subfile x vars
-                  return $ ToStr x'
-    ToList l -> do l' <- subfile l vars
-                   return $ ToList l'
-    ToBool x -> do x' <- subfile x vars
-                   return $ ToBool x'
-    List l ->      do list <- iolist [subfile e vars | e <- l]
+    ToInt a -> oneArg ToInt a
+    ToFloat a -> oneArg ToFloat a
+    ToStr a -> oneArg ToStr a
+    ToList a -> oneArg ToList a
+    ToBool a -> oneArg ToBool a
+    List l ->      do list <- iolist [subfile e | e <- l]
                       return $ List list
-    HashExpr l -> do list1 <- iolist [subfile (fst e) vars | e <- l]
-                     list2 <- iolist [subfile (snd e) vars | e <- l]
+    HashExpr l -> do list1 <- iolist [subfile (fst e) | e <- l]
+                     list2 <- iolist [subfile (snd e) | e <- l]
                      return $ HashExpr (zip list1 list2)
-    Subs x y -> do x' <- subfile x vars
-                   y' <- subfile y vars
-                   return $ Subs x' y'
-    Add x y -> do x' <- subfile x vars
-                  y' <- subfile y vars
-                  return $ Add x' y'
-    Sub x y -> do x' <- subfile x vars
-                  y' <- subfile y vars
-                  return $ Sub x' y'
-    Prod x y -> do x' <- subfile x vars
-                   y' <- subfile y vars
-                   return $ Prod x' y'
-    Div x y -> do x' <- subfile x vars
-                  y' <- subfile y vars
-                  return $ Div x' y'
-    Mod x y -> do x' <- subfile x vars
-                  y' <- subfile y vars
-                  return $ Mod x' y'
-    Exp x y -> do x' <- subfile x vars
-                  y' <- subfile y vars
-                  return $ Exp x' y'
-    Eq x y -> do x' <- subfile x vars
-                 y' <- subfile y vars
-                 return $ Eq x' y'
-    InEq x y -> do x' <- subfile x vars
-                   y' <- subfile y vars
-                   return $ InEq x' y'
-    Gt x y -> do x' <- subfile x vars
-                 y' <- subfile y vars
-                 return $ Gt x' y'
-    Lt x y -> do x' <- subfile x vars
-                 y' <- subfile y vars
-                 return $ Lt x' y'
-    And x y -> do x' <- subfile x vars
-                  y' <- subfile y vars
-                  return $ And x' y'
-    Or x y -> do x' <- subfile x vars
-                 y' <- subfile y vars
-                 return $ Or x' y'
-    Not x -> do x' <- subfile x vars
-                return $ Not x'
-    EagerDef id x y -> do x' <- subfile x vars
-                          y' <- subfile y vars
-                          return $ EagerDef id x' y'
-    Def id x y -> do y' <- subfile y vars
-                     return $ Def id x y'
-    If x y z -> do x' <- subfile x vars
-                   y' <- subfile y vars
-                   z' <- subfile z vars
-                   return $ If x' y' z'
-    For id x y z -> do x' <- subfile x vars
-                       y' <- subfile y vars
-                       z' <- iolist [subfile i vars | i <- z]
+    Subs a b -> twoArgs Subs a b
+    Add a b -> twoArgs Add a b
+    Sub a b -> twoArgs Sub a b
+    Prod a b -> twoArgs Prod a b
+    Div a b -> twoArgs Div a b
+    Mod a b -> twoArgs Mod a b
+    Exp a b -> twoArgs Exp a b
+    Eq a b -> twoArgs Eq a b
+    InEq a b -> twoArgs InEq a b
+    Gt a b -> twoArgs Gt a b
+    Lt a b -> twoArgs Lt a b
+    And a b -> twoArgs And a b
+    Or a b -> twoArgs Or a b
+    Not a -> oneArg Not a
+    EagerDef id a b -> twoArgs (EagerDef id) a b
+    Def id a b -> oneArg (Def id a) b
+    If a b c -> threeArgs If a b c
+    For id x y z -> do x' <- subfile x
+                       y' <- subfile y
+                       z' <- iolist [subfile i | i <- z]
                        return $ For id x' y' z'
-    Output x -> do x' <- subfile x vars
-                   return $ Output x'
+    Output a -> oneArg Output a
     Input -> do line <- getLine
                 return $ Val (Str line)
-    FileObj f -> do f' <- subfile f vars
-                    return $ FileObj f'
-    FileRead f -> do sub <- subfile f vars
+    FileObj f -> oneArg FileObj f
+    FileRead f -> do sub <- subfile f
                      case f of
                        Val (File f) -> do exists <- doesFileExist f
                                           case exists of 

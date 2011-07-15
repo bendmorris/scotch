@@ -35,7 +35,7 @@ import Scotch.Eval.Eval
 wexecute :: InterpreterSettings -> [PosExpr] -> VarDict -> IO VarDict
 wexecute _ [] bindings = do return bindings
 wexecute settings (h:t) bindings = 
-  do parsed <- subfile (snd h) bindings
+  do let parsed = snd h
      -- evaluate the parsed code
      result <- do ieval settings parsed bindings []
      -- get new bindings if any definitions/imports were made

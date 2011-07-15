@@ -71,7 +71,7 @@ countSeq seq (h:t) a = if Data.List.isPrefixOf seq (h:t) then countSeq seq t (a 
                            
 read name text = [result l
                   | l <- realLines text,
-                    result l /= (Nothing, Skip)]
+                    snd (result l) /= Skip]
                  where result l = case parse parser name l of
                                     Right r -> case Prelude.length r of
                                                  0 -> (Nothing, Skip)

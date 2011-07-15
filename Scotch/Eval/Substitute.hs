@@ -102,7 +102,7 @@ substitute exp params =
     Just expr -> expr
     otherwise -> parseExpr exp substitute'
                  where substitute' x = substitute x params
-      
+
 parseExpr exp f =
   case exp of
     Call id args -> Call (f id) [f arg | arg <- args]
