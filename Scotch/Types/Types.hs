@@ -15,15 +15,9 @@
 -}
 
 module Scotch.Types.Types where
-
-formatString [] = []
-formatString (h:t) = if h == '"' then "\\\"" ++ formatString t
-                     else h : formatString t
-                     
                      
 -- binds a left term to a right term
 type Binding = (Expr, Expr)
-                     
 
 -- a value identifier
 type Id = String
@@ -94,8 +88,3 @@ data Expr = Exception String                -- undefined
 
 type ExprPosition = (String, (Int, Int))
 type PosExpr = (Maybe ExprPosition, Expr)
-
-removeBrackets s = if (s !! 0) == '[' && (s !! (l-1)) == ']'
-                   then "(" ++ [s !! n | n <- [1..l-2]] ++ ")"
-                   else s
-                   where l = length s

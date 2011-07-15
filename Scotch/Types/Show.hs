@@ -5,6 +5,15 @@ import Numeric
 import Scotch.Types.Types
 
 
+formatString [] = []
+formatString (h:t) = if h == '"' then "\\\"" ++ formatString t
+                     else h : formatString t
+removeBrackets s = if (s !! 0) == '[' && (s !! (l-1)) == ']'
+                   then "(" ++ [s !! n | n <- [1..l-2]] ++ ")"
+                   else s
+                   where l = length s
+
+
 instance Show (Value) where
     show (Str s) = "\"" ++ formatString s ++ "\""
     show (NumInt n) = show n
