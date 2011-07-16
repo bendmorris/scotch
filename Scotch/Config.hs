@@ -14,4 +14,4 @@ environment = os
 
 
 libraryPath :: IO String
-libraryPath = do return $ "/usr/lib/scotch" ++ major ++ "." ++ minor ++ "/"
+libraryPath = do return $ "/usr/lib/scotch" ++ major ++ "." ++ minor
