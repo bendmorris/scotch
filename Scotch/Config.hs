@@ -12,5 +12,6 @@ version = major ++ "." ++ minor ++ "." ++ revision
 
 environment = os
 
+libraryPath :: IO String
 libraryPath = do fullPath <- splitExecutablePath
                  return $ (fst fullPath) ++ "scotch.lib"
