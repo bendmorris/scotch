@@ -12,4 +12,6 @@ version = major ++ "." ++ minor ++ "." ++ revision
 
 environment = os
 
+
+libraryPath :: IO String
 libraryPath = do return $ "/usr/lib/scotch" ++ major ++ "." ++ minor ++ "/"
