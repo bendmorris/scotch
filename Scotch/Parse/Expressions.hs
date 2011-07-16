@@ -339,10 +339,10 @@ procStmt =
      initialPos <- getPosition
      exprs <- sepBy1 (do whiteSpace
                          pos <- getPosition
-                         expr <- statement   
+                         expr <- statement
                          if sourceColumn pos < sourceColumn initialPos then fail "" else do return ()
                          return (sourceLine pos, expr))
-                     (oneOf ";")
+                     (oneOf ",")
                        
      if length (nub [fst expr | expr <- exprs]) /= length (exprs) then fail "" else do return ()
      return $ Val $ Proc [snd expr | expr <- exprs]
@@ -371,7 +371,7 @@ varcallStmt =
   do var <- identifier
      return $ Var var
   ) <|> (
-  do var <- parens customOp
+  do var <- parens (many1 (oneOf operatorSymbol))
      return $ Var var
   ) <|> (
   do n <- intStmt

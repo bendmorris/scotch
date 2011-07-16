@@ -33,13 +33,13 @@ all(l) = foldr((x, y) -> x & y, l, true)
 any(l) = foldr((x, y) -> x | y, l, false)
 
 # Checks whether string/list \c+d is a prefix of \a+b.
-prefix(a + b, c + d) = if a == c then prefix(b, d) else false
-prefix([], c) = false
-prefix(a, []) = true
+prefix(a:b, c:d) = if a == c then prefix(b, d) else false
+prefix([], c) = true
+prefix(a, []) = false
 # Checks whether string/list \c is a prefix of \a.
 suffix(a, c) = prefix(reverse(a), reverse(c))
-infix(a + b, c + d) = if prefix(a + b, c + d) then true else prefix(b, c + d)
-infix([], c + d) = false
+infix(a:b, c:d) = if prefix(a:b, c:d) then true else prefix(a:b, d)
+infix(a:b, d) = false
 
 # Returns true if \h:t contains element/sequence \s.
 contains(h:t, s) = if (h == s) then true else contains(t, s)
@@ -132,12 +132,12 @@ zip([], c:d, f) = []
 zip(a:b, [], f) = []
 
 
-"do (+)(x, y) = x + y
-   (-)(x, y) = x - y
-   (*)(x, y) = x * y
-   (/)(x, y) = x / y
-   (^)(x, y) = x ^ y
-   (&)(x, y) = x & y
-   (|)(x, y) = x | y
-   (==)(x, y) = x == y
-   (!=)(x, y) = x != y"
+do (+)(x, y) = x + y,
+   (-)(x, y) = x - y,
+   (*)(x, y) = x * y,
+   (/)(x, y) = x / y,
+   (^)(x, y) = x ^ y,
+   (&)(x, y) = x & y,
+   (|)(x, y) = x | y,
+   (==)(x, y) = x == y,
+   (!=)(x, y) = x != y

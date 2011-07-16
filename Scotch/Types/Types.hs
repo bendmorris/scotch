@@ -15,6 +15,21 @@
 -}
 
 module Scotch.Types.Types where
+
+
+upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+lowerCase = "abcdefghijklmnopqrstuvwxyz"
+numeric = "0123456789"
+idSymbol = "_!'."
+operatorSymbol = "!@#$%^&*+-*/=<>?|`"
+forbiddenOps = ["+", "-", "*", "/", "^", "=", ":=", "==",
+                "!=", "<", ">", "and", "or", "not", ":", 
+                "<=", ">=", "+=", "<<", ">>", "..", "::",
+                "@", "mod", "%", "->", "<-", "=>",
+                "+=", "-=", "*=", "/=", "^=", "%=",
+                "&", "|"
+                ]
+
                      
 -- binds a left term to a right term
 type Binding = (Expr, Expr)
