@@ -4,7 +4,11 @@ import System.Environment.Executable
 import System.Info
 
 
-version = "0.5.0"
+major    = "0"
+minor    = "5"
+revision = "0"
+
+version = major ++ "." ++ minor ++ "." ++ revision
 
 environment = os
 
