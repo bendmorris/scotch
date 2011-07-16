@@ -12,5 +12,4 @@ version = major ++ "." ++ minor ++ "." ++ revision
 
 environment = os
 
-libraryPath = do fullPath <- splitExecutablePath
-                 return $ (fst fullPath) ++ "scotch.lib"
+libraryPath = do return $ "/usr/lib/scotch" ++ major ++ "." ++ minor ++ "/"
