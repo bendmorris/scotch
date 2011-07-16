@@ -23,21 +23,9 @@ import Text.Parsec.Expr
 import Text.Parsec.Char
 import Text.Parsec.Language
 import Text.Parsec.Prim
+import Scotch.Types.Types
 import qualified Text.Parsec.Token as Token
 
-
-upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-lowerCase = "abcdefghijklmnopqrstuvwxyz"
-numeric = "0123456789"
-idSymbol = "_!'."
-operatorSymbol = "!@#$%^&*+-*/=<>?|`"
-forbiddenOps = ["+", "-", "*", "/", "^", "=", ":=", "==",
-                "!=", "<", ">", "and", "or", "not", ":", 
-                "<=", ">=", "+=", "<<", ">>", "..", "::",
-                "@", "mod", "%", "->", "<-", "=>",
-                "+=", "-=", "*=", "/=", "^=", "%=",
-                "&", "|"
-                ]
 
 languageDef =
   emptyDef { Token.commentStart    = "",

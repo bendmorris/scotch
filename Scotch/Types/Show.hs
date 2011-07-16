@@ -1,6 +1,7 @@
 module Scotch.Types.Show where
 
 import Data.List
+import Data.List.Utils
 import Numeric
 import Scotch.Types.Types
 
@@ -12,7 +13,7 @@ removeBrackets s = if (s !! 0) == '[' && (s !! (l-1)) == ']'
                    then "(" ++ [s !! n | n <- [1..l-2]] ++ ")"
                    else s
                    where l = length s
-moduleName s = tail (foldl (++) "" ["." ++ i | i <- s])
+moduleName s = join "." s
 
 
 instance Show (Value) where
@@ -21,12 +22,11 @@ instance Show (Value) where
     show (NumFloat n) = showFFloat Nothing n ""
     show (Bit True) = "true"
     show (Bit False) = "false"
-    show (Hash h) = "{" ++ (if length items > 0
-                            then tail $ tail (foldl (++) "" items)
+    show (Hash h) = "{" ++ (if length h > 0
+                            then join ", " ["\"" ++ fst i ++ "\": " ++ show (snd i) | j <- h, i <- j]
                             else "") ++ "}"
-                           where items = [", \"" ++ fst i ++ "\": " ++ show (snd i) | j <- h, i <- j]
-    show (Lambda ids expr) = "(" ++ tail (foldl (++) "" ["," ++ id | id <- ids]) ++ ") -> " ++ show expr
-    show (Proc p) = tail $ tail $ foldl (++) "" [", " ++ show i | i <- p]
+    show (Lambda ids expr) = "(" ++ (join ", " ids) ++ ") -> " ++ show expr
+    show (Proc p) = join ", " [show i | i <- p]
     show (Thread th) = "thread " ++ show th
     show (Null) = "null"
     show (Undefined s) = show s
@@ -41,10 +41,9 @@ instance Show(Expr) where
     show (List l) = show l
     show (Take a b) = "take " ++ show a ++ " from " ++ show b
     show (TakeFor a b c d e) = show (Take (Val (NumInt e)) (For a b c d))
-    show (HashExpr h) = "{" ++ (if length items > 0
-                                then tail (foldl (++) "" items)
+    show (HashExpr h) = "{" ++ (if length h > 0
+                                then join ", " [show (fst i) ++ ": " ++ show (snd i) | i <- h]
                                 else "") ++ "}"
-                               where items = ["," ++ show (fst i) ++ ":" ++ show (snd i) | i <- h]
     show (ToInt i) = "int(" ++ show i ++ ")"
     show (ToFloat f) = "float(" ++ show f ++ ")"
     show (ToStr s) = "str(" ++ show s ++ ")"
@@ -69,7 +68,7 @@ instance Show(Expr) where
     show (Or x y) = "(" ++ show x ++ " | " ++ show y ++ ")"
     show (Not x) = "not " ++ show x
     show (Def a (Rule r) Skip) = "rule " ++ show a ++ " =" ++ show (Rule r)
-    show (Rule r) = tail $ tail (foldl (++) "" [", " ++ show i | i <- r])
+    show (Rule r) = join ", " [show i | i <- r]
     show (Def a b Skip) = show a ++ " = " ++ show b
     show (Def a b c) = "(" ++ show c ++ " where " ++ show a ++ " = " ++ show b ++ ")"
     show (EagerDef a b Skip) = show a ++ " := " ++ show b
@@ -85,11 +84,10 @@ instance Show(Expr) where
     show (Range x y z) = "[" ++ show x ++ ".." ++ show y ++ (if z == (Val (NumInt 1)) then "" else "," ++ show z) ++ "]"
     show (Output x) = "print(" ++ show x ++ ")"
     show Input = "input"
---    show (Import s []) = "import " ++ moduleName s
---    show (Import s t) = show (Import s []) ++ " as " ++ moduleName t
+    show (Import s []) = "import " ++ moduleName s
+    show (Import s t) = show (Import s []) ++ " as " ++ moduleName t
     show (FileObj f) = "file(" ++ show f ++ ")"
     show (FileRead f) = "read(" ++ show f ++ ")"
     show (FileWrite f x) = "write(" ++ show f ++ ", " ++ show x ++ ")"
     show (FileAppend f x) = "append(" ++ show f ++ ", " ++ show x ++ ")"
     show (EvalExpr e) = "eval(" ++ show e ++ ")"
-
