@@ -25,6 +25,7 @@ import Data.List
 import System.Console.Haskeline
 import System.Console.Haskeline.IO
 import System.Console.Haskeline.Completion
+import Scotch.Config
 import Scotch.Parse.Parse as Parse
 import Scotch.Eval.ReadFile
 import Scotch.Types.Types
@@ -95,8 +96,10 @@ main = do args <- getArgs
                          if interpret then loop settings newbindings state
                                       else return ()
             -- otherwise, start the interpreter
-            else do wexecute settings [(Nothing, (Var "startup"))] stdlib
+            else do putStrLn $ "Scotch, version " ++ version ++ " on " ++ environment
+                    putStrLn "For more information, type \"about\", \"copyright\" or \"license\"."
                     loop settings stdlib state
+
 
 -- the interpreter's main REPL loop
 loop :: InterpreterSettings -> VarDict -> InputState -> IO ()

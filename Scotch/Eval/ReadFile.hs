@@ -28,7 +28,7 @@ import Scotch.Types.Bindings
 import Scotch.Types.Hash
 import Scotch.Types.Interpreter
 import Scotch.Eval.Eval
-import Scotch.Config.Paths
+import Scotch.Config
 
 
 -- interpret a list of code lines using a list of scoped bindings
