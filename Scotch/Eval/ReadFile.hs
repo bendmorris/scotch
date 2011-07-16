@@ -128,7 +128,7 @@ importFile settings s t =
                        libDir ++ moduleName ++ "/main",
                        libDir ++ moduleName]
      path <- searchPathMatch searchPath
-     let builtin = stdlib settings
+     let builtin = stdLib settings
      val <- case path of 
               "" -> do return []
               otherwise -> do e <- execute (InterpreterSettings 
@@ -138,7 +138,7 @@ importFile settings s t =
                                              interpret = False,
                                              exePath = exePath settings,
                                              exeMod = exeMod settings,
-                                             stdlib = stdlib settings
+                                             stdLib = stdLib settings
                                             })
                                    path builtin
                               return [i | j <- e, i <- j]

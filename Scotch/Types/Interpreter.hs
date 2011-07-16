@@ -26,5 +26,5 @@ data InterpreterSettings = InterpreterSettings {
     interpret :: Bool,
     exePath :: FilePath,
     exeMod :: System.Time.ClockTime,
-    stdlib :: VarDict
+    stdLib :: VarDict
 }

@@ -35,6 +35,7 @@ import Scotch.Types.Hash
 import Scotch.Types.Interpreter
 import Scotch.Eval.Eval
 import Scotch.Eval.Substitute
+import Scotch.Lib.StdLib
 
 
 -- check for flags
@@ -63,19 +64,13 @@ main = do args <- getArgs
           -- import std.lib
           exePath <- getExecutablePath
           exeMod <- getModificationTime (exePath)
-          importStdLib <- importFile (InterpreterSettings {verbose = verbose, interpret = False, strict = strict, exePath = exePath, exeMod = exeMod, stdlib = emptyHash}) 
-                                     ["std", "lib"] ["std", "lib"]
-          stdlib <- case importStdLib of
-                      (False, _) -> do putStrLn "Failed to import std.lib."
-                                       return emptyHash
-                      (True, b) -> do return $ b
           let settings = InterpreterSettings {
                                               verbose = verbose,
                                               strict = strict,
                                               interpret = interpret,
                                               exePath = exePath,
                                               exeMod = exeMod,
-                                              stdlib = stdlib
+                                              stdLib = stdlib
                                               }
 
           state <- initializeInput (setComplete (completeWord Nothing " " (completionFunction stdlib)) defaultSettings)
@@ -119,14 +114,14 @@ loop settings bindings state =
                                                 interpret = interpret settings,
                                                 exePath = exePath settings,
                                                 exeMod = exeMod settings,
-                                                stdlib = stdlib settings
+                                                stdLib = stdLib settings
                                                 }) bindings state
         Just "-s" -> loop (InterpreterSettings {verbose = verbose settings,
                                                 strict = not (strict settings),
                                                 interpret = interpret settings,
                                                 exePath = exePath settings,
                                                 exeMod = exeMod settings,
-                                                stdlib = stdlib settings
+                                                stdLib = stdLib settings
                                                 }) bindings state
         Just input -> do -- parse input
                          let parsed = Parse.read "Interpreter" input
