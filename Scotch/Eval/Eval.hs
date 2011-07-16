@@ -84,7 +84,17 @@ eval oexp vars settings rw =
                           Exception e -> Exception e
                           otherwise -> Take (eval' otherwise) x
   List l ->             case (validList l) of
-                          Val _ -> List [eval' i | i <- l]
+                          Val _ -> case List [eval' i | i <- l] of
+                                     List l -> if all ((==) True)
+                                                      [case i of
+                                                         Val (Str s) -> length s == 1
+                                                         otherwise -> False 
+                                                       | i <- l]
+                                               then Val $ Str (foldl (++) [case i of
+                                                                             Val (Str s) -> s !! 0
+                                                                           | i <- l] [])
+                                               else List l
+                                     otherwise -> otherwise
                           Exception e -> Exception e
   HashExpr l ->         Val $ Hash $ makeHash strHash
                                      [(case eval' (fst i) of
@@ -248,7 +258,11 @@ eval oexp vars settings rw =
                           Exception s -> Exception s
                           Val (Bit b) -> Val $ Bit $ not b
                           otherwise -> Not otherwise
-  Def f x Skip ->       Def f x Skip
+  Def f x Skip ->       case f of
+                          List l -> Val $ Proc $ 
+                                    [Def (l !! n) (Subs (Val $ NumInt $ fromIntegral n) x) Skip 
+                                     | n <- [0 .. length(l) - 1]]
+                          otherwise -> Def f x Skip
   Def f x y ->          evalWithNewDefs y [(f, x)]
   EagerDef f x Skip ->  EagerDef f (fullEval x eval') Skip
   EagerDef f x y ->     evalWithNewDefs y [(f, fullEval x eval')]
@@ -369,6 +383,8 @@ ieval settings expr vars last =
                 then putStrLn (show (last !! 0))
                 else return ()
               result' <- case expr of
+                           Def _ _ Skip -> do return (result, vars)
+                           EagerDef _ _ Skip -> do return (result, vars)
                            Def id x y -> do return $ (y, makeVarDict [(id, x)] vars)
                            EagerDef id x y -> do x' <- ieval settings x vars (expr : last')
                                                  return $ (y, makeVarDict [(id, x')] vars)

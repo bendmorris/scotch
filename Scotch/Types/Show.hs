@@ -12,6 +12,7 @@ removeBrackets s = if (s !! 0) == '[' && (s !! (l-1)) == ']'
                    then "(" ++ [s !! n | n <- [1..l-2]] ++ ")"
                    else s
                    where l = length s
+moduleName s = tail (foldl (++) "" ["." ++ i | i <- s])
 
 
 instance Show (Value) where
@@ -25,7 +26,7 @@ instance Show (Value) where
                             else "") ++ "}"
                            where items = [", \"" ++ fst i ++ "\": " ++ show (snd i) | j <- h, i <- j]
     show (Lambda ids expr) = "(" ++ tail (foldl (++) "" ["," ++ id | id <- ids]) ++ ") -> " ++ show expr
-    show (Proc p) = "do " ++ foldl (++) "" [show i ++ ";" | i <- p]
+    show (Proc p) = tail $ tail $ foldl (++) "" [", " ++ show i | i <- p]
     show (Thread th) = "thread " ++ show th
     show (Null) = "null"
     show (Undefined s) = show s
@@ -84,8 +85,8 @@ instance Show(Expr) where
     show (Range x y z) = "[" ++ show x ++ ".." ++ show y ++ (if z == (Val (NumInt 1)) then "" else "," ++ show z) ++ "]"
     show (Output x) = "print(" ++ show x ++ ")"
     show Input = "input"
-    show (Import s t) = "import " ++ (show s) ++ (if s == t then "" 
-                                                  else " as " ++ show t)
+--    show (Import s []) = "import " ++ moduleName s
+--    show (Import s t) = show (Import s []) ++ " as " ++ moduleName t
     show (FileObj f) = "file(" ++ show f ++ ")"
     show (FileRead f) = "read(" ++ show f ++ ")"
     show (FileWrite f x) = "write(" ++ show f ++ ", " ++ show x ++ ")"

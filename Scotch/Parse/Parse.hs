@@ -29,6 +29,8 @@ import Text.Parsec.Combinator
 import Text.Parsec.Prim
 import Text.Parsec.Pos
 import Scotch.Types.Types
+import Scotch.Types.Binary
+import Scotch.Types.Show
 import Scotch.Types.Hash
 import Scotch.Types.Exceptions
 import Scotch.Parse.Expressions

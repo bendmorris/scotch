@@ -10,6 +10,7 @@ about = do import std.about
 len(h:t, a) = len(t, a + 1)
 len([], a) = a
 len(l) = len(l, 0)
+length = len
 
 # Returns the first element in a string or list.
 head(h:t) = h
@@ -21,8 +22,7 @@ tail([]) = []
 last(h:t) = (l) @ (len(l) - 1) 
             where l := (h:t)
 # Returns a list or string in reverse order.
-reverse(h:t) = reverse(t) + h
-reverse([]) = []
+reverse(h:t) = [for i in [len(h:t) - 1 .. 0, -1], (h:t) @ i]
 
 # Joins the members of a list, separating them by string \s.
 join(h:t, s) = h + (if len(t) > 0 then s + join(t, s) else "")
@@ -85,7 +85,7 @@ only([], s) = []
 left(h:t, n) = take n from h:t
 left(h:t, 0) = []
 left([], n) = []
-right(h:t, n) = reverse(left(reverse(h:t), n))
+right(h:t, n) = [for i in [l - n .. l - 1], (h:t) @ i] where l := len(h:t)
 
 foldl(f, h:t, z) = foldl(f, t, f(z, h))
 foldl(f, [], z) = z
@@ -115,8 +115,8 @@ insert(x, [], a) = a + x
 insort(h:t) = insert(h, (insort(t)))
 insort([]) = []
 
-execute(h:t) = do h;
-                  execute(t)
+execute(h:t) = eval(right(left(s, l-1), l-2))
+               where s := str(h:t), l := len(s)
 execute([]) = skip
 
 repeat(f, r, n) = repeat(f, f(r), n-1)

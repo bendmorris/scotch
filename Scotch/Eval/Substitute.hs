@@ -57,8 +57,7 @@ patternMatch x y evalFunc tl =
                                                   then []
                                                   else [(y, x)])
     (Call (Var v1) args1, 
-     Call (Var v2) args2) -> 
-                                if length args1 == length args2
+     Call (Var v2) args2) ->    if length args1 == length args2
                                    && nameMatch v2 v1
                                 then trySubs 
                                      [patternMatch (a1 !! n) (args2 !! n) evalFunc False

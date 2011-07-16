@@ -100,7 +100,7 @@ wexecute settings (h:t) bindings =
                      Nothing -> 1
            showPosition = name ++ ": Line " ++ show line ++ ", column " ++ show column
            position = fst h
-           nextline newBindings = wexecute settings t (makeVarDict newBindings bindings)
+           nextline newBindings = wexecute settings t (makeVarDict (reverse newBindings) bindings)
            localVar id = case id of
                            Var v -> Var ("local." ++ v)
                            Call (Var v) args -> Call (Var ("local." ++ v)) args
