@@ -19,7 +19,6 @@ module Scotch.Eval.ReadFile (importFile, execute, wexecute) where
 import Data.List
 import Data.ByteString.Lazy (readFile)
 import System.Directory
-import System.Environment.Executable
 import Control.Concurrent
 import Text.Parsec.Pos
 import Scotch.Parse.Parse as Parse
@@ -29,6 +28,7 @@ import Scotch.Types.Bindings
 import Scotch.Types.Hash
 import Scotch.Types.Interpreter
 import Scotch.Eval.Eval
+import Scotch.Config.Paths
 
 
 -- interpret a list of code lines using a list of scoped bindings
@@ -121,8 +121,7 @@ searchPathMatch (h:t) = do exists <- doesFileExist (h ++ ".sco")
 importFile :: InterpreterSettings -> [String] -> [String] -> IO (Bool, VarDict)
 importFile settings s t = 
   do currDir <- getCurrentDirectory
-     fullPath <- splitExecutablePath
-     let libDir = (fst fullPath) ++ "scotch.lib"
+     libDir <- libraryPath
      let moduleName = importName s
      let searchPath = [currDir ++ moduleName ++ "/main",
                        currDir ++ moduleName,
