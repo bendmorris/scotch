@@ -56,14 +56,15 @@ wexecute settings (h:t) bindings =
                                        return b
                       Val (Proc p) -> do e <- wexecute settings [(position, e) | e <- p] bindings
                                          return [i | j <- e, i <- j]
-                      otherwise -> do return $ [(Var "ans", result)]
+                      Val v -> do return $ [(Var "ans", result)]
+                      otherwise -> do return []
      -- output, if necessary
      case result of
        Exception e -> do putStrLn ("\nException in " ++ (showPosition) ++ "\n" ++ e ++ "\n")
                          return []
        Output x -> do case x of
                         Val (Str s) -> putStrLn s
-                        otherwise -> putStrLn (show x)
+                        otherwise -> print x
                       nextline newBindings
        FileWrite (Val (File f)) (Val (Str x)) -> do writeFile f x
                                                     nextline newBindings

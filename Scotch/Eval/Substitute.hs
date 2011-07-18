@@ -84,10 +84,10 @@ patternMatch x y evalFunc tl =
     (Div a b, Div c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
     (Exp a b, Exp c d) ->       trySubs [patternMatch' a c, patternMatch' b d]
     otherwise ->                case tl of
-                                  False -> if veq False (fullEval x evalFunc) y == Val (Bit True)
+                                  False -> if x == y || veq False (fullEval x evalFunc) y == Val (Bit True)
                                            then (True, []) else (False, [])
-                                  True -> if veq False x y == Val (Bit True) 
-                                          then (True, []) else (False, [])
+                                  True ->  if x == y || veq False x y == Val (Bit True) 
+                                           then (True, []) else (False, [])
   where trySubs exprs = if all ((==) True) [fst expr | expr <- exprs]
                         then (True, foldl (++) [] [snd expr | expr <- exprs])
                         else (False, [])
