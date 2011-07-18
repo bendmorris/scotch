@@ -47,6 +47,49 @@ eval oexp vars settings rw =
                              else Var id
   Call x [] -> x
   Call (Call id args) args' -> eval' $ Call id (args ++ args')
+  Call (Var "int") 
+       [x] ->           case eval' x of
+                          Val (NumInt i) -> Val $ NumInt i
+                          Val (NumFloat f) -> Val $ NumInt (truncate f)
+                          Val (Str s) -> Val $ NumInt (Prelude.read s)
+                          Exception e -> Exception e
+                          otherwise -> Call (Var "int") [otherwise]
+  Call (Var "float") 
+       [x] ->           case eval' x of
+                          Val (NumInt i) -> Val $ NumFloat $ fromIntegral i
+                          Val (NumFloat f) -> Val $ NumFloat f
+                          Val (Str s) -> Val $ NumFloat (Prelude.read s :: Double)
+                          Exception e -> Exception e
+                          otherwise -> Call (Var "float") [otherwise]
+  Call (Var "str") 
+       [x] ->           case eval' x of
+                          Val (Str s) -> Val $ Str s
+                          Val (NumFloat f) -> Val $ Str $ showFFloat Nothing f ""
+                          Val (Undefined u) -> Exception u
+                          Val v -> Val $ Str (show v)
+                          Exception e -> Exception e
+                          otherwise -> if otherwise == x
+                                       then Val $ Str $ show x
+                                       else Call (Var "str") [otherwise]
+  Call (Var "list") 
+       [x] ->           case eval' x of
+                          List l -> List l
+                          Val (Str s) -> List [Val (Str [c]) | c <- s]
+                          Val (Hash h) -> List [List [Val (Str (fst l)), snd l] | e <- h, l <- e]
+                          Val (File f) -> Call (Var "std.lib.split") [FileRead (Val (File f)), Val (Str "\n")]
+                          FileObj f -> Call (Var "std.lib.split") [FileRead (f), Val (Str "\n")]
+                          Exception e -> Exception e
+                          Val v -> List [Val v]
+                          otherwise -> Call (Var "list") [otherwise]
+  Call (Var "bool") 
+       [x] ->           case eval' x of
+                          Val Null -> Val (Bit False)
+                          Val (Bit b) -> Val (Bit b)
+                          Val (NumInt n) -> Val (Bit (n /= 0))
+                          Val (NumFloat n) -> Val (Bit (n /= 0))
+                          Val (Str s) -> Val (Bit (s /= ""))
+                          List l -> Val (Bit (l /= []))
+                          otherwise -> Call (Var "bool") [otherwise]
   Call (Var id) args -> if fullEval (Var id) eval' == Var id
                         then Call (Var id) [fullEval arg eval' | arg <- args]
                         else Call (fullEval (Var id) eval') args
@@ -105,45 +148,6 @@ eval oexp vars settings rw =
   Val x ->              case x of
                           Undefined s -> Exception s
                           otherwise -> Val x
-  ToInt x ->            case eval' x of
-                          Val (NumInt i) -> Val $ NumInt i
-                          Val (NumFloat f) -> Val $ NumInt (truncate f)
-                          Val (Str s) -> Val $ NumInt (Prelude.read s)
-                          Exception e -> Exception e
-                          otherwise -> ToInt otherwise
-  ToFloat x ->          case eval' x of
-                          Val (NumInt i) -> Val $ NumFloat $ fromIntegral i
-                          Val (NumFloat f) -> Val $ NumFloat f
-                          Val (Str s) -> Val $ NumFloat (Prelude.read s :: Double)
-                          Exception e -> Exception e
-                          otherwise -> ToFloat otherwise
-  ToStr x ->            case eval' x of
-                          Val (Str s) -> Val $ Str s
-                          Val (NumFloat f) -> Val $ Str $ showFFloat Nothing f ""
-                          Val (Undefined u) -> Exception u
-                          Val v -> Val $ Str (show v)
-                          Exception e -> Exception e
-                          ToStr y -> ToStr y
-                          otherwise -> if otherwise == x
-                                       then Val $ Str $ show x
-                                       else ToStr $ eval' otherwise
-  ToList x ->           case eval' x of
-                          List l -> List l
-                          Val (Str s) -> List [Val (Str [c]) | c <- s]
-                          Val (Hash h) -> List [List [Val (Str (fst l)), snd l] | e <- h, l <- e]
-                          Val (File f) -> Call (Var "std.lib.split") [FileRead (Val (File f)), Val (Str "\n")]
-                          FileObj f -> Call (Var "std.lib.split") [FileRead (f), Val (Str "\n")]
-                          Exception e -> Exception e
-                          Val v -> List [Val v]
-                          otherwise -> ToList $ eval' otherwise
-  ToBool x ->           case eval' x of
-                          Val Null -> Val (Bit False)
-                          Val (Bit b) -> Val (Bit b)
-                          Val (NumInt n) -> Val (Bit (n /= 0))
-                          Val (NumFloat n) -> Val (Bit (n /= 0))
-                          Val (Str s) -> Val (Bit (s /= ""))
-                          List l -> Val (Bit (l /= []))
-                          otherwise -> ToBool otherwise
   Subs n x ->           case x of
                           List l ->       case n' of
                                             Val (NumInt n) -> if n >= 0
@@ -160,12 +164,11 @@ eval oexp vars settings rw =
                           Val (Hash l) -> case n' of
                                             Exception e -> Exception e
                                             List l' ->        List [Subs i (Val (Hash l)) | i <- l']
-                                            otherwise -> case fullEval (ToStr otherwise) eval' of
+                                            otherwise -> case fullEval (Call (Var "str") [otherwise]) eval' of
                                                            Val (Str s) ->    case hashMember strHash s l of
                                                                                Just x -> x
                                                                                Nothing -> exNotInHash s
                                                            Exception e ->    Exception e
-                                                           ToStr s ->        Subs s x
                                                            otherwise ->      Subs otherwise (Val (Hash l))
                           Call (Var f) args ->  case n' of
                                                   Val (NumInt n) -> if n >= 0
@@ -323,7 +326,6 @@ eval oexp vars settings rw =
   FileObj f ->          case eval' f of
                           Val (Str s) -> Val $ File s
                           otherwise -> FileObj otherwise
-  Output x ->           Output (eval' x)
   FileRead f ->         FileRead (eval' f)
   FileWrite f x ->      case eval' f of
                           Val (File f) -> case eval' x of
@@ -432,11 +434,6 @@ subfile exp =
                             c' <- subfile c
                             d' <- iolist [subfile i | i <- d]
                             return $ TakeFor a b' c' d' e
-    ToInt a -> oneArg ToInt a
-    ToFloat a -> oneArg ToFloat a
-    ToStr a -> oneArg ToStr a
-    ToList a -> oneArg ToList a
-    ToBool a -> oneArg ToBool a
     List l ->      do list <- iolist [subfile e | e <- l]
                       return $ List list
     HashExpr l -> do list1 <- iolist [subfile (fst e) | e <- l]
@@ -463,7 +460,6 @@ subfile exp =
                        y' <- subfile y
                        z' <- iolist [subfile i | i <- z]
                        return $ For id x' y' z'
-    Output a -> oneArg Output a
     Input -> do line <- getLine
                 return $ Val (Str line)
     FileObj f -> oneArg FileObj f

@@ -23,9 +23,12 @@ import Scotch.Eval.Substitute
 
 main = do exePath <- getExecutablePath
           exeMod <- getModificationTime (exePath)
-          importStdLib <- importFile (InterpreterSettings {verbose = False, interpret = False, strict = False, exePath = exePath, exeMod = exeMod, stdlib = emptyHash}) 
+          importStdLib <- importFile (InterpreterSettings {verbose = False, interpret = False, strict = False, exePath = exePath, exeMod = exeMod, stdLib = emptyHash}) 
                                      False
                                      ["std", "lib"] ["std", "lib"]
           case importStdLib of
-            (True, b) -> do print b
+            (True, b) -> do writeFile "Scotch/Lib/StdLib.hs"
+                                      ("module Scotch.Lib.StdLib where\n\nimport Scotch.Types.Types\n\n"
+                                       ++ "stdlib = " ++ show b)
+
             otherwise -> do putStrLn "Failed to import std.lib"

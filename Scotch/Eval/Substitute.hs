@@ -109,11 +109,6 @@ parseExpr exp f =
     Val (Lambda ids expr) -> Val (Lambda ids (f expr))
     Val (Thread e) -> Val (Thread (f e))
     Take n x -> Take (f n) (f x)        
-    ToInt x -> ToInt (f x)
-    ToFloat x -> ToFloat (f x)
-    ToStr x -> ToStr (f x)
-    ToList l -> ToList (f l)
-    ToBool b -> ToBool (f b)
     List l -> List [f e | e <- l]    
     HashExpr l -> HashExpr [(f (fst kv), f (snd kv)) | kv <- l]
     Subs n x -> Subs (f n) (f x)
@@ -138,7 +133,6 @@ parseExpr exp f =
     For id x y z -> For id (f x) (f y) [f i | i <- z]
     TakeFor id x y z n -> TakeFor id (f x) (f y) [f i | i <- z] n
     Range x y z -> Range (f x) (f y) (f z)
-    Output x -> Output (f x)
     FileObj x -> FileObj (f x)
     FileRead x -> FileRead (f x)
     FileWrite a x -> FileWrite (f a) (f x)
