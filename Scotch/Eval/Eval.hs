@@ -262,9 +262,30 @@ eval oexp vars settings rw =
                           List l -> Val $ Proc $ 
                                     [Def (l !! n) (Subs (Val $ NumInt $ fromIntegral n) x) Skip 
                                      | n <- [0 .. length(l) - 1]]
+                          Subs a b -> case fullEval b eval' of
+                                        Val (Hash h) -> Def b (Val (Hash (makeHash strHash [((case fullEval a eval' of
+                                                                                                Val (Str s) -> s
+                                                                                                otherwise -> show a), x)
+                                                                                            ] h))) Skip
+                                        HashExpr h -> Def b (HashExpr (h ++ [(a, x)])) Skip
+                                        Var id -> Def b (Val (Hash (makeHash strHash [(show a, x)] emptyHash))) Skip
+                                        otherwise -> Def f x Skip
                           otherwise -> Def f x Skip
   Def f x y ->          evalWithNewDefs y [(f, x)]
-  EagerDef f x Skip ->  EagerDef f (fullEval x eval') Skip
+  EagerDef f x' Skip -> case f of
+                          List l -> Val $ Proc $ 
+                                    [EagerDef (l !! n) (Subs (Val $ NumInt $ fromIntegral n) x) Skip 
+                                     | n <- [0 .. length(l) - 1]]
+                          Subs a b -> case fullEval b eval' of
+                                        Val (Hash h) -> Def b (Val (Hash (makeHash strHash [((case fullEval a eval' of
+                                                                                                Val (Str s) -> s
+                                                                                                otherwise -> show a), x)
+                                                                                            ] h))) Skip
+                                        HashExpr h -> EagerDef b (HashExpr (h ++ [(a, x)])) Skip
+                                        Var id -> EagerDef b (Val (Hash (makeHash strHash [(show a, x)] emptyHash))) Skip
+                                        otherwise -> EagerDef f x Skip
+                          otherwise -> EagerDef f x Skip
+                        where x = fullEval x' eval'
   EagerDef f x y ->     evalWithNewDefs y [(f, fullEval x eval')]
   If cond x y ->        case eval' cond of
                           Val (Bit True) -> x
