@@ -14,7 +14,7 @@
     along with Scotch.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
-module Scotch.Eval.ReadFile (importFile, execute, wexecute, stdModules) where
+module Scotch.Eval.ReadFile (importFile, execute, wexecute) where
 
 import Data.List
 import Data.ByteString.Lazy (readFile)
@@ -30,11 +30,6 @@ import Scotch.Types.Interpreter
 import Scotch.Eval.Eval
 import Scotch.Config
 import Scotch.Lib.StdLib
-
-
-stdModules = [(["std", "lib"], stdlib),
-              (["std", "info"], stdinfo)
-              ]
 
 
 -- interpret a list of code lines using a list of scoped bindings
@@ -122,57 +117,51 @@ searchPathMatch (h:t) = do exists <- doesFileExist (h ++ ".sco")
                            case exists of
                              True -> return h
                              False -> searchPathMatch t
-
                              
 -- returns (was the import successful?, VarDict of imported bindings)
 importFile :: InterpreterSettings -> Bool -> [String] -> [String] -> IO (Bool, VarDict)
-importFile settings useMemos s t = 
-  case (useMemos, lookup s stdModules) of
-    (True, Just a) -> do return (True, a)
-    otherwise ->
-      do currDir <- getCurrentDirectory
-         libDir <- libraryPath
-         let moduleName = importName s
-         let searchPath = [currDir ++ moduleName ++ "/main",
-                           currDir ++ moduleName,
-                           libDir ++ moduleName ++ "/main",
-                           libDir ++ moduleName]
-         path <- searchPathMatch searchPath
-         let builtin = stdLib settings
-         val <- case path of 
-                  "" -> do return []
-                  otherwise -> do e <- execute (InterpreterSettings 
-                                                {
-                                                 verbose = verbose settings,
-                                                 strict = strict settings,
-                                                 interpret = False,
-                                                 exePath = exePath settings,
-                                                 exeMod = exeMod settings,
-                                                 stdLib = stdLib settings
-                                                })
-                                       path builtin
-                                  return [i | j <- e, i <- j]
-         let success = case path of
-                         "" -> False
-                         otherwise -> True
-         let newval = [(case fst binding of
-                          Var v -> Var (qualifier ++ stripLocal v)
-                          Call (Var v) a -> Call (Var (qualifier ++ stripLocal v)) a
-                          otherwise -> otherwise,--stripLocal (stripName (fst binding))),
-                        snd binding) 
-                       | binding <- val,
-                         case fst binding of
-                           Var v -> isPrefixOf "local." v
-                           Call (Var v) _ -> isPrefixOf "local." v
-                           otherwise -> True
-                         --isPrefixOf "local." (stripName (fst binding))
-                         ]
-                       where qualifier = (foldl (++) [] [i ++ "." | i <- t])
-                             stripLocal s = if isPrefixOf "local." s then [s !! n | n <- [length "local." .. (length s) - 1]] else s
-         if success == False
-           then do putStrLn (show searchPath)
-           else do return ()
-         return (success, makeVarDict newval emptyHash)
+importFile settings True ["std", "lib"] ["std", "lib"] = do return (True, stdlib)
+importFile settings _ s t = 
+  do currDir <- getCurrentDirectory
+     libDir <- libraryPath
+     let moduleName = importName s
+     let searchPath = [currDir ++ moduleName ++ "/main",
+                       currDir ++ moduleName,
+                       libDir ++ moduleName ++ "/main",
+                       libDir ++ moduleName]
+     path <- searchPathMatch searchPath
+     let builtin = stdLib settings
+     val <- case path of 
+              "" -> do return []
+              otherwise -> do e <- execute (InterpreterSettings 
+                                            {
+                                             verbose = verbose settings,
+                                             strict = strict settings,
+                                             interpret = False,
+                                             exePath = exePath settings,
+                                             exeMod = exeMod settings,
+                                             stdLib = stdLib settings
+                                            })
+                                   path builtin
+                              return [i | j <- e, i <- j]
+     let success = case path of
+                     "" -> False
+                     otherwise -> True
+     let newval = [(case fst binding of
+                      Var v -> Var (qualifier ++ stripLocal v)
+                      Call (Var v) a -> Call (Var (qualifier ++ stripLocal v)) a
+                      otherwise -> otherwise,--stripLocal (stripName (fst binding))),
+                    snd binding) 
+                   | binding <- val,
+                     case fst binding of
+                       Var v -> isPrefixOf "local." v
+                       Call (Var v) _ -> isPrefixOf "local." v
+                       otherwise -> True
+                     --isPrefixOf "local." (stripName (fst binding))
+                     ]
+                   where qualifier = (foldl (++) [] [i ++ "." | i <- t])
+                         stripLocal s = if isPrefixOf "local." s then [s !! n | n <- [length "local." .. (length s) - 1]] else s
+     return (success, makeVarDict newval emptyHash)
 
 -- interpret the contents of a file, returning a dictionary of the new bindings
 execute :: InterpreterSettings -> String -> VarDict -> IO VarDict
