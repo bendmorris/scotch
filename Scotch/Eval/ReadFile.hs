@@ -40,7 +40,7 @@ wexecute settings (h:t) bindings =
      -- evaluate the parsed code
      result <- do ieval settings parsed bindings []
      -- get new bindings if any definitions/imports were made
-     newBindings <- case parsed of
+     newBindings <- case result of
                       Def id x Skip -> do return [(localVar id, x)]
                       EagerDef id x Skip -> do evaluated <- ieval settings x bindings []
                                                case evaluated of
@@ -54,25 +54,17 @@ wexecute settings (h:t) bindings =
                                                                return []
                                               (True, i) -> do return $ reverse [e | j <- i, e <- j]
                                        return b
-                                     
-                      otherwise -> do l <- case result of
-                                             Val (Proc p) -> do e <- wexecute settings [(position, e) | e <- p] bindings
-                                                                return [i | j <- e, i <- j]
-                                             Import s t -> do i <- importFile settings True s t
-                                                              b <- case i of
-                                                                     (False, _) -> do putStrLn ("Failed to import module " ++ show s)
-                                                                                      return []
-                                                                     (True, i) -> do return [e | j <- i, e <- j]
-                                                              return b
-                                             otherwise -> do return []
-                                      return $ l ++ [(Var "ans", result)]
+                      Val (Proc p) -> do e <- wexecute settings [(position, e) | e <- p] bindings
+                                         return [i | j <- e, i <- j]
+                      Val v -> do return $ [(Var "ans", result)]
+                      otherwise -> do return []
      -- output, if necessary
      case result of
        Exception e -> do putStrLn ("\nException in " ++ (showPosition) ++ "\n" ++ e ++ "\n")
                          return []
        Output x -> do case x of
                         Val (Str s) -> putStrLn s
-                        otherwise -> putStrLn (show x)
+                        otherwise -> print x
                       nextline newBindings
        FileWrite (Val (File f)) (Val (Str x)) -> do writeFile f x
                                                     nextline newBindings
