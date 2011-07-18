@@ -1,6 +1,10 @@
-import std.copyright
+version = print("0.5.0")
 
-print("
+about = print("To learn more about Scotch, visit <http://www.scotchlang.org>")
+
+copyright = print("Copyright (c) 2010 Ben Morris. All rights reserved.")
+
+license = print("
 Scotch is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or

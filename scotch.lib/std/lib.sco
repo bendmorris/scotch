@@ -1,10 +1,5 @@
 # these functions will be imported by the Scotch interpreter automatically
-
-version = do import std.version
-copyright = do import std.copyright
-license = do import std.license
-startup = do import std.startup
-about = do import std.about
+import std.info as local
 
 # Returns the length of a string or list.
 len(h:t, a) = len(t, a + 1)

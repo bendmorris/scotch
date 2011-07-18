@@ -366,12 +366,6 @@ totalProd (h:t) = if t == []
                   else Prod h (totalProd t)
                                     
 
-iolist :: [IO Expr] -> IO [Expr]
-iolist [] = do return []
-iolist (h:t) = do item <- h
-                  rest <- iolist t
-                  return (item:rest)
-
 -- ieval: evaluates an expression completely, replacing I/O operations as necessary
 ieval :: InterpreterSettings -> Expr -> VarDict -> [Expr] -> IO Expr
 ieval settings expr vars last =
