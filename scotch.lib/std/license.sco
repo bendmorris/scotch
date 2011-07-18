@@ -1,8 +1,4 @@
-version = print("0.5.0")
-
-about = print("To learn more about Scotch, visit <http://www.scotchlang.org>")
-
-copyright = print("Copyright (c) 2010 Ben Morris. All rights reserved.")
+import std.copyright
 
 license = print("
 Scotch is free software: you can redistribute it and/or modify

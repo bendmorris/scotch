@@ -32,11 +32,6 @@ import Scotch.Config
 import Scotch.Lib.StdLib
 
 
-stdModules = [(["std", "lib"], stdlib),
-              (["std", "info"], stdinfo)
-              ]
-
-
 -- interpret a list of code lines using a list of scoped bindings
 wexecute :: InterpreterSettings -> [PosExpr] -> VarDict -> IO VarDict
 wexecute _ [] bindings = do return bindings
@@ -123,12 +118,25 @@ searchPathMatch (h:t) = do exists <- doesFileExist (h ++ ".sco")
                              True -> return h
                              False -> searchPathMatch t
 
+stdModules = [(["std", "about"], stdabout),
+              (["std", "copyright"], stdcopyright),
+              (["std", "decimal"], stddecimal),
+              (["std", "fraction"], stdfraction),
+              (["std", "license"], stdlicense),
+              (["std", "unit"], stdunit),
+              (["std", "units"], stdunits),
+              (["std", "version"], stdversion),
+              (["std", "math"], stdmath),
+              (["std", "math", "algebra"], stdmathalgebra),
+              (["std", "math", "calculus"], stdmathcalculus),
+              (["std", "math", "infinity"], stdmathinfinity)
+              ]
                              
 -- returns (was the import successful?, VarDict of imported bindings)
 importFile :: InterpreterSettings -> Bool -> [String] -> [String] -> IO (Bool, VarDict)
 importFile settings useMemos s t = 
   case (useMemos, lookup s stdModules) of
-    (True, Just a) -> do return (True, a)
+    (False, Just a) -> do return (True, a)
     otherwise ->
       do currDir <- getCurrentDirectory
          libDir <- libraryPath
@@ -169,9 +177,6 @@ importFile settings useMemos s t =
                          ]
                        where qualifier = (foldl (++) [] [i ++ "." | i <- t])
                              stripLocal s = if isPrefixOf "local." s then [s !! n | n <- [length "local." .. (length s) - 1]] else s
-         if success == False
-           then do putStrLn (show searchPath)
-           else do return ()
          return (success, makeVarDict newval emptyHash)
 
 -- interpret the contents of a file, returning a dictionary of the new bindings

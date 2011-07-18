@@ -17,7 +17,7 @@ import Scotch.Types.Hash
 import Scotch.Types.Interpreter
 
           
-modules = [fst (stdModules !! m) | m <- [1 .. (length stdModules) -1]]
+modules = [fst m | m <- stdModules]
 
 main = do exePath <- getExecutablePath
           exeMod <- getModificationTime (exePath)
