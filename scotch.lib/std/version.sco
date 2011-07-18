@@ -1,1 +1,1 @@
-version = print("0.5.0")
+print("0.5.0")

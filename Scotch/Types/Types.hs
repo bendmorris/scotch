@@ -103,14 +103,3 @@ data Expr = Exception String                -- undefined
 
 type ExprPosition = (String, (Int, Int))
 type PosExpr = (Maybe ExprPosition, Expr)
-
-
-iolist :: [IO a] -> IO [a]
-iolist [] = do return []
-iolist (h:t) = do item <- h
-                  rest <- iolist t
-                  return (item:rest)
-                  
-iopair :: (IO a, b) -> IO (a, b)
-iopair (a, b) = do a' <- a
-                   return (a', b)
