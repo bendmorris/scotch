@@ -44,11 +44,6 @@ instance Show(Expr) where
     show (HashExpr h) = "{" ++ (if length h > 0
                                 then join ", " [show (fst i) ++ ": " ++ show (snd i) | i <- h]
                                 else "") ++ "}"
-    show (ToInt i) = "int(" ++ show i ++ ")"
-    show (ToFloat f) = "float(" ++ show f ++ ")"
-    show (ToStr s) = "str(" ++ show s ++ ")"
-    show (ToList l) = "list(" ++ show l ++ ")"
-    show (ToBool b) = "bool(" ++ show b ++ ")"
     show (Concat a b) = "(" ++ show a ++ " : " ++ show b ++ ")"
     show (Subs n s) = show s ++ " @" ++ show n
     show (Add x y) = "(" ++ show x ++ " + " ++ show y ++ ")"
@@ -76,13 +71,12 @@ instance Show(Expr) where
     show (UseRule r x) = "using " ++ show r ++ " => " ++ show x
     show (Var f) = f
     show (Call f args) = show f ++ removeBrackets (show args)
-    show (If (ToBool cond) x y) = "if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y
+    show (If (Call (Var "bool") [cond]) x y) = "if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y
     show (If cond x y) = "if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y
     show (Case c o) = "case " ++ show c ++ " of" ++ tail (foldl (++) "" [", " ++ show (fst i) ++ " -> " ++ show (snd i) | i <- o])
-    show (For x (ToList y) z w) = "[for " ++ show x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
+    show (For x (Call (Var "list") [y]) z w) = "[for " ++ show x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
     show (For x y z w) = "[for " ++ show x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
     show (Range x y z) = "[" ++ show x ++ ".." ++ show y ++ (if z == (Val (NumInt 1)) then "" else "," ++ show z) ++ "]"
-    show (Output x) = "print(" ++ show x ++ ")"
     show Input = "input"
     show (Import s []) = "import " ++ moduleName s
     show (Import s t) = show (Import s []) ++ " as " ++ moduleName t

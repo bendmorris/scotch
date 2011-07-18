@@ -58,11 +58,6 @@ data Expr = Exception String                -- undefined
           | List [Expr]                     -- list expression
           | Take Expr Expr                  -- take _ from _
           | HashExpr [(Expr, Expr)]         -- hash expression
-          | ToInt (Expr)                    -- conversion to integer
-          | ToFloat (Expr)                  -- conversion to float
-          | ToStr (Expr)                    -- conversion to string
-          | ToList (Expr)                   -- conversion to list
-          | ToBool (Expr)                   -- conversion to boolean
           | Subs Expr Expr                  -- list subscript
           | Concat Expr Expr                -- list concatenation
           | Add Expr Expr                   -- addition
@@ -89,7 +84,6 @@ data Expr = Exception String                -- undefined
           | TakeFor Id (Expr) (Expr) [Expr] Integer
                                             -- take from list comprehension
           | Range (Expr) (Expr) (Expr)      -- range
-          | Output Expr                     -- output
           | Input                           -- get a line of input from the user
           | Import [String] [String]        -- import module
           | FileObj Expr                    -- file object

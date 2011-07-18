@@ -111,7 +111,6 @@ valueExpr =
   try takeStmt <|>
   try forStmt <|>
   try notStmt <|>
-  try conversionStmt <|>
   try varcallStmt <|>
   try valueStmt
 
@@ -125,7 +124,7 @@ ifStmt =
       expr1 <- expression
       reserved "else"
       expr2 <- expression
-      return $ If (ToBool cond) expr1 expr2)
+      return $ If (Call (Var "bool") [cond]) expr1 expr2)
   <|>
   (do reserved "if"
       cond <- expression
@@ -200,7 +199,7 @@ inStmt =
      reserved "in"
      list <- expression
      reserved ","
-     return (iterator, ToList list)
+     return (iterator, Call (Var "list") [list])
 listCompStmt =
   do reserved "for"
      ins <- many (try inStmt)
@@ -216,34 +215,7 @@ notStmt =
   do reserved "not"
      expr <- expression
      return $ Not expr
-     
-conversionStmt = 
-  try toIntStmt <|> 
-  try toFloatStmt <|> 
-  try toStrStmt <|> 
-  try toListStmt <|> 
-  try toBoolStmt
-
-toIntStmt =
-  do reserved "int"
-     expr <- parens expression
-     return $ ToInt expr
-toFloatStmt =
-  do reserved "float"
-     expr <- parens expression
-     return $ ToFloat expr
-toStrStmt =
-  do reserved "str"
-     expr <- parens expression
-     return $ ToStr expr
-toListStmt =
-  do reserved "list"
-     expr <- parens expression
-     return $ ToList expr
-toBoolStmt =
-  do reserved "bool"
-     expr <- parens expression
-     return $ ToBool expr
+          
      
 -- value parsers
 
@@ -386,16 +358,10 @@ varcallStmt =
 
 -- statements
 stmt = 
-  try printStmt <|>
   try importStmt <|>
   try writeStmt <|>
   try appendStmt
   
-
-printStmt =
-  do reserved "print"
-     expr <- try (parens $ expression) <|> do return Skip
-     return $ Output (expr)
 
 moduleName =
   do sepBy (many (oneOf (upperCase ++ lowerCase ++ numeric))) (oneOf ".")     

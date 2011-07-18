@@ -66,16 +66,6 @@ instance Binary(Expr) where
                                put b
     put (HashExpr h) =      do put (23 :: Word8)
                                put h
-    put (ToInt i) =         do put (24 :: Word8)
-                               put i
-    put (ToFloat f) =       do put (25 :: Word8)
-                               put f
-    put (ToStr s) =         do put (26 :: Word8)
-                               put s
-    put (ToList l) =        do put (27 :: Word8)
-                               put l
-    put (ToBool b) =        do put (45 :: Word8)
-                               put b
     put (Subs n s) =        do put (28 :: Word8)
                                put n
                                put s
@@ -149,8 +139,6 @@ instance Binary(Expr) where
                                put a
                                put b
                                put c
-    put (Output x) =        do put (52 :: Word8)
-                               put x
     put (Input) =           do put (53 :: Word8)
     put (Import a b) =      do put (54 :: Word8)
                                put a
@@ -186,16 +174,6 @@ instance Binary(Expr) where
                            return $ Take a b
                23 ->    do h <- get
                            return $ HashExpr h
-               24 ->    do i <- get
-                           return $ ToInt i
-               25 ->    do f <- get
-                           return $ ToFloat f
-               26 ->    do s <- get
-                           return $ ToStr s
-               27 ->    do l <- get
-                           return $ ToList l
-               45 ->    do b <- get
-                           return $ ToBool b
                28 ->    do a <- get
                            b <- get
                            return $ Subs a b
@@ -269,8 +247,6 @@ instance Binary(Expr) where
                            b <- get
                            c <- get
                            return $ Range a b c
-               52 ->    do a <- get
-                           return $ Output a
                53 ->    do return $ Input
                54 ->    do a <- get
                            b <- get

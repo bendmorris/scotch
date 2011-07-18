@@ -62,10 +62,10 @@ wexecute settings (h:t) bindings =
      case result of
        Exception e -> do putStrLn ("\nException in " ++ (showPosition) ++ "\n" ++ e ++ "\n")
                          return []
-       Output x -> do case x of
-                        Val (Str s) -> putStrLn s
-                        otherwise -> print x
-                      nextline newBindings
+       Call (Var "print") [x] -> do case x of
+                                      Val (Str s) -> putStrLn s
+                                      otherwise -> print x
+                                    nextline newBindings
        FileWrite (Val (File f)) (Val (Str x)) -> do writeFile f x
                                                     nextline newBindings
        FileAppend (Val (File f)) (Val (Str x)) -> do appendFile f x
