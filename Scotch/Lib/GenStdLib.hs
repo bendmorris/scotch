@@ -24,7 +24,8 @@ import Scotch.Eval.Substitute
 main = do exePath <- getExecutablePath
           exeMod <- getModificationTime (exePath)
           importStdLib <- importFile (InterpreterSettings {verbose = False, interpret = False, strict = False, exePath = exePath, exeMod = exeMod, stdlib = emptyHash}) 
+                                     False
                                      ["std", "lib"] ["std", "lib"]
           case importStdLib of
-            (True, b) -> do putStrLn (show b)
+            (True, b) -> do print b
             otherwise -> do putStrLn "Failed to import std.lib"

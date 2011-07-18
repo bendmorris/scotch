@@ -29,6 +29,7 @@ import Scotch.Types.Hash
 import Scotch.Types.Interpreter
 import Scotch.Eval.Eval
 import Scotch.Config
+import Scotch.Lib.StdLib
 
 
 -- interpret a list of code lines using a list of scoped bindings
@@ -47,7 +48,7 @@ wexecute settings (h:t) bindings =
                                                                    return []
                                                  otherwise -> return [(localVar id, evaluated)]
                                                return [(localVar id, evaluated)]
-                      Import s t -> do i <- importFile settings s t
+                      Import s t -> do i <- importFile settings True s t
                                        b <- case i of 
                                               (False, _) -> do putStrLn ("Failed to import module " ++ show s)
                                                                return []
@@ -57,7 +58,7 @@ wexecute settings (h:t) bindings =
                       otherwise -> do l <- case result of
                                              Val (Proc p) -> do e <- wexecute settings [(position, e) | e <- p] bindings
                                                                 return [i | j <- e, i <- j]
-                                             Import s t -> do i <- importFile settings s t
+                                             Import s t -> do i <- importFile settings True s t
                                                               b <- case i of
                                                                      (False, _) -> do putStrLn ("Failed to import module " ++ show s)
                                                                                       return []
@@ -118,8 +119,9 @@ searchPathMatch (h:t) = do exists <- doesFileExist (h ++ ".sco")
                              False -> searchPathMatch t
                              
 -- returns (was the import successful?, VarDict of imported bindings)
-importFile :: InterpreterSettings -> [String] -> [String] -> IO (Bool, VarDict)
-importFile settings s t = 
+importFile :: InterpreterSettings -> Bool -> [String] -> [String] -> IO (Bool, VarDict)
+importFile settings True ["std", "lib"] ["std", "lib"] = do return (True, stdlib)
+importFile settings _ s t = 
   do currDir <- getCurrentDirectory
      libDir <- libraryPath
      let moduleName = importName s
