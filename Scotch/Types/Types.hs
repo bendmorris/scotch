@@ -80,8 +80,6 @@ data Expr = Exception String                -- undefined
           | If Expr Expr Expr               -- conditional
           | Case Expr [(Expr, Expr)]        -- case expression
           | For Id (Expr) (Expr) [Expr]     -- iteration
-          | TakeFor Id (Expr) (Expr) [Expr] Integer
-                                            -- take from list comprehension
           | Range (Expr) (Expr) (Expr)      -- range
           | Import [String] [String]        -- import module
           | Rule [Expr]                     -- a rule (list of definitions)

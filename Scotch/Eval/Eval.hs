@@ -59,14 +59,19 @@ eval oexp vars settings rw =
        [x] ->           case eval' x of
                           Val (NumInt i) -> Val $ NumInt i
                           Val (NumFloat f) -> Val $ NumInt (truncate f)
-                          Val (Str s) -> Val $ NumInt (Prelude.read s)
+                          Val (Str s) -> case (Parse.read "" s) !! 0 of
+                                           (Just a, Val (NumInt i)) -> Val (NumInt i)
+                                           otherwise -> exCantConvert s "integer"
                           Exception e -> Exception e
                           otherwise -> Call (Var "int") [otherwise]
   Call (Var "float") 
        [x] ->           case eval' x of
                           Val (NumInt i) -> Val $ NumFloat $ fromIntegral i
                           Val (NumFloat f) -> Val $ NumFloat f
-                          Val (Str s) -> Val $ NumFloat (Prelude.read s :: Double)
+                          Val (Str s) -> case (Parse.read "" s) !! 0 of
+                                           (Just a, Val (NumFloat f)) -> Val (NumFloat f)
+                                           (Just a, Val (NumInt i)) -> Val (NumFloat (fromIntegral i))
+                                           otherwise -> exCantConvert s "float"
                           Exception e -> Exception e
                           otherwise -> Call (Var "float") [otherwise]
   Call (Var "str") 
@@ -114,12 +119,7 @@ eval oexp vars settings rw =
   Take n x ->           case n of
                           Val (NumInt i) -> case x of
                                               List l -> List (take i' l)
-                                              Range from to step -> case eval' (Range from to step) of
-                                                                      List l -> List (take i' l)
-                                                                      Exception e -> Exception e
-                                                                      otherwise -> Take n otherwise
                                               Val (Str s) -> Val $ Str $ take i' s
-                                              For id x y conds -> TakeFor id x y conds i
                                               Exception e -> Exception e
                                               Add (List l) (y) -> if length t == i'
                                                                   then List t
@@ -151,11 +151,13 @@ eval oexp vars settings rw =
   Val x ->              case x of
                           Undefined s -> Exception s
                           otherwise -> Val x
-  Subs n x ->           case x' of
+  Subs n x ->           case fullEval x' eval' of
                           List l ->       case n' of
-                                            Val (NumInt n) -> if n >= 0
-                                                              then l !! (fromIntegral n)
-                                                              else l !! ((length l) + (fromIntegral n))
+                                            Val (NumInt n) -> case (if n >= 0
+                                                                    then getElemAtN l (fromIntegral n)
+                                                                    else getElemAtN l ((length l) + (fromIntegral n))) of
+                                                                Just x -> x
+                                                                Nothing -> exNotInList n
                                             List l' ->        List [Subs i (List l) | i <- l']
                                             otherwise ->      Subs n' x'
                           Val (Str s) ->  case n' of
@@ -226,7 +228,7 @@ eval oexp vars settings rw =
                                                         allTrue [fullEval (Eq (a' !! n) 
                                                                               (b' !! n))
                                                                           eval'
-                                                                 | n <- [0 .. (length a - 2)]]
+                                                                 | n <- [0 .. (length a - 1)]]
                                                   else Val (Bit False)
                                                   where allTrue [] = True
                                                         allTrue (h:t) = case h of 
@@ -308,13 +310,6 @@ eval oexp vars settings rw =
                                                   ]
                           Exception e ->    Exception e
                           otherwise ->      For id otherwise y conds
-  TakeFor id x y conds n -> case eval' x of
-                          List l ->         List     (take (fromIntegral n)
-                                                     [substitute y [(Var id, item)] | item <- l,
-                                                      allTrue [substitute cond [(Var id, item)] | cond <- conds]
-                                                      ])
-                          Exception e ->    Exception e
-                          otherwise ->      TakeFor id otherwise y conds n
   Range from to step -> case from of
                           Val (NumInt i) -> case to of
                                               Val (NumInt j) -> case step of
@@ -374,6 +369,10 @@ eval oexp vars settings rw =
        eval' expr = eval expr vars settings rw
        evalWithNewDefs expr defs = eval expr (makeVarDict defs vars) settings rw
        
+getElemAtN [] n = Nothing
+getElemAtN (h:t) 0 = Just h
+getElemAtN (h:t) n = getElemAtN t (n-1)
+
 
 totalProd [] = Val (NumInt 1)       
 totalProd (h:t) = if t == []
@@ -434,10 +433,6 @@ subfile exp =
     Call f args -> do args' <- iolist [subfile arg | arg <- args]
                       return $ Call f args'
     Take a b -> twoArgs Take a b
-    TakeFor a b c d e -> do b' <- subfile b
-                            c' <- subfile c
-                            d' <- iolist [subfile i | i <- d]
-                            return $ TakeFor a b' c' d' e
     List l ->      do list <- iolist [subfile e | e <- l]
                       return $ List list
     HashExpr l -> do list1 <- iolist [subfile (fst e) | e <- l]

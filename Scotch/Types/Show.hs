@@ -39,7 +39,6 @@ instance Show(Expr) where
     show (Val v) = show v
     show (List l) = show l
     show (Take a b) = "take " ++ show a ++ " from " ++ show b
-    show (TakeFor a b c d e) = show (Take (Val (NumInt e)) (For a b c d))
     show (HashExpr h) = "{" ++ (if length h > 0
                                 then join ", " [show (fst i) ++ ": " ++ show (snd i) | i <- h]
                                 else "") ++ "}"

@@ -24,7 +24,6 @@ import Data.List
 
 fullEval x evalFunc = case x of
                         List l -> List l
-                        For a b c d -> For a b c d
                         otherwise -> if evalFunc x == x then x else fullEval (evalFunc x) evalFunc
 
 -- if expression x should be rewritten, return the rewritten expression;
@@ -131,6 +130,5 @@ parseExpr exp f =
     If x y z -> If (f x) (f y) (f z)
     Case c opts -> Case (f c) [(fst opt, f (snd opt)) | opt <- opts]
     For id x y z -> For id (f x) (f y) [f i | i <- z]
-    TakeFor id x y z n -> TakeFor id (f x) (f y) [f i | i <- z] n
     Range x y z -> Range (f x) (f y) (f z)
     otherwise -> otherwise

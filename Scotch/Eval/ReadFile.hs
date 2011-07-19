@@ -112,7 +112,7 @@ searchPathMatch (h:t) = do exists <- doesFileExist (h ++ ".sco")
                              
 -- returns (was the import successful?, VarDict of imported bindings)
 importFile :: InterpreterSettings -> Bool -> [String] -> [String] -> IO (Bool, VarDict)
-importFile settings True ["std", "lib"] ["std", "lib"] = do return (True, stdlib)
+--importFile settings True ["std", "lib"] ["std", "lib"] = do return (True, stdlib)
 importFile settings _ s t = 
   do currDir <- getCurrentDirectory
      libDir <- libraryPath
