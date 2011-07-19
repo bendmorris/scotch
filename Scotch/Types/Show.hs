@@ -73,8 +73,8 @@ instance Show(Expr) where
     show (If (Call (Var "bool") [cond]) x y) = "if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y
     show (If cond x y) = "if " ++ show cond ++ " then " ++ show x ++ " else " ++ show y
     show (Case c o) = "case " ++ show c ++ " of" ++ tail (foldl (++) "" [", " ++ show (fst i) ++ " -> " ++ show (snd i) | i <- o])
-    show (For x (Call (Var "list") [y]) z w) = "[for " ++ show x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
-    show (For x y z w) = "[for " ++ show x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
+    show (For x (Call (Var "list") [y]) z w) = "[for " ++ x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
+    show (For x y z w) = "[for " ++ x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
     show (Range x y z) = "[" ++ show x ++ ".." ++ show y ++ (if z == (Val (NumInt 1)) then "" else "," ++ show z) ++ "]"
     show (Import s []) = "import " ++ moduleName s
     show (Import s t) = show (Import s []) ++ " as " ++ moduleName t
