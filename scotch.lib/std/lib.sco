@@ -62,11 +62,17 @@ strip(h:t) = strip(h:t, " ")
 strip(h:t, s) = rstrip(lstrip(h:t, s), s)
 
 # Splits a string into a list of strings separated by character \s.
-split(h:t, s) = split(h:t, s, [], [])
-split(h:t, s, a, b) = if h == s
-                      then split(t, s, a + [b], [])
-                      else split(t, s, a, b + h)
-split([], s, a, b) = a + [b]
+split(h:t, s) = if len(s) == 1 
+                then splitChar(h:t, s, [], [])
+                else splitSeq(h:t, s, [], [])
+splitChar(h:t, s, a, b) = if s == h
+                          then splitChar(t, s, a + [b], [])
+                          else splitChar(t, s, a, b + h)
+splitChar([], s, a, b) = a + [b]
+splitSeq(h:t, s, a, b) = if prefix(s, h:t)
+                         then splitSeq(right(h:t, len(h:t) - len(s)), s, a + [b], [])
+                         else splitSeq(t, s, a, b + h)
+splitSeq([], s, a, b) = a + [b]
 lines(f) = split(read(f), "\n")
 
 join(h:t, s) = if t == []
