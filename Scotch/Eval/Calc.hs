@@ -117,6 +117,8 @@ veq _ (Val (Str "")) (List []) = Val (Bit (True))
 veq _ (Val a) (Val b) = Val (Bit (a == b))
 veq _ (List a) (List b) = if a == b then Val (Bit True) 
                           else Eq (List a) (List b)
+veq _ (List a) (Val (Str b)) = Val $ Bit $ (List a) == List [Val (Str [s]) | s <- b]
+veq f (Val (Str b)) (List a) = veq f (List a) (Val $ Str b)
 veq _ a b = Eq a b
 -- greater than
 vgt _ (List l) (Val v) = List $ [Gt i (Val v) | i <- l]
