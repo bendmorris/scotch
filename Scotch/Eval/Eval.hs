@@ -47,6 +47,14 @@ eval oexp vars settings rw =
                              else Var id
   Call x [] -> x
   Call (Call id args) args' -> eval' $ Call id (args ++ args')
+  Call (Var "eval") 
+       [x] ->           case eval' x of
+                          Val (Str s) -> case length evaled of
+                                           0 -> Skip
+                                           1 -> evaled !! 0
+                                           otherwise -> Val $ Proc $ evaled
+                                         where evaled = [snd i | i <- Parse.read "" s]
+                          otherwise -> Call (Var "eval") [otherwise]
   Call (Var "int") 
        [x] ->           case eval' x of
                           Val (NumInt i) -> Val $ NumInt i
@@ -76,8 +84,6 @@ eval oexp vars settings rw =
                           List l -> List l
                           Val (Str s) -> List [Val (Str [c]) | c <- s]
                           Val (Hash h) -> List [List [Val (Str (fst l)), snd l] | e <- h, l <- e]
-                          Val (File f) -> Call (Var "std.lib.split") [FileRead (Val (File f)), Val (Str "\n")]
-                          FileObj f -> Call (Var "std.lib.split") [FileRead (f), Val (Str "\n")]
                           Exception e -> Exception e
                           Val v -> List [Val v]
                           otherwise -> Call (Var "list") [otherwise]
@@ -104,13 +110,6 @@ eval oexp vars settings rw =
                                                                otherwise -> show otherwise 
                                                              | i <- args]
   Call x args ->        Call (fullEval x eval') args
-  EvalExpr x ->         case eval' x of
-                          Val (Str s) -> case length evaled of
-                                           0 -> Skip
-                                           1 -> evaled !! 0
-                                           otherwise -> Val $ Proc $ evaled
-                                         where evaled = [snd i | i <- Parse.read "" s]
-                          otherwise -> EvalExpr otherwise
   Import s t ->         Import s t
   Take n x ->           case n of
                           Val (NumInt i) -> case x of
@@ -325,20 +324,6 @@ eval oexp vars settings rw =
                                               otherwise -> Range from (eval' to) step
                           Exception e -> Exception e
                           otherwise -> Range (eval' from) to step
-  FileObj f ->          case eval' f of
-                          Val (Str s) -> Val $ File s
-                          otherwise -> FileObj otherwise
-  FileRead f ->         FileRead (eval' f)
-  FileWrite f x ->      case eval' f of
-                          Val (File f) -> case eval' x of
-                                            Val (Str s) -> FileWrite (Val (File f)) (Val (Str s))
-                                            otherwise -> FileWrite (Val (File f)) otherwise
-                          otherwise -> FileWrite otherwise x
-  FileAppend f x ->     case eval' f of
-                          Val (File f) -> case eval' x of
-                                            Val (Str s) -> FileAppend (Val (File f)) (Val (Str s))
-                                            otherwise -> FileAppend (Val (File f)) otherwise
-                          otherwise -> FileAppend otherwise x
   UseRule r x ->        case r of
                           Rule r -> eval' (rule x r)
                           List l -> if all ((/=) [Skip]) l'
@@ -462,15 +447,14 @@ subfile exp =
                        y' <- subfile y
                        z' <- iolist [subfile i | i <- z]
                        return $ For id x' y' z'
-    Input -> do line <- getLine
-                return $ Val (Str line)
-    FileObj f -> oneArg FileObj f
-    FileRead f -> do sub <- subfile f
-                     case f of
-                       Val (File f) -> do exists <- doesFileExist f
-                                          case exists of 
-                                            True -> do contents <- readFile f
-                                                       return $ Val $ Str contents
-                                            False -> return $ exFileDNE
-                       otherwise -> return $ FileRead f
+    Var "input" -> do line <- getLine
+                      return $ Val (Str line)
+    Call (Var "read") [f] -> do sub <- subfile f
+                                case f of
+                                  Val (Str f) -> do exists <- doesFileExist f
+                                                    case exists of 
+                                                      True -> do contents <- readFile f
+                                                                 return $ Val $ Str contents
+                                                      False -> return $ exFileDNE
+                                  otherwise -> return $ exp
     otherwise -> do return otherwise

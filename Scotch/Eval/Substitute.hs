@@ -133,9 +133,4 @@ parseExpr exp f =
     For id x y z -> For id (f x) (f y) [f i | i <- z]
     TakeFor id x y z n -> TakeFor id (f x) (f y) [f i | i <- z] n
     Range x y z -> Range (f x) (f y) (f z)
-    FileObj x -> FileObj (f x)
-    FileRead x -> FileRead (f x)
-    FileWrite a x -> FileWrite (f a) (f x)
-    FileAppend a x -> FileAppend (f a) (f x)
-    EvalExpr x -> EvalExpr (f x)
     otherwise -> otherwise

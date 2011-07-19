@@ -30,7 +30,6 @@ instance Show (Value) where
     show (Thread th) = "thread " ++ show th
     show (Null) = "null"
     show (Undefined s) = show s
-    show (File f) = "file(" ++ show f ++ ")"
     show InvalidValue = "**invalid value**"
 
 
@@ -77,11 +76,5 @@ instance Show(Expr) where
     show (For x (Call (Var "list") [y]) z w) = "[for " ++ show x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
     show (For x y z w) = "[for " ++ show x ++ " in " ++ show y ++ ", " ++ show z ++ (foldl (++) "" [", " ++ show w' | w' <- w]) ++ "]"
     show (Range x y z) = "[" ++ show x ++ ".." ++ show y ++ (if z == (Val (NumInt 1)) then "" else "," ++ show z) ++ "]"
-    show Input = "input"
     show (Import s []) = "import " ++ moduleName s
     show (Import s t) = show (Import s []) ++ " as " ++ moduleName t
-    show (FileObj f) = "file(" ++ show f ++ ")"
-    show (FileRead f) = "read(" ++ show f ++ ")"
-    show (FileWrite f x) = "write(" ++ show f ++ ", " ++ show x ++ ")"
-    show (FileAppend f x) = "append(" ++ show f ++ ", " ++ show x ++ ")"
-    show (EvalExpr e) = "eval(" ++ show e ++ ")"

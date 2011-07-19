@@ -40,12 +40,10 @@ languageDef =
                                       "and", "or", "not", "mod",
                                       "where", "case", "of",
                                       "do",
-                                      "read", "write", "append", "input",
                                       "thread",
                                       "lambda",
                                       "import", "as",
                                       "take", "from",
-                                      "eval",
                                       "using", "rule"
                                      ],
              Token.reservedOpNames = forbiddenOps

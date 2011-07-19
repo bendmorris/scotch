@@ -25,8 +25,6 @@ instance Binary(Value) where
     put (Null) =            do put (14 :: Word8)
     put (Undefined s) =     do put (15 :: Word8)
                                put s
-    put (File f) =          do put (16 :: Word8)
-                               put f
     get = do t <- get :: Get Word8
              case t of 
                4 ->     do s <- get
@@ -49,8 +47,6 @@ instance Binary(Value) where
                14 ->    do return $ Null
                15 ->    do s <- get
                            return $ Undefined s
-               16 ->    do f <- get
-                           return $ File f
 
 
 instance Binary(Expr) where
@@ -139,22 +135,9 @@ instance Binary(Expr) where
                                put a
                                put b
                                put c
-    put (Input) =           do put (53 :: Word8)
     put (Import a b) =      do put (54 :: Word8)
                                put a
                                put b
-    put (FileObj a) =       do put (55 :: Word8)
-                               put a
-    put (FileRead a) =      do put (56 :: Word8)
-                               put a
-    put (FileWrite a b) =   do put (57 :: Word8)
-                               put a
-                               put b
-    put (FileAppend a b) =  do put (58 :: Word8)
-                               put a
-                               put b
-    put (EvalExpr a) =      do put (61 :: Word8)
-                               put a
     put (Rule a) =          do put (62 :: Word8)
                                put a
     put (UseRule a b) =     do put (63 :: Word8)
@@ -247,22 +230,9 @@ instance Binary(Expr) where
                            b <- get
                            c <- get
                            return $ Range a b c
-               53 ->    do return $ Input
                54 ->    do a <- get
                            b <- get
                            return $ Import a b
-               55 ->    do a <- get
-                           return $ FileObj a
-               56 ->    do a <- get
-                           return $ FileRead a
-               57 ->    do a <- get
-                           b <- get
-                           return $ FileWrite a b
-               58 ->    do a <- get
-                           b <- get
-                           return $ FileAppend a b
-               61 ->    do a <- get
-                           return $ EvalExpr a
                62 ->    do a <- get
                            return $ Rule a
                63 ->    do a <- get

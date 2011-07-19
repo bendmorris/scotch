@@ -53,7 +53,7 @@ assignment =
   try (assign "^=" expAssign) <|>
   try (assign "%=" modAssign)
 
-statement = do exp <- sepBy1 (whiteSpace >> (assignment <|> expression)) (oneOf ",")
+statement = do exp <- sepBy1 (whiteSpace >> (assignment <|> importStmt <|> expression)) (oneOf ",")
                if length exp == 1 
                 then return (exp !! 0)
                 else return $ Val $ Proc $ exp
@@ -67,7 +67,6 @@ nonCurryExpression = try (operation False) <|>
 operation b = buildExpressionParser (operators b) (term <|> parens term)
 
 term = try valueExpr <|>
-       try stmt <|>
        try (parens expression)
 
 reservedWord = try (do reserved "true"
@@ -89,7 +88,6 @@ value =
   try intValue
 valueStmt =
   try reservedExpr <|>
-  try evalStmt <|>
   try procStmt <|>
   try hashStmt <|>
   try listStmt <|>
@@ -100,12 +98,9 @@ valueStmt =
 valueExpr = 
   try ruleStmt <|>
   try useRuleStmt <|>
-  try fileStmt <|>
   try ifStmt <|>
   try caseStmt <|>
   try skipStmt <|>
-  try readStmt <|>
-  try inputStmt <|>
   try threadStmt <|>
   try rangeStmt <|>
   try takeStmt <|>
@@ -145,15 +140,6 @@ caseStmt =
      
 skipStmt = do reserved "skip"
               return Skip
-
-readStmt =
-  do reserved "read"
-     expr <- parens expression
-     return $ FileRead (expr)
-     
-inputStmt =
-  do reserved "input"
-     return $ Input
      
 threadStmt =
   do reserved "thread"
@@ -253,11 +239,6 @@ useRuleStmt =
      y <- statement
      return $ UseRule x y
 
-fileStmt =
-  do symbol "file"
-     expr <- parens expression
-     return $ FileObj expr
-
 strValue = 
   do quote <- oneOf "\"'"
      chars <- many (do char <- noneOf [quote]
@@ -300,11 +281,6 @@ floatValue =
 floatStmt =
   do val <- floatValue
      return $ Val val
-     
-evalStmt =
-  do reserved "eval"
-     expr <- parens expression
-     return $ EvalExpr expr
 
 procStmt =
   do reserved "do"
@@ -354,13 +330,6 @@ varcallStmt =
      var <- identifier
      return $ Prod n (Var var)
   )
-     
-
--- statements
-stmt = 
-  try importStmt <|>
-  try writeStmt <|>
-  try appendStmt
   
 
 moduleName =
@@ -376,23 +345,6 @@ importStmt =
   try (do reserved "import"
           mod <- moduleName
           return $ Import mod mod)
-
-writeStmt =
-  do reserved "write"
-     symbol "("
-     file <- expression
-     symbol ","
-     expr <- expression
-     symbol ")"
-     return $ FileWrite file expr
-appendStmt =
-  do reserved "append"
-     symbol "("
-     file <- expression
-     symbol ","
-     expr <- expression
-     symbol ")"
-     return $ FileAppend file expr
 
 
 

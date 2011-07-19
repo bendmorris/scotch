@@ -66,10 +66,10 @@ wexecute settings (h:t) bindings =
                                       Val (Str s) -> putStrLn s
                                       otherwise -> print x
                                     nextline newBindings
-       FileWrite (Val (File f)) (Val (Str x)) -> do writeFile f x
-                                                    nextline newBindings
-       FileAppend (Val (File f)) (Val (Str x)) -> do appendFile f x
-                                                     nextline newBindings
+       Call (Var "write") [Val (Str f), Val (Str x)] -> do writeFile f x
+                                                           nextline newBindings
+       Call (Var "append") [Val (Str f), Val (Str x)] -> do appendFile f x
+                                                            nextline newBindings
        Val (Thread th) -> do forkIO (do wexecute settings [(Nothing, th)] bindings
                                         return ())
                              nextline newBindings

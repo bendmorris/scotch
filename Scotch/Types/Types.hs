@@ -47,7 +47,6 @@ data Value = NumInt Integer
            | Proc [Expr]
            | Thread Expr
            | Undefined String
-           | File String
            | InvalidValue
            deriving Eq
 
@@ -84,13 +83,7 @@ data Expr = Exception String                -- undefined
           | TakeFor Id (Expr) (Expr) [Expr] Integer
                                             -- take from list comprehension
           | Range (Expr) (Expr) (Expr)      -- range
-          | Input                           -- get a line of input from the user
           | Import [String] [String]        -- import module
-          | FileObj Expr                    -- file object
-          | FileRead Expr                   -- read file
-          | FileWrite Expr Expr             -- write to file
-          | FileAppend Expr Expr            -- append to file
-          | EvalExpr Expr                   -- eval for metaprogramming
           | Rule [Expr]                     -- a rule (list of definitions)
           | UseRule (Expr) (Expr)           -- evaluate using a rule
           deriving Eq
