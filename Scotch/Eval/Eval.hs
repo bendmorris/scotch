@@ -151,19 +151,19 @@ eval oexp vars settings rw =
   Val x ->              case x of
                           Undefined s -> Exception s
                           otherwise -> Val x
-  Subs n x ->           case x of
+  Subs n x ->           case x' of
                           List l ->       case n' of
                                             Val (NumInt n) -> if n >= 0
                                                               then l !! (fromIntegral n)
                                                               else l !! ((length l) + (fromIntegral n))
                                             List l' ->        List [Subs i (List l) | i <- l']
-                                            otherwise ->      exNonNumSubs otherwise
+                                            otherwise ->      Subs n' x'
                           Val (Str s) ->  case n' of
                                             Val (NumInt n) -> if n >= 0
                                                               then Val (Str ([s !! (fromIntegral n)]))
                                                               else Val (Str ([s !! ((length s) + (fromIntegral n))]))
                                             List l' ->        List [Subs i (Val (Str s)) | i <- l']
-                                            otherwise ->      exNonNumSubs otherwise
+                                            otherwise ->      Subs n' x'
                           Val (Hash l) -> case n' of
                                             Exception e -> Exception e
                                             List l' ->        List [Subs i (Val (Hash l)) | i <- l']
@@ -172,16 +172,17 @@ eval oexp vars settings rw =
                                                                                Just x -> x
                                                                                Nothing -> exNotInHash s
                                                            Exception e ->    Exception e
-                                                           otherwise ->      Subs otherwise (Val (Hash l))
+                                                           otherwise ->      Subs n' x'
                           Call (Var f) args ->  case n' of
                                                   Val (NumInt n) -> if n >= 0
                                                                     then eval' $ Subs (Val (NumInt n)) (eval' (Take (Val (NumInt ((fromIntegral n) + 1))) (Call (Var f) args)))
                                                                     else Subs (Val (NumInt n)) (eval' x)
                                                   List l' ->        List [Subs i f' | i <- l']
                                                                     where f' = (Call (Var f) args)
-                                                  otherwise ->      Subs otherwise (eval' x)
-                          otherwise ->    Subs n (eval' otherwise)
-                        where n' = fullEval n eval'
+                                                  otherwise ->      Subs n' x'
+                          otherwise ->    Subs n x'
+                        where n' = eval' n
+                              x' = eval' x
   Concat x y ->         eval' (Add x y)
   Add x y ->            case x of
                           Exception e ->    Exception e
@@ -290,17 +291,21 @@ eval oexp vars settings rw =
                                         otherwise -> EagerDef f x Skip
                           otherwise -> EagerDef f x Skip
                         where x = fullEval x' eval'
-  EagerDef f x y ->     evalWithNewDefs y [(f, fullEval x eval')]
+  EagerDef f x y ->     case fullEval x eval' of
+                          Val v -> next
+                          List l -> next
+                          otherwise -> EagerDef f otherwise y
+                        where next = evalWithNewDefs y [(f, fullEval x eval')]
   If cond x y ->        case eval' cond of
                           Val (Bit True) -> x
                           Val (Bit False) -> y
                           Exception e -> Exception e
                           otherwise -> If otherwise x y
   Case check cases ->   caseExpr check (reverse cases)
-  For id x y conds ->   case eval' x of
+  For id x y conds ->   case fullEval x eval' of
                           List l ->         List [substitute y [(Var id, item)] | item <- l,
-                                                      allTrue [substitute cond [(Var id, item)] | cond <- conds]
-                                                      ]
+                                                  allTrue [substitute cond [(Var id, item)] | cond <- conds]
+                                                  ]
                           Exception e ->    Exception e
                           otherwise ->      For id otherwise y conds
   TakeFor id x y conds n -> case eval' x of
@@ -400,7 +405,7 @@ ieval settings expr vars last =
                                                  return $ (y, makeVarDict [(id, x')] vars)
                            otherwise -> do return (result, vars)
               ieval settings (fst result') (snd result') (expr : last')
-              where last' = take 4 last
+              where last' = take 2 last
 
 oneArg f a = do a' <- subfile a
                 return $ f a'
@@ -416,6 +421,18 @@ threeArgs f a b c = do a' <- subfile a
 subfile :: Expr -> IO Expr
 subfile exp =
   case exp of
+    Var "input" -> do line <- getLine
+                      return $ Val (Str line)
+    Call (Var "read") [f] -> do sub <- subfile f
+                                case f of
+                                  Val (Str f) -> do exists <- doesFileExist f
+                                                    case exists of 
+                                                      True -> do contents <- readFile f
+                                                                 return $ Val $ Str contents
+                                                      False -> return $ exFileDNE
+                                  otherwise -> return $ exp
+    Call f args -> do args' <- iolist [subfile arg | arg <- args]
+                      return $ Call f args'
     Take a b -> twoArgs Take a b
     TakeFor a b c d e -> do b' <- subfile b
                             c' <- subfile c
@@ -447,14 +464,4 @@ subfile exp =
                        y' <- subfile y
                        z' <- iolist [subfile i | i <- z]
                        return $ For id x' y' z'
-    Var "input" -> do line <- getLine
-                      return $ Val (Str line)
-    Call (Var "read") [f] -> do sub <- subfile f
-                                case f of
-                                  Val (Str f) -> do exists <- doesFileExist f
-                                                    case exists of 
-                                                      True -> do contents <- readFile f
-                                                                 return $ Val $ Str contents
-                                                      False -> return $ exFileDNE
-                                  otherwise -> return $ exp
     otherwise -> do return otherwise
