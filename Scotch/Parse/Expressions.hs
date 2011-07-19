@@ -282,7 +282,7 @@ floatStmt =
   do val <- floatValue
      return $ Val val
 
-procStmt =
+procStmt = try (
   do reserved "do"
      initialPos <- getPosition
      exprs <- sepBy1 (do whiteSpace
@@ -290,10 +290,15 @@ procStmt =
                          expr <- statement
                          if sourceColumn pos < sourceColumn initialPos then fail "" else do return ()
                          return (sourceLine pos, expr))
-                     (oneOf ",")
+                     (oneOf "\n")
                        
-     if length (nub [fst expr | expr <- exprs]) /= length (exprs) then fail "" else do return ()
-     return $ Val $ Proc [snd expr | expr <- exprs]
+     if length (nub [fst expr | expr <- exprs]) < length (exprs) then fail "" else do return ()
+     return $ Val $ Proc [snd expr | expr <- exprs])
+  <|> (
+  do reserved "do"
+     exprs <- sepBy1 statement (oneOf ",")
+     return $ Val $ Proc exprs
+  )
 
 listStmt =
   do exprs <- brackets exprList
