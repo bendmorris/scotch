@@ -192,14 +192,12 @@ eval oexp vars settings rw =
                                               Val v -> vadd (strict settings) x y
                                               Add a (Call id args) -> Add (eval' (Add x a)) (Call id args)
                                               otherwise -> nextOp
+                          Val (Proc p) ->   Val $ Proc $ p ++ [y]
                           Val v ->          case y of
                                               Exception e -> Exception e
                                               List l -> vadd (strict settings) x y
                                               Val v -> vadd (strict settings) x y
                                               otherwise -> nextOp
-                          Add a b ->        {-if (eval' x) == x
-                                            then Add a (Add b y)
-                                            else -}nextOp
                           otherwise ->      nextOp
                         where nextOp = if vadd (strict settings) x y == Add x y
                                        then Add (eval' x) (eval' y)
