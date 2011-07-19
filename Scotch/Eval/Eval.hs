@@ -99,6 +99,10 @@ eval oexp vars settings rw =
                         else exp
   Call (Val (NumInt i)) args -> Prod (Val (NumInt i)) (totalProd args)
   Call (Val (NumFloat i)) args -> Prod (Val (NumFloat i)) (totalProd args)
+  Call (Val (Str s)) args -> Val $ Str $ s ++ foldl (++) "" [case fullEval i eval' of
+                                                               Val (Str a) -> a
+                                                               otherwise -> show otherwise 
+                                                             | i <- args]
   Call x args ->        Call (fullEval x eval') args
   EvalExpr x ->         case eval' x of
                           Val (Str s) -> case length evaled of
