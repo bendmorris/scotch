@@ -296,7 +296,7 @@ eval oexp vars settings rw =
   EagerDef f x y ->     case fullEval x eval' of
                           Val v -> next
                           List l -> next
-                          otherwise -> EagerDef f otherwise y
+                          otherwise -> next--EagerDef f otherwise y
                         where next = evalWithNewDefs y [(f, fullEval x eval')]
   If cond x y ->        case fullEval cond eval' of
                           Val (Bit True) -> x

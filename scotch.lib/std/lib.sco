@@ -92,7 +92,7 @@ only([], s) = []
 left(h:t, n) = take n from h:t
 left(h:t, 0) = []
 left([], n) = []
-right(h:t, n) = [for i in [l - n .. l - 1], (h:t) @ i] where l := len(h:t)
+right(h:t, n) = [for i in [if l > n then (l - n) else 0 .. l - 1], (h:t) @ i] where l := len(h:t)
 
 foldl(f, h:t, z) = foldl(f, t, f(z, h))
 foldl(f, [], z) = z

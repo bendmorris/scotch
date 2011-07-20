@@ -7,12 +7,12 @@ read_decimal(h:t, a) = case h of
 read_decimal([], a) = Decimal(int(a), 0)
 decimal(s) = read_decimal(s, "0")
                                        
-print(Decimal(a,b)) = print((if l > b then left(s, l - b) else "0") +
-                              "." + 
-                              case ("0" * (b - l)) + right(s, b) of 
-                                "" -> "0", 
-                                otherwise -> otherwise
-                             where s = str(a), l := len(s))
+print(Decimal(a,b)) = print(((if l > b then left(s, l - b) else "0") +
+                               "." +
+                               case str([for i in [2..b], "0"]) + str(right(s, b)) of 
+                                 "" -> "0", 
+                                 otherwise -> otherwise)
+                              where s = str(a), l := len(s))
 
 float(Decimal(a,b)) = (a * (10 ^ (-b)))
 
