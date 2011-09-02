@@ -206,6 +206,7 @@ notStmt =
 -- value parsers
 
 exprList = sepBy (whiteSpace >> expression) (oneOf ",")
+exprList2D = sepBy (exprList) (oneOf ";")
 idList = sepBy (do id <- whiteSpace >> identifier
                    return $ id) (oneOf ",")
 
@@ -300,9 +301,13 @@ procStmt = try (
      return $ Val $ Proc exprs
   )
 
-listStmt =
+listStmt = try (
   do exprs <- brackets exprList
      return $ List exprs
+  ) <|> (
+  do exprs <- brackets exprList2D
+     return $ List [List x | x <- exprs]
+  )
      
 keyValue = try (
   do key <- whiteSpace >> (many (oneOf (upperCase ++ lowerCase)))
@@ -413,9 +418,10 @@ operators b =
    [Infix  (reservedOp "and" >> return (And             )) AssocLeft,
     Infix  (reservedOp "or"  >> return (Or              )) AssocLeft,
     Infix  (reservedOp "&"   >> return (And             )) AssocLeft,
-    Infix  (reservedOp "|"   >> return (Or              )) AssocLeft],
-   [Postfix(do { w <- whereStmt;return (w          )})          ]
+    Infix  (reservedOp "|"   >> return (Or              )) AssocLeft]
    --[Infix  (do { op <- customOp;return (opCall op   )}) AssocLeft]
    ] ++ if b 
         then [[Postfix(do { c <- curryStmt;return (c          )})          ]]
         else []
+   ++
+   [[Postfix(do { w <- whereStmt;return (w          )})          ]]
