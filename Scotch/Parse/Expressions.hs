@@ -184,12 +184,11 @@ inStmt =
   do iterator <- identifier
      reserved "in"
      list <- expression
-     reserved ","
      return (iterator, Call (Var "list") [list])
 listCompStmt =
-  do reserved "for"
-     ins <- many (try inStmt)
-     expr <- expression
+  do expr <- expression
+     reserved "for"
+     ins <- sepBy (whiteSpace >> inStmt) (oneOf ",")
      conds <- many (do symbol ","
                        cond <- whiteSpace >> expression
                        return cond)
