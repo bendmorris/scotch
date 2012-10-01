@@ -16,7 +16,7 @@
 
 module Main where
 
-import System
+import System.Environment
 import System.Environment.Executable
 import System.Directory
 import System.IO
